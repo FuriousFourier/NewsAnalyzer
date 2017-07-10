@@ -70,6 +70,14 @@
             <!--<scope>test</scope>-->
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/org.gephi/graph-api -->
+        <dependency>
+            <groupId>org.gephi</groupId>
+            <artifactId>graph-api</artifactId>
+            <version>0.9.1</version>
+        </dependency>
+
+
     </dependencies>
 
     <properties>

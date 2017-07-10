@@ -1,0 +1,17 @@
+spring:
+  h2:
+    console:
+      enabled: true
+  data:
+    rest:
+      # for exposing only annotated repositories
+      detection-strategy: annotated
+
+      # for changing default data rest api endpoint
+      base-path: /api
+  jpa:
+    hibernate:
+      ddl-auto: update
+  datasource:
+    url: jdbc:h2:./db/NewsAnalyzer;DB_CLOSE_ON_EXIT=FALSE
+
