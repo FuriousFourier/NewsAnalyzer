@@ -33,11 +33,11 @@ public class TryController {
 
     @RequestMapping("/")
     public String index() {
-        foo();
         return "index";
     }
 
-    public void foo(){
+    @RequestMapping("/foo")
+    public String foo(){
         if (newspaperRepository == null) {
             System.out.println("Lel");
             System.exit(1);
@@ -56,7 +56,7 @@ public class TryController {
         }
         if (printWriter == null) {
             System.out.println("Kapa");
-            return;
+            return "index";
         }
 
         List<Language> languages = languageRepository.findByName("English");
@@ -89,5 +89,6 @@ public class TryController {
         }
         languages = null;
         printWriter.close();
+        return "index";
     }
 }
