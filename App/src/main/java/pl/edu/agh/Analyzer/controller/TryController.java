@@ -10,8 +10,10 @@ import pl.edu.agh.Analyzer.model.PressRelease;
 import pl.edu.agh.Analyzer.repository.FeedRepository;
 import pl.edu.agh.Analyzer.repository.LanguageRepository;
 import pl.edu.agh.Analyzer.repository.NewspaperRepository;
+import pl.edu.agh.Analyzer.repository.PressReleaseRepository;
 
 import java.io.*;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -31,6 +33,9 @@ public class TryController {
     @Autowired
     private LanguageRepository languageRepository;
 
+    @Autowired
+    private PressReleaseRepository pressReleaseRepository;
+
     @RequestMapping("/")
     public String index() {
         return "index";
@@ -38,12 +43,15 @@ public class TryController {
 
     @RequestMapping("/foo")
     public String foo(){
+
+        final String viewName = "foo";
+        Date patternDate = new Date(114, 7, 8, 0, 0, 0 );
         if (newspaperRepository == null) {
             System.out.println("Lel");
             System.exit(1);
         }
 
-        final File file = new File("lol.txt");
+        final File file = new File("foo.txt");
 
         file.delete();
         PrintWriter printWriter = null;
@@ -56,7 +64,7 @@ public class TryController {
         }
         if (printWriter == null) {
             System.out.println("Kapa");
-            return "index";
+            return viewName;
         }
 
         List<Language> languages = languageRepository.findByName("English");
@@ -75,13 +83,16 @@ public class TryController {
                 for (Newspaper newspaper : newspapers) {
                     printWriter.println("Gazeta: " + newspaper.getName());
                     List<Feed> feeds = newspaper.getFeeds();
-                    printWriter.println("Feedy:");
                     for (Feed myFeed : feeds) {
-                        printWriter.println(myFeed.getName() + ": " + myFeed.getSection());
                         List<PressRelease> pressReleases = myFeed.getPressReleases();
                         printWriter.println("Notki:");
                         for (PressRelease pressRelease : pressReleases) {
-                            printWriter.println(pressRelease.getDate() + ": " + pressRelease.getContent());
+                            Date dateOfCurrent = pressRelease.getDate();
+                            if (dateOfCurrent.after(patternDate)) {
+                                printWriter.println(dateOfCurrent + ": " + pressRelease.getContent());
+                            } else {
+                                System.out.println(pressRelease.getTitle() + ", " + dateOfCurrent);
+                            }
                         }
                     }
                 }
@@ -89,6 +100,48 @@ public class TryController {
         }
         languages = null;
         printWriter.close();
-        return "index";
+        System.out.println("Data is written ");
+        return viewName;
+    }
+
+    @RequestMapping("/bar")
+    public String bar(){
+        final String viewName = "foo";
+        final Date patternDate = new Date(116, 3, 8, 0, 0, 0 );
+        System.out.println("Pattern Date: " + patternDate);
+
+        final File file = new File("bar.txt");
+
+        file.delete();
+        PrintWriter printWriter = null;
+        try {
+            printWriter = new PrintWriter(file, "UTF-8");
+        } catch (FileNotFoundException e) {
+            System.out.println("Coś się popsuło");
+        } catch (UnsupportedEncodingException e) {
+            System.out.println("Kodowanie nie działa");
+        }
+        if (printWriter == null) {
+            System.out.println("Kapa");
+            return viewName;
+        }
+        System.out.println("No to robim");
+
+        Iterable<PressRelease> pressReleases = pressReleaseRepository.findAll();
+
+        for (PressRelease pressRelease : pressReleases) {
+            Date currentReleaseDate = pressRelease.getDate();
+
+            if (currentReleaseDate.after(patternDate)) {
+                printWriter.println(currentReleaseDate + ": " + pressRelease.getContent());
+            } else {
+                System.out.println(currentReleaseDate + " ");
+            }
+        }
+        System.out.println();
+        pressReleases = null;
+        printWriter.close();
+        System.out.println("Data is written");
+        return viewName;
     }
 }
