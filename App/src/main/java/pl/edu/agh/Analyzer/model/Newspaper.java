@@ -1,5 +1,7 @@
 package pl.edu.agh.Analyzer.model;
 
+import org.hibernate.mapping.Join;
+
 import javax.persistence.*;
 import java.util.List;
 
@@ -8,6 +10,7 @@ import java.util.List;
  */
 
 @Entity
+@Table(name = "Newspapers")
 public class Newspaper {
 
     @Id
@@ -17,15 +20,17 @@ public class Newspaper {
     private String name;
 
     @ManyToOne(targetEntity = Language.class)
+    @JoinColumn(name = "languageID", referencedColumnName = "ID")
     private Language language;
 
     @ManyToOne (targetEntity = Country.class)
+    @JoinColumn(name = "countryID", referencedColumnName = "ID")
     private Country country;
 
-    @OneToMany(targetEntity = Feed.class)
-    private List feeds;
+    @OneToMany(targetEntity = Feed.class, mappedBy = "newspaper")
+    private List<Feed> feeds;
 
-    public Newspaper(String name, Language language, Country country, List feeds) {
+    public Newspaper(String name, Language language, Country country, List<Feed> feeds) {
         this.name = name;
         this.language = language;
         this.country = country;
@@ -52,7 +57,7 @@ public class Newspaper {
         return feeds;
     }
 
-    public void setFeeds(List feeds) {
+    public void setFeeds(List<Feed> feeds) {
         this.feeds = feeds;
     }
 

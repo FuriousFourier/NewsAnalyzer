@@ -10,6 +10,7 @@ import java.util.List;
  */
 
 @Entity
+@Table(name = "Countries")
 public class Country {
 
     @Id
@@ -18,13 +19,13 @@ public class Country {
 
     private String name;
 
-    @OneToMany(targetEntity = Newspaper.class)
-    private List newspapers;
+    @OneToMany(targetEntity = Newspaper.class, mappedBy = "country")
+    private List<Newspaper> newspapers;
 
-    @OneToOne(targetEntity = Tag.class)
+    @OneToOne(targetEntity = Tag.class, mappedBy = "country")
     private Tag tag;
 
-    public Country(String name, List newspapers, Tag tag) {
+    public Country(String name, List<Newspaper> newspapers, Tag tag) {
         this.name = name;
         this.newspapers = newspapers;
         this.tag = tag;
@@ -37,7 +38,7 @@ public class Country {
         return newspapers;
     }
 
-    public void setNewspapers(List newspapers) {
+    public void setNewspapers(List<Newspaper> newspapers) {
         this.newspapers = newspapers;
     }
 

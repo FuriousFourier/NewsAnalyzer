@@ -15,4 +15,6 @@ public interface NewspaperRepository extends PagingAndSortingRepository<Newspape
 
     List<Newspaper> findByCountry(Country country);
 
+    Newspaper findById(Integer id);
+
 }

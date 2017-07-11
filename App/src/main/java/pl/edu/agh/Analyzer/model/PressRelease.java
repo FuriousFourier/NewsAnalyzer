@@ -9,10 +9,12 @@ import java.util.List;
  */
 
 @Entity
+@Table(name = "Pressreleases")
 public class PressRelease {
 
     @Id
     @GeneratedValue
+    @Column(name = "ID")
     private Integer id;
 
     private String title;
@@ -21,13 +23,15 @@ public class PressRelease {
 
     private String content;
 
-    @ManyToMany(targetEntity = Tag.class)
-    private List tags;
+    @ManyToMany(targetEntity = Tag.class, cascade = CascadeType.ALL)
+    @JoinTable(name = "Pressreleasestag", joinColumns = @JoinColumn(name = "pressreleaseid", referencedColumnName = "ID"), inverseJoinColumns = @JoinColumn(name = "tagid", referencedColumnName = "ID"))
+    private List<Tag> tags;
 
     @ManyToOne(targetEntity = Feed.class)
+    @JoinColumn(name = "feedID", referencedColumnName = "ID")
     private Feed feed;
 
-    public PressRelease(String title, Date date, String content, List tags, Feed feed) {
+    public PressRelease(String title, Date date, String content, List<Tag> tags, Feed feed) {
         this.title = title;
         this.date = date;
         this.content = content;
@@ -38,11 +42,11 @@ public class PressRelease {
     public PressRelease() {
     }
 
-    public List getTags() {
+    public List<Tag> getTags() {
         return tags;
     }
 
-    public void setTags(List tags) {
+    public void setTags(List<Tag> tags) {
         this.tags = tags;
     }
 

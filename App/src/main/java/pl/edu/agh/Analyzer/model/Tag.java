@@ -8,6 +8,7 @@ import java.util.List;
  */
 
 @Entity
+@Table(name = "TAGs")
 public class Tag {
 
     @Id
@@ -17,12 +18,13 @@ public class Tag {
     private String name;
 
     @OneToOne(targetEntity = Country.class)
+    @JoinColumn(name = "countryid", referencedColumnName = "ID")
     private Country country;
 
-    @ManyToMany(targetEntity = PressRelease.class)
-    private List pressReleases;
+    @ManyToMany(mappedBy = "tags")
+    private List<PressRelease> pressReleases;
 
-    public Tag(String name, Country country, List pressReleases) {
+    public Tag(String name, Country country, List<PressRelease> pressReleases) {
         this.name = name;
         this.country = country;
         this.pressReleases = pressReleases;
@@ -36,11 +38,11 @@ public class Tag {
         this.country = country;
     }
 
-    public List getPressReleases() {
+    public List<PressRelease> getPressReleases() {
         return pressReleases;
     }
 
-    public void setPressReleases(List pressReleases) {
+    public void setPressReleases(List<PressRelease> pressReleases) {
         this.pressReleases = pressReleases;
     }
 

@@ -1,8 +1,5 @@
 package pl.edu.agh.Analyzer.model;
 
-import org.h2.util.New;
-import org.omg.CosNaming.NamingContextExtPackage.StringNameHelper;
-
 import javax.persistence.*;
 import java.util.List;
 
@@ -11,6 +8,7 @@ import java.util.List;
  */
 
 @Entity
+@Table(name = "Feeds")
 public class Feed {
 
     @Id
@@ -21,10 +19,11 @@ public class Feed {
 
     private String section;
 
-    @OneToMany(targetEntity = PressRelease.class)
+    @OneToMany(targetEntity = PressRelease.class, mappedBy = "feed")
     private List pressReleases;
 
     @ManyToOne(targetEntity = Newspaper.class)
+    @JoinColumn(name = "newspaperID", referencedColumnName = "ID")
     private Newspaper newspaper;
 
     public Feed(String name, String section) {

@@ -1,9 +1,6 @@
 package pl.edu.agh.Analyzer.model;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
+import javax.persistence.*;
 import java.util.List;
 
 /**
@@ -11,6 +8,7 @@ import java.util.List;
  */
 
 @Entity
+@Table(name = "Languages")
 public class Language {
 
     @Id
@@ -20,11 +18,12 @@ public class Language {
     private String name;
 
     @OneToMany(targetEntity = Newspaper.class)
-    private List newspaperList;
+    @JoinColumn(name = "languageID")
+    private List newspapers;
 
-    public Language(String name, List newspaperList) {
+    public Language(String name, List newspapers) {
         this.name = name;
-        this.newspaperList = newspaperList;
+        this.newspapers = newspapers;
     }
 
     public Language() {
@@ -46,11 +45,11 @@ public class Language {
         this.name = name;
     }
 
-    public List getNewspaperList() {
-        return newspaperList;
+    public List getNewspapers() {
+        return newspapers;
     }
 
-    public void setNewspaperList(List newspaperList) {
-        this.newspaperList = newspaperList;
+    public void setNewspapers(List newspapers) {
+        this.newspapers = newspapers;
     }
 }
