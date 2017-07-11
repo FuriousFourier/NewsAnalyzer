@@ -52,4 +52,6 @@ public class Language {
     public void setNewspapers(List newspapers) {
         this.newspapers = newspapers;
     }
+
+
 }

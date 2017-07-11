@@ -6,10 +6,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import pl.edu.agh.Analyzer.model.Feed;
 import pl.edu.agh.Analyzer.model.Language;
 import pl.edu.agh.Analyzer.model.Newspaper;
+import pl.edu.agh.Analyzer.model.PressRelease;
 import pl.edu.agh.Analyzer.repository.FeedRepository;
 import pl.edu.agh.Analyzer.repository.LanguageRepository;
 import pl.edu.agh.Analyzer.repository.NewspaperRepository;
 
+import java.io.*;
 import java.util.List;
 
 /**
@@ -41,28 +43,51 @@ public class TryController {
             System.exit(1);
         }
 
-        List<Language> languages = languageRepository.findByName("Polish");
+        final File file = new File("lol.txt");
+
+        file.delete();
+        PrintWriter printWriter = null;
+        try {
+            printWriter = new PrintWriter(file, "UTF-8");
+        } catch (FileNotFoundException e) {
+            System.out.println("Coś się popsuło");
+        } catch (UnsupportedEncodingException e) {
+            System.out.println("Kodowanie nie działa");
+        }
+        if (printWriter == null) {
+            System.out.println("Kapa");
+            return;
+        }
+
+        List<Language> languages = languageRepository.findByName("English");
         if (languages.size() == 0) {
             System.out.println("Brak języków");
             System.exit(0);
         }
-        System.out.println("Języków znalezionych jest: " + languages.size());
+        printWriter.println("Języków znalezionych jest: " + languages.size());
         for (Language language : languages) {
-            System.out.println("Język " + language.getId());
-            System.out.println(language.getName());
+            printWriter.println("Język " + language.getId());
+            printWriter.println(language.getName());
             List<Newspaper> newspapers = language.getNewspapers();
             if (newspapers.size() == 0) {
-                System.out.println("Brak gazet dla tego języka");
+                printWriter.println("Brak gazet dla tego języka");
             } else {
                 for (Newspaper newspaper : newspapers) {
-                    System.out.println("Gazeta: " + newspaper.getName());
-                    List<Feed> feeds = feedRepository.findByNewspaper(newspaper);
-                    System.out.println("Feedy:");
+                    printWriter.println("Gazeta: " + newspaper.getName());
+                    List<Feed> feeds = newspaper.getFeeds();
+                    printWriter.println("Feedy:");
                     for (Feed myFeed : feeds) {
-                        System.out.println(myFeed.getName() + ": " + myFeed.getSection());
+                        printWriter.println(myFeed.getName() + ": " + myFeed.getSection());
+                        List<PressRelease> pressReleases = myFeed.getPressReleases();
+                        printWriter.println("Notki:");
+                        for (PressRelease pressRelease : pressReleases) {
+                            printWriter.println(pressRelease.getDate() + ": " + pressRelease.getContent());
+                        }
                     }
                 }
             }
         }
+        languages = null;
+        printWriter.close();
     }
 }

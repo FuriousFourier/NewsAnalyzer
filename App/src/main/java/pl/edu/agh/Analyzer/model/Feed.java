@@ -57,4 +57,20 @@ public class Feed {
     public void setSection(String section) {
         this.section = section;
     }
+
+    public List getPressReleases() {
+        return pressReleases;
+    }
+
+    public void setPressReleases(List pressReleases) {
+        this.pressReleases = pressReleases;
+    }
+
+    public Newspaper getNewspaper() {
+        return newspaper;
+    }
+
+    public void setNewspaper(Newspaper newspaper) {
+        this.newspaper = newspaper;
+    }
 }
