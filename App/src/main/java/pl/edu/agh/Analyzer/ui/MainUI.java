@@ -13,10 +13,12 @@ public class MainUI {
         //petla nieskonczone
         //funkckja do wypisywania komend
         //funckja do informowania "aby wypisac komendy, wpisz ?"
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        final BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        final AnalysisHandler handler = new AnalysisHandler(br);
         boolean isRunning = true;
         try {
             while (isRunning) {
+                iterativeMsg();
                 String line = null;
                 try {
                     line = br.readLine();
@@ -32,13 +34,14 @@ public class MainUI {
                     myPrint("Notes will get missing tags");
                 else if (line.startsWith("u"))
                     myPrint("Database will be updated with new data");
-                else if (line.startsWith("a"))
+                else if (line.startsWith("a")) {
                     myPrint("Analysis will start  soon...");
+                    handler.startHandling();
+                }
                 else if (line.startsWith("?"))
                     listCommands();
-                if (!line.startsWith("?") && isRunning)
-                    iterativeCommand();
             }
+            myPrint("Goodbye!");
         } catch (Exception e){
             e.printStackTrace();
         }
@@ -51,13 +54,14 @@ public class MainUI {
         myPrint("\t t -> tag new notes");
         myPrint("\t u -> update database with new data (notes and tags");
         myPrint("\t a -> analyse social network");
+        myPrint("\t q -> quit application");
         myPrint("\t ? -> show this message");
     }
-    private static void iterativeCommand(){
+    private static void iterativeMsg(){
         myPrint("Type ? and press ENTER to show all commands");
     }
 
-    private static void myPrint(String s){
+    public static final void myPrint(String s){
         System.out.println(s);
     }
 }
