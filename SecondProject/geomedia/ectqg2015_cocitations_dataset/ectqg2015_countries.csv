@@ -1,0 +1,210 @@
+id,name,nb_citations
+0,"European Union",13775.8
+1,"France",10784.2
+2,"North Korea",3898.72
+3,"Algeria",1060.37
+4,"United Kingdom",15458.3
+5,"Ukraine",25637.2
+6,"Russia",28209.7
+7,"Dominica",33.6706
+8,"Nigeria",1841.19
+9,"United States",48537.6
+10,"Switzerland",2832.42
+11,"Spain",3458.35
+12,"Colombia",1416.51
+13,"Italy",3578.11
+14,"South Korea",3223.84
+15,"Mexico",2642.32
+16,"Germany",6745.59
+17,"Portugal",429.749
+18,"Nepal",394.11
+19,"Malaysia",5991.2
+20,"Syria",13245.3
+21,"Turkey",3975.91
+22,"Egypt",3555.49
+23,"Yemen",773.48
+24,"Canada",2661.25
+25,"Singapore",763.759
+26,"Czech Republic",335.995
+27,"Iraq",10511.6
+28,"Vatican City",3614.8
+29,"Pakistan",2948.08
+30,"China",15471.9
+31,"Myanmar (Burma)",844.756
+32,"Poland",1379.39
+33,"Mali",849.683
+34,"Japan",7315.63
+35,"Saudi Arabia",1296.8
+36,"Brazil",2144.88
+37,"Armenia",156.2
+38,"Qatar",789.099
+39,"Palestine",14943.7
+40,"El Salvador",375.746
+41,"Afghanistan",3854.78
+42,"Bangladesh",485.406
+43,"India",5435.16
+44,"Georgia",464.843
+45,"Monaco",102.589
+46,"Belgium",3113.91
+47,"Israel",15862.7
+48,"South Africa",1434.38
+49,"Lesotho",75.9034
+50,"Andorra",12.587
+51,"Costa Rica",219.89
+52,"South Sudan",1317.1
+53,"Sudan",1638.78
+54,"Dominican Republic",222.164
+55,"Congo (Brazzaville)",607.506
+56,"Congo (Kinshasa)",338.103
+57,"Congo",59.3802
+58,"Argentina",1651.82
+59,"Moldova",180.175
+60,"Australia",10799.9
+61,"Bulgaria",316.799
+62,"Central African Republic",736.276
+63,"Denmark",496.608
+64,"Netherlands",2273.68
+65,"Kosovo",159.954
+66,"Ireland",832.846
+67,"Austria",1314.54
+68,"Philippines",1668.48
+69,"Uruguay",494.633
+70,"Somalia",937.413
+71,"Kenya",1007.37
+72,"Slovenia",87.3697
+73,"Hong Kong",2598.62
+74,"Thailand",1612.16
+75,"Estonia",181.239
+76,"Luxembourg",307.545
+77,"Mauritius",51.0026
+78,"Cameroon",431.943
+79,"Peru",490.189
+80,"Rwanda",406.108
+81,"Chad",283.214
+82,"Niger",184.46
+83,"Cuba",2675.54
+84,"Venezuela",1435.96
+85,"Cambodia",355.843
+86,"Azerbaijan",120.595
+87,"Romania",282.096
+88,"Lithuania",182.896
+89,"Libya",1801.35
+90,"Albania",274.839
+91,"Greece",1094.4
+92,"Sweden",973.374
+93,"Vietnam",719.048
+94,"Bosnia and Herzegovina",445.769
+95,"Serbia",610.867
+96,"Tunisia",460.676
+97,"Slovakia",101.064
+98,"Jordan",983.028
+99,"Djibouti",30.9493
+100,"Hungary",300.192
+101,"Morocco",514.467
+102,"Bolivia",1245.0
+103,"Maldives",662.776
+104,"Latvia",128.156
+105,"Iran",4476.08
+106,"Mongolia",119.769
+107,"Ethiopia",423.816
+108,"Malta",120.848
+109,"Indonesia",1953.49
+110,"Haiti",248.747
+111,"Norway",672.508
+112,"Sierra Leone",1267.19
+113,"Liberia",1728.95
+114,"Guinea",1139.76
+115,"Ecuador",485.174
+116,"Finland",240.189
+117,"Mozambique",63.3307
+118,"Uganda",446.569
+119,"Gambia",51.4647
+120,"Iceland",104.089
+121,"Tanzania",97.1535
+122,"Senegal",399.032
+123,"Mauritania",31.0646
+124,"Cote d'Ivoire (Ivory Coast)",130.92
+125,"Western Sahara",64.4413
+126,"Lebanon",2757.75
+127,"Taiwan",659.46
+128,"Burkina Faso",312.782
+129,"Panama",341.696
+130,"Sri Lanka",652.823
+131,"Macedonia",79.0479
+132,"Croatia",236.284
+133,"Honduras",310.873
+134,"Nicaragua",196.686
+135,"Guatemala",312.429
+136,"Belarus",474.807
+137,"Jamaica",253.843
+138,"Bahrain",139.884
+139,"Fiji",244.401
+140,"United Arab Emirates",586.829
+141,"Benin",35.6056
+142,"Cyprus",241.288
+143,"Guinea-Bissau",58.8468
+144,"Kazakhstan",221.226
+145,"Grenada",93.8464
+146,"Zambia",127.852
+147,"Solomon Islands",58.5024
+148,"New Zealand",1138.56
+149,"Oman",66.6367
+150,"Equatorial Guinea",33.9979
+151,"Saint Lucia",15.848
+152,"Burundi",61.3584
+153,"Antigua and Barbuda",107.182
+154,"Chile",1034.75
+155,"Kuwait",211.945
+156,"Seychelles",673.66
+157,"Cape Verde",24.9176
+158,"Sao Tome and Principe",1280.26
+159,"Angola",78.6718
+160,"Macau",101.864
+161,"Brunei",29.9564
+162,"Tajikistan",69.8913
+163,"Ghana",141.484
+164,"Comoros",7.2023
+165,"Eritrea",50.6976
+166,"Malawi",34.6017
+167,"Gabon",17.2362
+168,"Namibia",42.9285
+169,"Zimbabwe",183.507
+170,"Tonga",25.3889
+171,"U.S. Virgin Islands",16.706
+172,"Timor-Leste (East Timor)",68.5532
+173,"Christmas Island",48.3167
+174,"Greenland",41.5714
+175,"Nauru",77.7562
+176,"Marshall Islands",68.6619
+177,"Falkland Islands (Islas Malvinas)",23.7722
+178,"Suriname",16.2744
+179,"Papua New Guinea",200.434
+180,"Tuvalu",3.5
+181,"Paraguay",108.199
+182,"Vanuatu",14.0857
+183,"Laos",75.5231
+184,"Turkmenistan",61.9861
+185,"Barbados",18.2619
+186,"Samoa",63.7524
+187,"Trinidad and Tobago",40.1667
+188,"Kiribati",10.3934
+189,"Botswana",30.0042
+190,"Uzbekistan",71.5782
+191,"San Marino",4.25098
+192,"Bhutan",25.0079
+193,"Western Sahara",66.5619
+194,"Guyana",86.731
+195,"Bahamas",75.5338
+196,"Belize",21.4611
+197,"Swaziland",5.43182
+198,"Togo",16.7586
+199,"Montenegro",21.0714
+200,"Kyrgyzstan",32.6407
+201,"Liechtenstein",8.85952
+202,"Saint Vincent and the Grenadines",5.81462
+203,"Cocos Island",14.8
+204,"Faroe Islands",2.4
+205,"Micronesia",4.83956
+206,"Cook Islands",0.333333
+207,"Palau",4.01905
+208,"Saint Kitts and Nevis",1.25098
