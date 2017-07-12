@@ -1,5 +1,7 @@
 package pl.edu.agh.Analyzer.model;
 
+import org.hibernate.validator.constraints.Length;
+
 import javax.persistence.*;
 import java.util.Date;
 import java.util.List;
@@ -17,10 +19,12 @@ public class PressRelease {
     @Column(name = "ID")
     private Integer id;
 
+    @Length(max = 10000)
     private String title;
 
     private Date date;
 
+    @Length(max = 100000)
     private String content;
 
     @ManyToMany(targetEntity = Tag.class, cascade = CascadeType.ALL)

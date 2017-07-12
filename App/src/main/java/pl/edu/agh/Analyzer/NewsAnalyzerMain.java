@@ -1,17 +1,12 @@
 package pl.edu.agh.Analyzer;
 
 import database.util.HibernateUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import pl.edu.agh.Analyzer.model.Feed;
-import pl.edu.agh.Analyzer.model.Newspaper;
-import pl.edu.agh.Analyzer.repository.FeedRepository;
-import pl.edu.agh.Analyzer.repository.NewspaperRepository;
+import pl.edu.agh.Analyzer.controller.DatabaseTryController;
 import tagger.Tagger;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Scanner;
 
 /**
@@ -20,13 +15,14 @@ import java.util.Scanner;
 
 
 @SpringBootApplication
-public class Main {
+public class NewsAnalyzerMain {
 
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         Scanner scanner = new Scanner(System.in);
 
-        SpringApplication.run(Main.class, args);
+        SpringApplication.run(NewsAnalyzerMain.class, args);
+
         while (true) {
             System.out.println("Napisz \"p\" to to zrobię");
             String line = scanner.nextLine();

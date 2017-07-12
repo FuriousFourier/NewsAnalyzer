@@ -10,11 +10,14 @@ public class TAG {
     @Id@GeneratedValue
     @Column
     private int ID;
+
     @Column(length = 5)
     private String name;
+
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "countryID")
-    private Country countryID;
+    private Country country;
+
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "tagID")
     private Set<PressReleasesTag> pressReleasesTags = new HashSet<PressReleasesTag>(0);
 
@@ -38,12 +41,12 @@ public class TAG {
         this.name = name;
     }
 
-    public Country getCountryID() {
-        return countryID;
+    public Country getCountry() {
+        return country;
     }
 
-    public void setCountryID(Country countryID) {
-        this.countryID = countryID;
+    public void setCountry(Country countryID) {
+        this.country = countryID;
     }
 
     public Set<PressReleasesTag> getPressReleasesTags() {

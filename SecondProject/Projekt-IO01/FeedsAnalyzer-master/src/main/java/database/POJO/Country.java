@@ -14,7 +14,7 @@ public class Country {
     private String name;
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "countryID")
     private Set<Newspaper> newspapers = new HashSet<Newspaper>(0);
-    @OneToOne(mappedBy = "countryID")
+    @OneToOne(mappedBy = "country")
     private TAG tag;
 
     public Country(Integer id, String name) {

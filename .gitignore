@@ -27,3 +27,13 @@ hs_err_pid*
 #IntelliJ Idea
 .idea
 *.iml
+
+#Feeds
+Feeds
+Feeds
+TaggedFeeds
+TaggedFeeds
+NewFeeds
+
+#backups
+*.bak

@@ -12,4 +12,5 @@ import java.util.List;
 public interface FeedRepository extends PagingAndSortingRepository<Feed, Integer> {
     List<Feed> findByNewspaper(Newspaper newspaper);
 
+    List<Feed> findByName(String name);
 }

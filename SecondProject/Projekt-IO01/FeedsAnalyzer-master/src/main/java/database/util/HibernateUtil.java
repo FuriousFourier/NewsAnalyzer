@@ -113,6 +113,12 @@ public class HibernateUtil {
     public static void main(String[] args) throws IOException {
 
         //foo();
+        System.err.println("No cześ");
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         addLanguagesToDB();
         addCountriesToDB();
         addNewspapersToDB();
@@ -276,7 +282,7 @@ public class HibernateUtil {
             if (countriesIDs.size() != 1){
                 continue;
             }
-            tag.setCountryID(new Country((Integer) countriesIDs.get(0), countries.get(i)));
+            tag.setCountry(new Country((Integer) countriesIDs.get(0), countries.get(i)));
             dao.create(tag);
             if (i % 20 == 0){
                 dao.flushAndClear();
@@ -309,6 +315,7 @@ public class HibernateUtil {
         File file = new File(path);
         extractFeedsFilesAndSave(file, newFeeds);
     }
+
     private static void extractFeedsFilesAndSave(File file, boolean newFeeds) throws IOException {
         File[] files = file.listFiles();
         assert files != null;
