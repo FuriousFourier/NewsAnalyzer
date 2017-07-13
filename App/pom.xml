@@ -72,7 +72,7 @@
         <!-- https://mvnrepository.com/artifact/org.gephi/graph-api -->
         <dependency>
             <groupId>org.gephi</groupId>
-            <artifactId>graph-api</artifactId>
+            <artifactId>gephi-toolkit</artifactId>
             <version>0.9.1</version>
         </dependency>
 

@@ -64,19 +64,19 @@ public class MainUI {
     }
 
     private static void listCommands(){
-        myPrint("List of commands:");
-        myPrint("\t d -> download new press notes");
-        myPrint("\t t -> tag new notes");
-        myPrint("\t u -> update database with new data (notes and tags");
-        myPrint("\t a -> analyse social network");
-        myPrint("\t q -> quit application");
-        myPrint("\t ? -> show this message");
+        myPrint("List of commands:\n" +
+            "\t d -> download new press notes\n" +
+            "\t t -> tag new notes\n" +
+            "\t u -> update database with new data (notes and tags)\n" +
+            "\t a -> analyse social network\n" +
+            "\t q -> quit application\n" +
+            "\t ? -> show this message\n");
     }
     private static void iterativeMsg(){
         myPrint("Type ? and press ENTER to show all commands");
     }
 
-    public static final void myPrint(String s){
+    private static final void myPrint(String s){
         System.out.println(s);
     }
 }

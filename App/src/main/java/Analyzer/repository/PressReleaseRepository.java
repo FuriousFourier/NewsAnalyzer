@@ -18,4 +18,6 @@ public interface PressReleaseRepository extends PagingAndSortingRepository<Press
 
   @Query("SELECT r FROM PressRelease r WHERE MONTH(r.date)=:month AND YEAR(r.date)=:year")
   List<PressRelease> findByMonthAndYear(@Param("month") String month, @Param ("year") String year);
+  @Query("SELECT r FROM PressRelease r ORDER BY r.date ASC")
+  List<PressRelease> getSortedByDate();
 }
