@@ -3,6 +3,7 @@ package pl.edu.agh.Analyzer.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import pl.edu.agh.Analyzer.model.Feed;
 import pl.edu.agh.Analyzer.model.Language;
 import pl.edu.agh.Analyzer.model.Country;
@@ -37,23 +38,64 @@ public class AnalysisController {
 
     @RequestMapping("/ana")
     public String analysisIndex() {
+       /* List<Newspaper> result = getAllNewspapers();
+        System.out.println("Newspapers:");
+        for (Newspaper n : result) {
+            System.out.println(n.getName());
+        }
+
+        List<Country> result1 = getAllCountries();
+        System.out.println("Countries (use tag in parenthesis to choose one):");
+        for (Country c : result1) {
+            System.out.println(c.getName() + "("+c.getTag()+")");
+        }
+
+        List<Language> result2 = getAllLanguages();
+        System.out.println("Languages:");
+        for (Language l : result2) {
+            System.out.println(l.getName());
+        }
+*/
         return "foo";
     }
 
     public List<Language> getAllLanguages(){
+        if (languageRepository == null){
+            System.out.println("repository not initialised");
+            return new ArrayList<>();
+        }
       return (List<Language>)languageRepository.findAll();
     }
+
     public List<Newspaper> getAllNewspapers(){
+        if (newspaperRepository == null){
+            System.out.println("repository not initialised");
+            return new ArrayList<>();
+        }
       return (List<Newspaper>)newspaperRepository.findAll();
     }
+
     public List<Country> getAllCountries(){
+        if (countryRepository== null){
+            System.out.println("repository not initialised");
+            return new ArrayList<>();
+        }
       return (List<Country>)countryRepository.findAll();
     }
 
     public List<PressRelease> getPressReleasesSortedByDate(){
+        if (pressReleaseRepository == null){
+            System.out.println("repository not initialised");
+            return new ArrayList<>();
+        }
       return pressReleaseRepository.getSortedByDate();
     }
+
     public List<PressRelease> getPressReleases(String month, String year){
+        if (pressReleaseRepository == null){
+            System.out.println("repository not initialised");
+            return new ArrayList<>();
+        }
       List<PressRelease> result = pressReleaseRepository.findByMonthAndYear(month, year);
       if (result == null || result.size() < 1){
           System.out.println("Couldn't find current date - all entries will be retrieved");

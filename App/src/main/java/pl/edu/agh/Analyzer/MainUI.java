@@ -1,10 +1,10 @@
-package pl.edu.agh.Analyzer.ui;
+package pl.edu.agh.Analyzer;
 
 import database.util.HibernateUtil;
-import download.DownloadedFeed;
-import download.FeedWriter;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import pl.edu.agh.Analyzer.ui.AnalysisHandler;
 import rss.Main;
-import rss.reader.RssReader;
 import tagger.Tagger;
 
 import java.io.BufferedReader;
@@ -15,9 +15,11 @@ import java.io.InputStreamReader;
 /**
  * Created by karolina on 11.07.17.
  */
+@SpringBootApplication
 public class MainUI {
     public static void main (String args[]){
 
+        SpringApplication.run(MainUI.class, args);
         final BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         final AnalysisHandler handler = new AnalysisHandler(br);
         boolean isRunning = true;

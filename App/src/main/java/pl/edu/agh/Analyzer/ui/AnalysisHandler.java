@@ -25,7 +25,7 @@ public class AnalysisHandler {
         controller = new AnalysisController();
     }
     public void startHandling() throws IOException {
-        graphCreator(); // zmienic, aby bazowal na wynikach z zapytania dla dat
+       // graphCreator(); // zmienic, aby bazowal na wynikach z zapytania dla dat
 
         String field = "", value = "", fieldName = "";
 
@@ -108,10 +108,7 @@ public class AnalysisHandler {
 
 //Get a graph model - it exists because we have a workspace
         GraphModel graphModel = Lookup.getDefault().lookup(GraphController.class).getGraphModel(workspace);
-        //AttributeModel attributeModel = Lookup.getDefault().lookup(AttributeController.class).getModel();
 
-        //Set<Node> nodes = new HashSet<>();
-        //Set<Edge> edges = new HashSet<>();
         DirectedGraph directedGraph= graphModel.getDirectedGraph();
         for (PressRelease pr : notes) {
             List<Tag> noteTags = pr.getTags();
@@ -126,47 +123,38 @@ public class AnalysisHandler {
                         n1.setLabel(tag1.getName());
                         directedGraph.addNode(n1);
                     }
-                    //nodes.add(n1);
+
                     Node n2 = directedGraph.getNode(tag2.getName());
                     if (n2 == null) {
                         n2 = graphModel.factory().newNode(tag2.getName());
                         n2.setLabel(tag2.getName());
                         directedGraph.addNode(n2);
                     }
-                    //nodes.add(n2);
+
 
                     Edge e1 = directedGraph.getEdge(n1, n2);
                     if(e1 == null){
                         e1 = graphModel.factory().newEdge(n1, n2, 0, 1.0, true);
                         directedGraph.addEdge(e1);
                     }
+                    else {
+                        double weight = e1.getWeight();
+                        e1.setWeight(weight+1);
+                    }
                     Edge e2 = directedGraph.getEdge(n2, n1);
                     if (e2 == null) {
                         e2 = graphModel.factory().newEdge(n2, n1, 0, 1.0, true);
                         directedGraph.addEdge(e2);
                     }
-                    //edges.add(e1);
-                    //edges.add(e2);
-                    //jak dodawac parametry do Edge?
+                    else {
+                        double weight = e2.getWeight();
+                        e2.setWeight(weight+1);
+                    }
+
                 }
             }
         }
-        /*for (Node n : nodes){
-            System.out.println("ID: " + n.getId() + "; label: " + n.getLabel());
-        }
 
-        DirectedGraph directedGraph= graphModel.getDirectedGraph();
-        directedGraph.addAllNodes(nodes);
-        //directedGraph.addAllEdges(edges); //to jest zle, trzeba bedzie iterowac i sprawdzac, czy jest - jesli tak, zwiekszam wage
-        for (Edge e : edges){
-            try {
-                directedGraph.addEdge(e);
-                System.out.print("+");
-            }catch (Exception ex){
-                System.out.print("-");
-            }
-
-        }*/
         System.out.println();
         UndirectedGraph undirectedGraph = graphModel.getUndirectedGraph();
 
