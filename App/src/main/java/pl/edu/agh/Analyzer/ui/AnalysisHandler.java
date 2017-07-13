@@ -10,7 +10,12 @@ import pl.edu.agh.Analyzer.controller.AnalysisController;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
+
+import static org.springframework.http.HttpHeaders.USER_AGENT;
 
 
 /**
@@ -18,11 +23,11 @@ import java.util.*;
  */
 public class AnalysisHandler {
     private BufferedReader br;
-    private AnalysisController controller;
+//    private AnalysisController controller;
 
     public AnalysisHandler(BufferedReader br){
         this.br = br;
-        controller = new AnalysisController();
+  //      controller = new AnalysisController();
     }
     public void startHandling() throws IOException {
        // graphCreator(); // zmienic, aby bazowal na wynikach z zapytania dla dat
@@ -52,7 +57,7 @@ public class AnalysisHandler {
         value = br.readLine();
         while (value.startsWith("??")){
             if (field.startsWith("d")){
-                listDates();
+               // listDates();
             }
             else if (field.startsWith("n")){
                 listNewspapers();
@@ -73,7 +78,8 @@ public class AnalysisHandler {
             String month = value.substring(0, 2);
             String year = value.substring(3, 7);
             System.out.println("Chosen month: " + month + ", year: " + year);
-            List<PressRelease> result = controller.getPressReleases(month, year);
+            //List<PressRelease> result = controller.getPressReleases(month, year);
+            List<PressRelease> result = new ArrayList<>(); ///ATRAPA
             System.out.println("Result: ");
             for (PressRelease pr : result) {
                 System.out.println("ID: " + pr.getId() + "; Title: " + pr.getTitle() + "; Content: " + pr.getContent());
@@ -229,31 +235,31 @@ public class AnalysisHandler {
         System.out.println("The density of the graph: "+ density.getDensity());
     }
 
-    private void listNewspapers(){
-        List<Newspaper> result = controller.getAllNewspapers();
-        System.out.println("Newspapers:");
-        for (Newspaper n : result) {
-            System.out.println(n.getName());
-        }
+    private void listNewspapers() throws IOException {
+        URL url = new URL("http://localhost:8080/news");
+        HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+        connection.setRequestProperty("User-Agent", USER_AGENT);
+        int responseCode = connection.getResponseCode();
     }
-    private void listCountries(){
-        List<Country> result = controller.getAllCountries();
-        System.out.println("Countries (use tag in parenthesis to choose one):");
-        for (Country c : result) {
-            System.out.println(c.getName() + "("+c.getTag()+")");
-        }
-    }  
-    private void listLanguages(){
-        List<Language> result = controller.getAllLanguages();
-        System.out.println("Languages:");
-        for (Language l : result) {
-            System.out.println(l.getName());
-        }
+
+    private void listCountries() throws IOException {
+        //List<Country> result = controller.getAllCountries();
+        URL url = new URL("http://localhost:8080/countr");
+        HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+        connection.setRequestProperty("User-Agent", USER_AGENT);
+        int responseCode = connection.getResponseCode();
     }
-    private void listDates(){
+
+    private void listLanguages() throws IOException {
+        URL url = new URL("http://localhost:8080/langs");
+        HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+        connection.setRequestProperty("User-Agent", USER_AGENT);
+        int responseCode = connection.getResponseCode();
+    }
+/*    private void listDates(){
         List<PressRelease> result = controller.getPressReleasesSortedByDate();
         int size = result.size();
         System.out.println("First date: " + result.get(0).getDate());
         System.out.println("Last date: " + result.get(size-1).getDate());
-    }
+    }*/
 }

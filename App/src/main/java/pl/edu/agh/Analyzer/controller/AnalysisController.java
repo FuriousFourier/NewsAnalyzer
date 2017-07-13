@@ -2,6 +2,7 @@ package pl.edu.agh.Analyzer.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import pl.edu.agh.Analyzer.model.Feed;
@@ -38,50 +39,52 @@ public class AnalysisController {
 
     @RequestMapping("/ana")
     public String analysisIndex() {
-       /* List<Newspaper> result = getAllNewspapers();
-        System.out.println("Newspapers:");
-        for (Newspaper n : result) {
-            System.out.println(n.getName());
-        }
 
-        List<Country> result1 = getAllCountries();
-        System.out.println("Countries (use tag in parenthesis to choose one):");
-        for (Country c : result1) {
-            System.out.println(c.getName() + "("+c.getTag()+")");
-        }
-
-        List<Language> result2 = getAllLanguages();
-        System.out.println("Languages:");
-        for (Language l : result2) {
-            System.out.println(l.getName());
-        }
-*/
         return "foo";
     }
 
-    public List<Language> getAllLanguages(){
-        if (languageRepository == null){
-            System.out.println("repository not initialised");
-            return new ArrayList<>();
+    @GetMapping("/langs")
+    public String getAllLanguages(){
+        System.out.println("Languages:");
+        if (languageRepository== null){
+            System.out.println("Repository not initialised");
+            return("foo");
         }
-      return (List<Language>)languageRepository.findAll();
+        List<Language> result = (List<Language>)languageRepository.findAll();
+        for (Language l : result) {
+            System.out.println(l.getName());
+        }
+        return "foo";
     }
 
-    public List<Newspaper> getAllNewspapers(){
-        if (newspaperRepository == null){
-            System.out.println("repository not initialised");
-            return new ArrayList<>();
+    @GetMapping("/news")
+    public String getAllNewspapers(){
+        System.out.println("Newspapers");
+        if (newspaperRepository== null){
+            System.out.println("Repository not initialised");
+            return("foo");
         }
-      return (List<Newspaper>)newspaperRepository.findAll();
+        List<Newspaper> result = (List<Newspaper>)newspaperRepository.findAll();
+        for (Newspaper n : result) {
+            System.out.println(n.getName());
+        }
+        return "foo";
     }
 
-    public List<Country> getAllCountries(){
+    @GetMapping("/countr")
+    public String getAllCountries(){
+        System.out.println("Countries (use tag in parenthesis to choose one):");
         if (countryRepository== null){
-            System.out.println("repository not initialised");
-            return new ArrayList<>();
+            System.out.println("Repository not initialised");
+            return("foo");
         }
-      return (List<Country>)countryRepository.findAll();
+        List<Country> result = (List<Country>)countryRepository.findAll();
+        for (Country c : result) {
+            System.out.println(c.getName() + "("+c.getTag()+")");
+        }
+        return "foo";
     }
+
 
     public List<PressRelease> getPressReleasesSortedByDate(){
         if (pressReleaseRepository == null){
