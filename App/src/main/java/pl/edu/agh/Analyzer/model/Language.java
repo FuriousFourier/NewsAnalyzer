@@ -17,9 +17,8 @@ public class Language {
 
     private String name;
 
-    @OneToMany(targetEntity = Newspaper.class)
-    @JoinColumn(name = "languageID")
-    private List newspapers;
+    @OneToMany(targetEntity = Newspaper.class, mappedBy = "language")
+    private List<Newspaper> newspapers;
 
     public Language(String name, List newspapers) {
         this.name = name;
@@ -45,7 +44,7 @@ public class Language {
         this.name = name;
     }
 
-    public List getNewspapers() {
+    public List<Newspaper> getNewspapers() {
         return newspapers;
     }
 

@@ -27,11 +27,11 @@ public class PressRelease {
     @Length(max = 100000)
     private String content;
 
-    @ManyToMany(targetEntity = Tag.class, cascade = CascadeType.ALL)
+    @ManyToMany(targetEntity = Tag.class, cascade = {CascadeType.ALL})
     @JoinTable(name = "Pressreleasestag", joinColumns = @JoinColumn(name = "pressreleaseid", referencedColumnName = "ID"), inverseJoinColumns = @JoinColumn(name = "tagid", referencedColumnName = "ID"))
     private List<Tag> tags;
 
-    @ManyToOne(targetEntity = Feed.class)
+    @ManyToOne(targetEntity = Feed.class, cascade = {CascadeType.ALL})
     @JoinColumn(name = "feedID", referencedColumnName = "ID")
     private Feed feed;
 

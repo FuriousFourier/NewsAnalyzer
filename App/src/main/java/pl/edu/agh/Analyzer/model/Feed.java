@@ -20,9 +20,9 @@ public class Feed {
     private String section;
 
     @OneToMany(targetEntity = PressRelease.class, mappedBy = "feed")
-    private List pressReleases;
+    private List<PressRelease> pressReleases;
 
-    @ManyToOne(targetEntity = Newspaper.class)
+    @ManyToOne(targetEntity = Newspaper.class, cascade = {CascadeType.ALL})
     @JoinColumn(name = "newspaperID", referencedColumnName = "ID")
     private Newspaper newspaper;
 
@@ -58,7 +58,7 @@ public class Feed {
         this.section = section;
     }
 
-    public List getPressReleases() {
+    public List<PressRelease> getPressReleases() {
         return pressReleases;
     }
 

@@ -2,6 +2,7 @@ package pl.edu.agh.Analyzer.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import pl.edu.agh.Analyzer.model.Feed;
 import pl.edu.agh.Analyzer.model.Language;
@@ -42,14 +43,10 @@ public class TryController {
     }
 
     @RequestMapping("/foo")
-    public String foo(){
+    public String foo() {
 
         final String viewName = "foo";
-        Date patternDate = new Date(114, 7, 8, 0, 0, 0 );
-        if (newspaperRepository == null) {
-            System.out.println("Lel");
-            System.exit(1);
-        }
+        Date patternDate = new Date(116, 7, 8, 0, 0, 0);
 
         final File file = new File("foo.txt");
 
@@ -88,8 +85,6 @@ public class TryController {
                         Date dateOfCurrent = pressRelease.getDate();
                         if (dateOfCurrent.after(patternDate)) {
                             printWriter.println(dateOfCurrent + ": " + pressRelease.getContent());
-                        } else {
-                            System.out.println(pressRelease.getTitle() + ", " + dateOfCurrent);
                         }
                     }
                 }
@@ -102,9 +97,9 @@ public class TryController {
     }
 
     @RequestMapping("/bar")
-    public String bar(){
+    public String bar() {
         final String viewName = "foo";
-        final Date patternDate = new Date(116, 3, 8, 0, 0, 0 );
+        final Date patternDate = new Date(117, 1, 1, 0, 0, 0);
         System.out.println("Pattern Date: " + patternDate);
 
         final File file = new File("bar.txt");
@@ -132,13 +127,25 @@ public class TryController {
             if (currentReleaseDate.after(patternDate)) {
                 printWriter.println(currentReleaseDate + ": " + pressRelease.getContent());
             } else {
-                System.out.println(currentReleaseDate + " ");
+                //System.out.println(currentReleaseDate + " ");
             }
         }
         System.out.println();
         pressReleases = null;
         printWriter.close();
         System.out.println("Data is written");
+        return viewName;
+
+    }
+
+    @GetMapping("/lang")
+    public String getLangs() {
+        final String viewName = "foo";
+        Iterable<Language> languages = languageRepository.findAll();
+        System.out.println("Języki:");
+        for (Language language : languages) {
+            System.out.println(language.getName());
+        }
         return viewName;
     }
 }

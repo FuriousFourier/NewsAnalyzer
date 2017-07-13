@@ -17,8 +17,9 @@ public class Tag {
 
     private String name;
 
-    @OneToOne(targetEntity = Country.class)
-    @JoinColumn(name = "countryid", referencedColumnName = "ID")
+    /*@OneToOne(targetEntity = Country.class, cascade = {CascadeType.ALL})
+    @JoinColumn(name = "countryid", referencedColumnName = "ID")*/
+    @OneToOne (targetEntity = Country.class, mappedBy = "tag")
     private Country country;
 
     @ManyToMany(mappedBy = "tags")

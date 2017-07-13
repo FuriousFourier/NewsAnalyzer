@@ -5,11 +5,9 @@ import org.hibernate.exception.DataException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import pl.edu.agh.Analyzer.model.*;
 import pl.edu.agh.Analyzer.repository.*;
 
-import javax.persistence.NonUniqueResultException;
 import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
@@ -41,6 +39,13 @@ public class DatabaseTryController {
 
     @Autowired
     private PressReleaseRepository pressReleaseRepository;
+
+    private Map<String, Language> languagesToDb;
+    private Map<String, Country> countriesToDb;
+    private Map<String, Newspaper> newspapersToDb;
+    private Map<String, Feed> feedsToDb;
+    private List<PressRelease> pressReleasesToDb;
+    private boolean flushed = true;
 
     private static final String GEOMEDIA_FEEDS_FILE_PATH = "../SecondProject/geomedia/Geomedia_extract_AGENDA/Geomedia_extract_AGENDA/";
     private static final String ORG_PATH = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/TaggedFeeds/taggedForOrg/";
@@ -210,12 +215,20 @@ public class DatabaseTryController {
             "French",
             "French"
     };
-    private static List pressReleases;
-    private static List tagsList;
 
-    @GetMapping("/addThingsToDb")
+    private static final String[] languages = {
+            "English",
+            "Spanish",
+            "French",
+            "Polish"
+    };
+
+    private static List<PressRelease> pressReleases;
+    private static List<Tag> tagsList;
+
+    @GetMapping("/addThingsOldWay")
     public String addThingsToDB() throws IOException {
-        System.out.println("Im going");
+        System.out.println("Im going old way");
         addLanguagesToDB();
         addCountriesToDB();
         addNewspapersToDB();
@@ -230,12 +243,6 @@ public class DatabaseTryController {
     }
 
     public void addLanguagesToDB(){
-        String[] languages = {
-                "English",
-                "Spanish",
-                "French",
-                "Polish"
-        };
         for (String language: languages) {
             Language lg = languageRepository.findByName(language);
             if (lg == null) {
@@ -329,7 +336,11 @@ public class DatabaseTryController {
 
     private void extractFeedsFilesAndSave(File file, boolean newFeeds) throws IOException {
         File[] files = file.listFiles();
-        assert files != null;
+//        assert files != null;
+        if (files == null) {
+            System.out.println("Null dla " + file.getAbsolutePath());
+            return;
+        }
         for (File f: files){
             if (f.isFile()) {
                 if (f.getName().contains(".csv") && !f.getName().equals(GEOMEDIA_RSS_FILE_NAME) && !f.getName().equals(GEOMEDIA_EBOLA_TAGGED_FILE_NAME)
@@ -505,7 +516,7 @@ public class DatabaseTryController {
                 continue;
             }
             Feed feed = feeds.get(0);
-            pressReleases = pressReleaseRepository.findByFeed(feed);
+            pressReleases = feed.getPressReleases();
             if (pressReleases.size() == 0) {
                 System.out.println("Baaaaad");
                 continue;
@@ -552,7 +563,7 @@ public class DatabaseTryController {
             Feed feed = feeds.get(0);
             pressReleases = pressReleaseRepository.findByFeed(feed);
             Iterable<Tag> tagIterable = tagRepository.findAll();
-            tagsList = new ArrayList();
+            tagsList = new ArrayList<>();
             for (Tag tag : tagIterable) {
                 tagsList.add(tag);
             }
@@ -573,6 +584,330 @@ public class DatabaseTryController {
                 }
             }catch (NullPointerException e){
                 e.printStackTrace();
+            }
+        }
+    }
+
+    @GetMapping("/addThingsNewWay")
+    public String  addSomething() throws IOException {
+        long startTime = System.nanoTime();
+        if (flushed) {
+            languagesToDb = new HashMap<>(languages.length);
+            countriesToDb = new HashMap<>();
+            newspapersToDb = new HashMap<>();
+            feedsToDb = new HashMap<>();
+            pressReleasesToDb = new ArrayList<>();
+
+            System.out.println("Langs");
+            //langs
+            for (String languageName : languages) {
+                Language language = new Language();
+                language.setName(languageName);
+                language.setNewspapers(new ArrayList());
+                languagesToDb.put(languageName, language);
+            }
+
+            System.out.println("Countries");
+            //countries
+            String tagsAndCountriesFilePath = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/tagsAndCountries.csv";
+            List<String> countries = ReaderCsvFiles.readAtPosition(tagsAndCountriesFilePath, 1, '\t');
+            for (int i = 0; i < countries.size(); i++) {
+                Country addingCountry = new Country();
+                addingCountry.setName(countries.get(i));
+                addingCountry.setNewspapers(new ArrayList<>());
+                countriesToDb.put(countries.get(i), addingCountry);
+            }
+
+            System.out.println("Newspapers");
+            //newspapers
+            for (int i = 0; i < newspapersNames.length; i++) {
+                Country country = countriesToDb.get(newspapersCountry[i]);
+                Language language = languagesToDb.get(newspapersLanguage[i]);
+                if (language == null || country == null) {
+                    continue;
+                }
+                Newspaper newspaper = new Newspaper();
+                newspaper.setName(newspapersNames[i]);
+                newspaper.setCountry(country);
+                newspaper.setLanguage(language);
+                newspaper.setFeeds(new ArrayList<>());
+                language.getNewspapers().add(newspaper);
+                country.getNewspapers().add(newspaper);
+                newspapersToDb.put(newspapersNames[i], newspaper);
+            }
+
+            System.out.println("Tags");
+            //tags
+            tagsList = new ArrayList<>();
+            List<String> tags = ReaderCsvFiles.readAtPosition(tagsAndCountriesFilePath, 0, '\t');
+            for (int i = 0; i < tags.size(); i++) {
+                Country country = countriesToDb.get(countries.get(i));
+                if (country == null) {
+                    continue;
+                }
+                Tag tag = new Tag();
+                tag.setName(tags.get(i));
+                tag.setCountry(country);
+                tag.setPressReleases(new ArrayList<>());
+                country.setTag(tag);
+                tagsList.add(tag);
+            }
+
+            System.out.println("Feeds");
+            //feeds
+            String intSection = "International";
+            for (int i = 0; i < feedsNames.length; i++) {
+                Newspaper newspaper = newspapersToDb.get(newspapersNames[i]);
+                if (newspaper == null) {
+                    continue;
+                }
+                Feed addingFeed = new Feed();
+                addingFeed.setName(feedsNames[i]);
+                addingFeed.setNewspaper(newspaper);
+                addingFeed.setSection(intSection);
+                addingFeed.setPressReleases(new ArrayList());
+                newspaper.getFeeds().add(addingFeed);
+                feedsToDb.put(feedsNames[i], addingFeed);
+            }
+
+            System.out.println("PressReleases");
+            //pressReleases
+            pressReleases = new LinkedList<>();
+            addPressReleasesToDBNewWay(GEOMEDIA_FEEDS_FILE_PATH, false);
+            addPressReleasesToDBNewWay(NEW_FEEDS_PATH, true);
+
+            System.out.println("Linking table");
+            //linking table
+            addPressReleasesTagsDataNewWay(NEW_FEEDS_PATH_TAGGED, 2);
+
+            System.out.println("PressReleases ebola tags");
+            //pressReleases ebola tags
+            String[] ebolaFilePaths = new String[feedsNames.length];
+            for (int i = 0; i < feedsNames.length; i++) {
+                ebolaFilePaths[i] = GEOMEDIA_FEEDS_FILE_PATH + feedsNames[i] + "/rss_unique_TAG_country_Ebola.csv";
+                System.out.println(ebolaFilePaths[i]);
+            }
+            for (int i1 = 0; i1 < ebolaFilePaths.length; i1++) {
+                String filePath = ebolaFilePaths[i1];
+                List<String> titles = ReaderCsvFiles.readAtPosition(filePath, 3, '\t');
+                List<String> myEbolaTags = ReaderCsvFiles.readAtPosition(filePath, 6, '\t');
+                System.err.println("#################################");
+                System.err.println(filePath);
+                System.err.println("#################################");
+                Feed feed = feedsToDb.get(feedsNames[i1]);
+                if (feed == null) {
+                    continue;
+                }
+                pressReleases = feed.getPressReleases();
+                if (pressReleases.size() == 0) {
+                    System.out.println("Baaaaad");
+                    continue;
+                }
+
+                Tag ebolaTag = findTag("EBOLA");
+                if (ebolaTag != null) {
+                    for (int i = 0; i < titles.size(); i++) {
+                        if (myEbolaTags.get(i).equals("") || titles.get(i).contains("\'")) {
+                            continue;
+                        }
+                        PressRelease pressRelease = findPressRelease(titles.get(i));
+                        if (pressRelease == null) {
+                            continue;
+                        }
+                        pressRelease.getTags().add(ebolaTag);
+                        ebolaTag.getPressReleases().add(pressRelease);
+                    }
+                }
+            }
+
+            System.out.println("OrganizationFeed tags");
+            //organization feed tags
+            for (int i = 0; i < feedsNames.length; i++) {
+                ebolaFilePaths[i] = ORG_PATH + "SHORT/" + feedsNames[i] + "/rss_org_tagged.csv";
+                System.out.println(ebolaFilePaths[i]);
+            }
+            for (int i1 = 0; i1 < ebolaFilePaths.length; i1++) {
+                String filePath = ebolaFilePaths[i1];
+                List<String> titles = ReaderCsvFiles.readAtPosition(filePath, 3, '\t');
+                List<String> myOrgTags = ReaderCsvFiles.readAtPosition(filePath, 4, '\t');
+                System.err.println("#################################");
+                System.err.println(filePath);
+                System.err.println("#################################");
+                Feed feed = feedsToDb.get(feedsNames[i1]);
+                if (feed == null) {
+                    continue;
+                }
+                pressReleases = feed.getPressReleases();
+                try {
+                    for (int i = 0; i < titles.size(); i++) {
+                        if (myOrgTags.get(i).equals("") || titles.get(i).contains("\'")) {
+                            continue;
+                        }
+                        PressRelease pressRelease = findPressRelease(titles.get(i));
+                        Tag tag = findTag(myOrgTags.get(i));
+                        if (pressRelease == null || tag == null) {
+                            continue;
+                        }
+                        pressRelease.getTags().add(tag);
+                        tag.getPressReleases().add(pressRelease);
+                    }
+                } catch (NullPointerException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        System.out.println("I will be saving this to DB now");
+        flushed = false;
+        long startDBTime = System.nanoTime();
+        Collection<Country> countryCollection = countriesToDb.values();
+        Collection<Feed> feedCollection = feedsToDb.values();
+        Collection<Language> languageCollection = languagesToDb.values();
+        Collection<Newspaper> newspaperCollection = newspapersToDb.values();
+        countryRepository.save(countryCollection);
+        feedRepository.save(feedCollection);
+        languageRepository.save(languageCollection);
+        newspaperRepository.save(newspaperCollection);
+        pressReleaseRepository.save(pressReleasesToDb);
+        tagRepository.save(tagsList);
+        flushed = true;
+        System.out.println("I have saved");
+        this.feedsToDb = null;
+        this.countriesToDb = null;
+        this.languagesToDb = null;
+        this.newspapersToDb = null;
+        this.pressReleasesToDb = null;
+        tagsList = null;
+        pressReleases = null;
+        long currentTime = System.nanoTime();
+        System.out.println("Czas zapisu do bazy: " + ((currentTime - startDBTime)/1000000000) + " s");
+        System.out.println("Czas wykonania: " + ((currentTime - startTime)/1000000000) + " s");
+        return "foo";
+    }
+
+    private void extractFeedsFilesAndSaveNewWay(File file, boolean newFeeds) throws IOException {
+        File[] files = file.listFiles();
+//        assert files != null;
+        if (files == null) {
+            System.out.println("Null dla " + file.getAbsolutePath());
+            return;
+        }
+        for (File f: files){
+            if (f.isFile()) {
+                if (f.getName().contains(".csv") && !f.getName().equals(GEOMEDIA_RSS_FILE_NAME) && !f.getName().equals(GEOMEDIA_EBOLA_TAGGED_FILE_NAME)
+                        && !f.getName().equals(EBOLA_TAG_FILE_NAME)
+                        && !f.getName().equals(COUNTRY_TAG_FILE_NAME)) {
+
+                    String filePath = f.getAbsolutePath();
+                    System.out.println(filePath);
+                    List<String> feedsNames = null;
+                    List<String> dates = null;
+                    List<String> titles = null;
+                    List<String> contents = null;
+                    if (newFeeds) {
+                        feedsNames = ReaderCsvFiles.readAtPosition(filePath,0, ' ');
+                        dates = ReaderCsvFiles.readAtPosition(filePath, 1, ' ');
+                        titles = ReaderCsvFiles.readAtPosition(filePath, 2, ' ');
+                        contents = ReaderCsvFiles.readAtPosition(filePath, 3, ' ');
+                    }
+                    else {
+                        feedsNames = ReaderCsvFiles.readAtPosition(filePath,1, '\t');
+                        dates = ReaderCsvFiles.readAtPosition(filePath, 2, '\t');
+                        titles = ReaderCsvFiles.readAtPosition(filePath, 3, '\t');
+                        contents = ReaderCsvFiles.readAtPosition(filePath, 4, '\t');
+                    }
+
+                    for (int  i = 0; i < feedsNames.size(); i++){
+                        Feed feed = feedsToDb.get(feedsNames.get(i));
+                        if (feed == null){
+                            continue;
+                        }
+                        try {
+                            PressRelease pressRelease = new PressRelease();
+                            pressRelease.setFeed(feed);
+                            pressRelease.setTitle(titles.get(i));
+                            pressRelease.setDate(convertStringToDate(dates.get(i)));
+                            pressRelease.setContent(contents.get(i));
+                            feed.getPressReleases().add(pressRelease);
+                            pressRelease.setTags(new ArrayList<>());
+                            pressReleases.add(pressRelease);
+                            pressReleasesToDb.add(pressRelease);
+                        }catch (DataException e){
+                            e.printStackTrace();
+                        }catch (IndexOutOfBoundsException e){
+                            e.printStackTrace();
+                        }
+
+                    }
+                }
+            }
+            else if (f.isDirectory()){
+                extractFeedsFilesAndSaveNewWay(f, newFeeds);
+            }
+        }
+    }
+
+    private void addPressReleasesToDBNewWay(String path, boolean newFeeds) throws IOException {
+        File file = new File(path);
+        extractFeedsFilesAndSaveNewWay(file, newFeeds);
+    }
+
+    private void addPressReleasesTagsDataNewWay(String path, int titlesPosition) throws IOException {
+        File file = new File(path);
+        extractTaggedFeedsFilesAndSaveNewWay(file, titlesPosition);
+
+    }
+
+    private void extractTaggedFeedsFilesAndSaveNewWay(File file, int titlesPosition) throws IOException {
+        File[] files = file.listFiles();
+        //assert files != null;
+        if (files == null) {
+            System.out.println("Tu jest null, dla file: " + file.getAbsolutePath());
+        }
+        for (File f : files) {
+            if (f.isFile()) {
+                if ((f.getName().contains(".csv") && !f.getName().equals(GEOMEDIA_RSS_FILE_NAME)
+                        && !f.getName().equals(EBOLA_TAG_FILE_NAME)
+                        && !f.getName().equals(COUNTRY_TAG_FILE_NAME)
+                        && !f.getName().equals(GEOMEDIA_UNIQUE_FILE_NAME)) || (f.getName().equals(ORG_TAGGED_FILE_NAME))) {
+                    String filePath = f.getAbsolutePath();
+                    System.out.println(filePath);
+                    List<String> titles = ReaderCsvFiles.readAtPosition(filePath, titlesPosition, '\t');
+                    List<String> tags = ReaderCsvFiles.readAtPosition(filePath, 4, '\t');
+
+                    System.err.println("#################################");
+                    System.err.println(filePath);
+                    System.err.println("#################################");
+                    //ATTENTION - PARSING FILE SHOULD BE NAMED LIKE FEED NAME !!!
+                    String feedName = f.getName().split("\\.")[0];
+                    System.out.println(feedName);
+                    Feed feed = feedsToDb.get(feedName);
+                    if (feed == null) {
+                        continue;
+                    }
+                    List<PressRelease> pressReleases = feed.getPressReleases();
+                    if (pressReleases.size() == 0) {
+                        continue;
+                    }
+                    if (tagsList == null || tagsList.size() == 0) {
+                        throw new IOException("AAAAAAAAA");
+                    }
+                    for (int i = 0; i < titles.size(); i++) {
+                        if (tags.get(i).equals("") || titles.get(i).contains("\'")) {
+                            continue;
+                        }
+                        PressRelease pressRelease = findPressRelease(titles.get(i));
+                        Tag tag = findTag(tags.get(i));
+                        if (pressRelease == null || tag == null){
+                            continue;
+                        }
+                        pressRelease.getTags().add(tag);
+                        tag.getPressReleases().add(pressRelease);
+                    }
+                }
+
+            }
+            else if (f.isDirectory()) {
+                extractTaggedFeedsFilesAndSaveNewWay(f, titlesPosition);
             }
         }
     }

@@ -22,7 +22,8 @@ public class Country {
     @OneToMany(targetEntity = Newspaper.class, mappedBy = "country")
     private List<Newspaper> newspapers;
 
-    @OneToOne(targetEntity = Tag.class, mappedBy = "country")
+    @OneToOne(targetEntity = Tag.class, cascade = {CascadeType.ALL})
+    @JoinColumn(name = "countryid", referencedColumnName = "ID")
     private Tag tag;
 
     public Country(String name, List<Newspaper> newspapers, Tag tag) {
@@ -34,7 +35,7 @@ public class Country {
     public Country() {
     }
 
-    public List getNewspapers() {
+    public List<Newspaper> getNewspapers() {
         return newspapers;
     }
 

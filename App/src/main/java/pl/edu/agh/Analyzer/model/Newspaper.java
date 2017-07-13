@@ -19,11 +19,11 @@ public class Newspaper {
 
     private String name;
 
-    @ManyToOne(targetEntity = Language.class)
+    @ManyToOne(targetEntity = Language.class, cascade = {CascadeType.ALL})
     @JoinColumn(name = "languageID", referencedColumnName = "ID")
     private Language language;
 
-    @ManyToOne (targetEntity = Country.class)
+    @ManyToOne (targetEntity = Country.class, cascade = {CascadeType.ALL})
     @JoinColumn(name = "countryID", referencedColumnName = "ID")
     private Country country;
 
@@ -53,7 +53,7 @@ public class Newspaper {
         this.country = country;
     }
 
-    public List getFeeds() {
+    public List<Feed> getFeeds() {
         return feeds;
     }
 

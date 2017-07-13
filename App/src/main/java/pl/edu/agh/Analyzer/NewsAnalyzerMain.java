@@ -19,11 +19,10 @@ public class NewsAnalyzerMain {
 
 
     public static void main(String[] args) throws IOException {
-        Scanner scanner = new Scanner(System.in);
-
+        //Scanner scanner = new Scanner(System.in);
         SpringApplication.run(NewsAnalyzerMain.class, args);
 
-        while (true) {
+        /*while (true) {
             System.out.println("Napisz \"p\" to to zrobię");
             String line = scanner.nextLine();
             if (line.equals("p")) {
@@ -34,7 +33,7 @@ public class NewsAnalyzerMain {
             } else {
                 System.out.println("Błędna opcja");
             }
-        }
+        }*/
 
     }
 

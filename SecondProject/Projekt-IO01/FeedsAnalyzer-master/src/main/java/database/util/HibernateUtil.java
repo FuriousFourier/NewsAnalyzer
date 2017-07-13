@@ -14,6 +14,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.logging.Level;
 
 
 public class HibernateUtil {
@@ -113,6 +114,7 @@ public class HibernateUtil {
     public static void main(String[] args) throws IOException {
 
         //foo();
+        java.util.logging.Logger.getLogger("org.hibernate").setLevel(Level.SEVERE);
         System.err.println("No cześ");
         try {
             Thread.sleep(1000);
