@@ -2,6 +2,7 @@ package pl.edu.agh.Analyzer.model;
 
 import javax.persistence.*;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by pawel on 10.07.17.
@@ -20,7 +21,7 @@ public class Feed {
     private String section;
 
     @OneToMany(targetEntity = PressRelease.class, mappedBy = "feed")
-    private List<PressRelease> pressReleases;
+    private Set<PressRelease> pressReleases;
 
     @ManyToOne(targetEntity = Newspaper.class, cascade = {CascadeType.ALL})
     @JoinColumn(name = "newspaperID", referencedColumnName = "ID")
@@ -58,11 +59,11 @@ public class Feed {
         this.section = section;
     }
 
-    public List<PressRelease> getPressReleases() {
+    public Set<PressRelease> getPressReleases() {
         return pressReleases;
     }
 
-    public void setPressReleases(List pressReleases) {
+    public void setPressReleases(Set<PressRelease> pressReleases) {
         this.pressReleases = pressReleases;
     }
 
@@ -72,5 +73,15 @@ public class Feed {
 
     public void setNewspaper(Newspaper newspaper) {
         this.newspaper = newspaper;
+    }
+
+    @Override
+    public boolean equals(Object feed) {
+        return feed instanceof Feed && this.name.equals(((Feed) feed).getName());
+    }
+
+    @Override
+    public int hashCode() {
+        return this.name.hashCode();
     }
 }

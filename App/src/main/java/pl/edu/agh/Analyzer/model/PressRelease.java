@@ -10,6 +10,7 @@ import java.util.List;
  * Created by pawel on 10.07.17.
  */
 
+//date + title is unique
 @Entity
 @Table(name = "Pressreleases")
 public class PressRelease {
@@ -92,5 +93,15 @@ public class PressRelease {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        return object instanceof PressRelease && (this.date.compareTo(((PressRelease) object).getDate()) == 0) && (this.title.equals(((PressRelease) object).getTitle()));
+    }
+
+    @Override
+    public int hashCode() {
+        return this.date.hashCode() / 2 + this.title.hashCode() / 2;
     }
 }

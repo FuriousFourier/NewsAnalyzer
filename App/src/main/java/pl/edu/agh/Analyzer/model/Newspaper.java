@@ -4,6 +4,7 @@ import org.hibernate.mapping.Join;
 
 import javax.persistence.*;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by pawel on 10.07.17.
@@ -28,9 +29,9 @@ public class Newspaper {
     private Country country;
 
     @OneToMany(targetEntity = Feed.class, mappedBy = "newspaper")
-    private List<Feed> feeds;
+    private Set<Feed> feeds;
 
-    public Newspaper(String name, Language language, Country country, List<Feed> feeds) {
+    public Newspaper(String name, Language language, Country country, Set<Feed> feeds) {
         this.name = name;
         this.language = language;
         this.country = country;
@@ -53,11 +54,11 @@ public class Newspaper {
         this.country = country;
     }
 
-    public List<Feed> getFeeds() {
+    public Set<Feed> getFeeds() {
         return feeds;
     }
 
-    public void setFeeds(List<Feed> feeds) {
+    public void setFeeds(Set<Feed> feeds) {
         this.feeds = feeds;
     }
 
@@ -78,5 +79,15 @@ public class Newspaper {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    @Override
+    public boolean equals(Object newspaper) {
+        return newspaper instanceof Newspaper && this.getName().equals(((Newspaper) newspaper).getName());
+    }
+
+    @Override
+    public int hashCode() {
+        return this.name.hashCode();
     }
 }

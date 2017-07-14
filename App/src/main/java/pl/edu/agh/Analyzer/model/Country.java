@@ -4,6 +4,7 @@ import org.h2.util.New;
 
 import javax.persistence.*;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by pawel on 10.07.17.
@@ -20,13 +21,13 @@ public class Country {
     private String name;
 
     @OneToMany(targetEntity = Newspaper.class, mappedBy = "country")
-    private List<Newspaper> newspapers;
+    private Set<Newspaper> newspapers;
 
     @OneToOne(targetEntity = Tag.class, cascade = {CascadeType.ALL})
     @JoinColumn(name = "countryid", referencedColumnName = "ID")
     private Tag tag;
 
-    public Country(String name, List<Newspaper> newspapers, Tag tag) {
+    public Country(String name, Set<Newspaper> newspapers, Tag tag) {
         this.name = name;
         this.newspapers = newspapers;
         this.tag = tag;
@@ -35,11 +36,11 @@ public class Country {
     public Country() {
     }
 
-    public List<Newspaper> getNewspapers() {
+    public Set<Newspaper> getNewspapers() {
         return newspapers;
     }
 
-    public void setNewspapers(List<Newspaper> newspapers) {
+    public void setNewspapers(Set<Newspaper> newspapers) {
         this.newspapers = newspapers;
     }
 
@@ -65,6 +66,16 @@ public class Country {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    @Override
+    public boolean equals(Object country) {
+        return country instanceof Country && this.name.equals(((Country) country).getName());
+    }
+
+    @Override
+    public int hashCode(){
+        return this.name.hashCode();
     }
 
 }

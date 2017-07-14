@@ -65,4 +65,14 @@ public class Tag {
     public void setName(String name) {
         this.name = name;
     }
+
+    @Override
+    public boolean equals(Object object) {
+        return object instanceof Tag && this.name.equals(((Tag) object).getName());
+    }
+
+    @Override
+    public int hashCode() {
+        return this.name.hashCode();
+    }
 }

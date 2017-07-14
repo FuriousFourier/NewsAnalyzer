@@ -51,6 +51,7 @@ public class NewsAnalyzerMain {
             } else {
                 System.out.println("Błędna opcja");
             }
+            System.gc();
         }
 
     }

@@ -1,5 +1,6 @@
 package pl.edu.agh.Analyzer.controller;
 
+import org.h2.util.New;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,7 +16,9 @@ import pl.edu.agh.Analyzer.repository.PressReleaseRepository;
 
 import java.io.*;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by pawel on 07.07.17.
@@ -45,6 +48,9 @@ public class TryController {
     @RequestMapping("/foo")
     public String foo() {
 
+        final long denominator = 1000000000;
+        List<PressRelease> pressReleasesTmp = new LinkedList<>();
+
         final String viewName = "foo";
         Date patternDate = new Date(116, 7, 8, 0, 0, 0);
 
@@ -64,33 +70,42 @@ public class TryController {
             return viewName;
         }
 
+        long startDBTime = System.nanoTime();
+        System.out.println("Robie zapytanie do bazy");
         Language language = languageRepository.findByName("English");
+        long endDBTime = System.nanoTime();
+        System.out.println("Skonczylem pobierac z bazy, czas: " + ((endDBTime - startDBTime) / denominator));
         if (language == null) {
             System.out.println("Brak języków");
-            System.exit(0);
+            return viewName;
         }
-        printWriter.println("Język " + language.getId());
-        printWriter.println(language.getName());
-        List<Newspaper> newspapers = language.getNewspapers();
+        Set<Newspaper> newspapers = language.getNewspapers();
         if (newspapers.size() == 0) {
             printWriter.println("Brak gazet dla tego języka");
         } else {
             for (Newspaper newspaper : newspapers) {
-                printWriter.println("Gazeta: " + newspaper.getName());
-                List<Feed> feeds = newspaper.getFeeds();
+                Set<Feed> feeds = newspaper.getFeeds();
                 for (Feed myFeed : feeds) {
-                    List<PressRelease> pressReleases = myFeed.getPressReleases();
-                    printWriter.println("Notki:");
+                    Set<PressRelease> pressReleases = myFeed.getPressReleases();
                     for (PressRelease pressRelease : pressReleases) {
-                        Date dateOfCurrent = pressRelease.getDate();
-                        if (dateOfCurrent.after(patternDate)) {
-                            printWriter.println(dateOfCurrent + ": " + pressRelease.getContent());
+                        if (pressRelease.getTitle().contains("Best pictures ever")) {
+                            pressReleasesTmp.add(pressRelease);
                         }
                     }
                 }
             }
         }
+        for (PressRelease pressRelease : pressReleasesTmp) {
+            printWriter.println(pressRelease.getId() + "; " + pressRelease.getDate() + "; " + pressRelease.getTitle() + "; "
+                    + pressRelease.getContent());
+            printWriter.println(pressRelease.getTitle().length() + "; " + pressRelease.getDate().getTime() + "; "
+                    + pressRelease.getContent().length() + "; " + pressRelease.getTags().size());
+            printWriter.println();
+        }
         language = null;
+        newspapers = null;
+        pressReleasesTmp = null;
+        System.gc();
         printWriter.close();
         System.out.println("Data is written ");
         return viewName;
@@ -126,8 +141,6 @@ public class TryController {
 
             if (currentReleaseDate.after(patternDate)) {
                 printWriter.println(currentReleaseDate + ": " + pressRelease.getContent());
-            } else {
-                //System.out.println(currentReleaseDate + " ");
             }
         }
         System.out.println();
@@ -145,6 +158,80 @@ public class TryController {
         System.out.println("Języki:");
         for (Language language : languages) {
             System.out.println(language.getName());
+        }
+        return viewName;
+    }
+
+    @GetMapping("/getPl")
+    public String getPl() {
+        final String viewName = "foo";
+        final String errorViewName = "myError";
+
+        Language language = languageRepository.findByName("Polish");
+        if (language == null) {
+            System.out.println("Brak języka");
+            return errorViewName;
+        }
+
+        List<Newspaper> newspapers = newspaperRepository.findByLanguage(language);
+        if (newspapers.size() == 0) {
+            System.out.println("Coś się popsuło");
+            return errorViewName;
+        }
+        for (Newspaper newspaper : newspapers) {
+            System.out.println("Gazeta: " + newspaper.getName());
+            for (Feed feed : newspaper.getFeeds()) {
+                System.out.println("\t" + feed.getName());
+            }
+        }
+        return viewName;
+    }
+
+    @GetMapping("/getFeeds")
+    public String getFeedsRequest() {
+        final String viewName = "foo";
+
+        Iterable<Feed> feeds = feedRepository.findAll();
+        System.out.println("Feedy: ");
+        for (Feed feed : feeds) {
+            System.out.println(feed.getName());
+        }
+        return viewName;
+    }
+
+    @GetMapping("/getPl/pressreleases")
+    public String getPlPressReeases(){
+        final String viewName = "foo";
+        final String errorViewName = "myError";
+
+        final File file = new File("polishPressReleases.txt");
+
+        file.delete();
+        PrintWriter printWriter = null;
+        try {
+            printWriter = new PrintWriter(file, "UTF-8");
+        } catch (FileNotFoundException e) {
+            System.out.println("Coś się popsuło");
+            return errorViewName;
+        } catch (UnsupportedEncodingException e) {
+            System.out.println("Kodowanie nie działa");
+            return errorViewName;
+        }
+
+        Language language = languageRepository.findByName("Polish");
+        if (language == null) {
+            System.err.println("Brak języka");
+            return errorViewName;
+        }
+        Set<Newspaper> newspapers = language.getNewspapers();
+        for (Newspaper newspaper : newspapers) {
+            Set<Feed> feeds = newspaper.getFeeds();
+            for (Feed feed : feeds) {
+                Set<PressRelease> pressReleases = feed.getPressReleases();
+                for (PressRelease pressRelease : pressReleases) {
+                    printWriter.println(newspaper.getName() + ": " + feed.getName() + ": " + pressRelease.getDate() + ": " + pressRelease.getTitle());
+                }
+            }
         }
         return viewName;
     }

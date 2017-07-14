@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import pl.edu.agh.Analyzer.NewsAnalyzerMain;
 import pl.edu.agh.Analyzer.model.*;
 import pl.edu.agh.Analyzer.repository.*;
+import pl.edu.agh.Analyzer.support.PressReleaseId;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,7 +47,7 @@ public class DatabaseTryController {
     private Map<String, Country> countriesToDb;
     private Map<String, Newspaper> newspapersToDb;
     private Map<String, Feed> feedsToDb;
-    private List<PressRelease> pressReleasesToDb;
+    private Set<PressRelease> pressReleasesToDb;
     private boolean flushed = true;
 
     private static final String GEOMEDIA_FEEDS_FILE_PATH = "../SecondProject/geomedia/Geomedia_extract_AGENDA/Geomedia_extract_AGENDA/";
@@ -96,7 +97,17 @@ public class DatabaseTryController {
             "Le Journal de Montreal",
             "El Watan",
             "LExpression",
-            "Le Parisien"
+            "Le Parisien",
+    };
+
+    private static String[] nonGeomediaNewspapersNames = {
+            "Do rzeczy",
+            "Fakt",
+            "Interia",
+            "Newsweek",
+            "RMF24",
+            "TVN24",
+            "WP"
     };
 
     private static String[] feedsNames = {
@@ -139,6 +150,16 @@ public class DatabaseTryController {
             "fr_FRA_lepari_int",
     };
 
+    private static final String[] nonGeomediaFeedsNames = {
+            "pl_POL_dorzeczy_int",
+            "pl_POL_fakt_int",
+            "pl_POL_interia_int",
+            "pl_POL_newsweek_int",
+            "pl_POL_rmf24_int",
+            "pl_POL_tvn24_int",
+            "pl_POL_wp_int"
+    };
+
     private static final String[] newspapersCountry = {
             "China",
             "France",
@@ -176,8 +197,19 @@ public class DatabaseTryController {
             "Canada",
             "Algeria",
             "Algeria",
-            "France"
+            "France",
     };
+
+    private static final String[] nonGeomediaNewspapersCountry = {
+            "Poland",
+            "Poland",
+            "Poland",
+            "Poland",
+            "Poland",
+            "Poland",
+            "Poland"
+    };
+
     private static final String[] newspapersLanguage = {
             "English",
             "French",
@@ -215,7 +247,17 @@ public class DatabaseTryController {
             "French",
             "French",
             "French",
-            "French"
+            "French",
+    };
+
+    private static final String[] nonGeomediaNewspapersLanguage = {
+            "Polish",
+            "Polish",
+            "Polish",
+            "Polish",
+            "Polish",
+            "Polish",
+            "Polish"
     };
 
     private static final String[] languages = {
@@ -225,8 +267,7 @@ public class DatabaseTryController {
             "Polish"
     };
 
-    //private static List<PressRelease> pressReleases;
-    private static Map<String, PressRelease> pressReleases;
+    private static Map<PressReleaseId, PressRelease> pressReleases;
     private static Map<String, Tag> tagMap;
 
     private static Date convertStringToDate(String date){
@@ -242,6 +283,7 @@ public class DatabaseTryController {
 
     @GetMapping("/addThingsToDB")
     public String  addSomething(@RequestParam(name = "secNum") Long secNum) throws IOException {
+        final long denominator = 1000000000;
         if (!secNum.equals(NewsAnalyzerMain.securityNumber))
             return "forbidden";
         long startTime = System.nanoTime();
@@ -250,15 +292,47 @@ public class DatabaseTryController {
             countriesToDb = new HashMap<>();
             newspapersToDb = new HashMap<>();
             feedsToDb = new HashMap<>();
-            pressReleasesToDb = new LinkedList<>();
+            pressReleasesToDb = new HashSet<>();
+            tagMap = new HashMap<>();
+            pressReleases = new HashMap<>();
 
+            //get data from db
+            System.out.println("Im getting collections from DB");
+            Iterable<Language> languagesFromDb = languageRepository.findAll();
+            Iterable<Country> countriesFromDb = countryRepository.findAll();
+            Iterable<Newspaper> newspapersFromDb = newspaperRepository.findAll();
+            Iterable<Feed> feedsFromDb = feedRepository.findAll();
+            Iterable<Tag> tagsFromDb = tagRepository.findAll();
+            Iterable<PressRelease> pressReleasesFromDb = pressReleaseRepository.findAll();
+
+            System.out.println("Im gonna put them into my data structures");
+            for (Language language : languagesFromDb) {
+                languagesToDb.put(language.getName(), language);
+            }
+            for (Country country : countriesFromDb) {
+                countriesToDb.put(country.getName(), country);
+            }
+            for (Newspaper newspaper : newspapersFromDb) {
+                newspapersToDb.put(newspaper.getName(), newspaper);
+            }
+            for (Feed feed : feedsFromDb) {
+                feedsToDb.put(feed.getName(), feed);
+            }
+            for (Tag tag : tagsFromDb) {
+                tagMap.put(tag.getName(), tag);
+            }
+
+            System.out.println("Lets go with updating database");
             System.out.println("Langs");
             //langs
             for (String languageName : languages) {
-                Language language = new Language();
-                language.setName(languageName);
-                language.setNewspapers(new LinkedList());
-                languagesToDb.put(languageName, language);
+                Language language = languagesToDb.get(languageName);
+                if (language == null) {
+                    language = new Language();
+                    language.setName(languageName);
+                    language.setNewspapers(new HashSet<>());
+                    languagesToDb.put(languageName, language);
+                }
             }
 
             System.out.println("Countries");
@@ -266,95 +340,74 @@ public class DatabaseTryController {
             String tagsAndCountriesFilePath = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/tagsAndCountries.csv";
             List<String> countries = ReaderCsvFiles.readAtPosition(tagsAndCountriesFilePath, 1, '\t');
             for (String country1 : countries) {
-                Country addingCountry = new Country();
-                addingCountry.setName(country1);
-                addingCountry.setNewspapers(new LinkedList<>());
-                countriesToDb.put(country1, addingCountry);
+                Country addingCountry = countriesToDb.get(country1);
+                if (addingCountry == null) {
+                    addingCountry = new Country();
+                    addingCountry.setName(country1);
+                    addingCountry.setNewspapers(new HashSet<>());
+                    countriesToDb.put(country1, addingCountry);
+                }
             }
 
             System.out.println("Newspapers");
             //newspapers
-            for (int i = 0; i < newspapersNames.length; i++) {
-                Country country = countriesToDb.get(newspapersCountry[i]);
-                Language language = languagesToDb.get(newspapersLanguage[i]);
-                if (language == null || country == null) {
-                    continue;
-                }
-                Newspaper newspaper = new Newspaper();
-                newspaper.setName(newspapersNames[i]);
-                newspaper.setCountry(country);
-                newspaper.setLanguage(language);
-                newspaper.setFeeds(new LinkedList<>());
-                language.getNewspapers().add(newspaper);
-                country.getNewspapers().add(newspaper);
-                newspapersToDb.put(newspapersNames[i], newspaper);
-            }
+            addNewspapersToDb(newspapersNames, newspapersCountry, newspapersLanguage);
+            addNewspapersToDb(nonGeomediaNewspapersNames, nonGeomediaNewspapersCountry, nonGeomediaNewspapersLanguage);
 
             System.out.println("Tags");
             //tags
-            tagMap = new HashMap<>();
             List<String> tags = ReaderCsvFiles.readAtPosition(tagsAndCountriesFilePath, 0, '\t');
             for (int i = 0; i < tags.size(); i++) {
                 Country country = countriesToDb.get(countries.get(i));
                 if (country == null) {
                     continue;
                 }
-                Tag tag = new Tag();
-                tag.setName(tags.get(i));
+                Tag tag = tagMap.get(tags.get(i));
+                if (tag == null) {
+                    tag = new Tag();
+                    tag.setName(tags.get(i));
+                    tag.setPressReleases(new LinkedList<>());
+                }
                 tag.setCountry(country);
-                tag.setPressReleases(new LinkedList<>());
                 country.setTag(tag);
                 tagMap.put(tags.get(i), tag);
             }
 
             System.out.println("Feeds");
             //feeds
-            String intSection = "International";
-            for (int i = 0; i < feedsNames.length; i++) {
-                Newspaper newspaper = newspapersToDb.get(newspapersNames[i]);
-                if (newspaper == null) {
-                    continue;
-                }
-                Feed addingFeed = new Feed();
-                addingFeed.setName(feedsNames[i]);
-                addingFeed.setNewspaper(newspaper);
-                addingFeed.setSection(intSection);
-                addingFeed.setPressReleases(new LinkedList());
-                newspaper.getFeeds().add(addingFeed);
-                feedsToDb.put(feedsNames[i], addingFeed);
-            }
+            addFeedsToDb("International", feedsNames, newspapersNames);
+
+            //Here we should add pl feeds
+            addFeedsToDb("Polish", nonGeomediaFeedsNames, nonGeomediaNewspapersNames);
 
             System.out.println("PressReleases");
             //pressReleases
-            pressReleases = new HashMap<>();
             addPressReleasesToDBNewWay(GEOMEDIA_FEEDS_FILE_PATH, false);
             addPressReleasesToDBNewWay(NEW_FEEDS_PATH, true);
 
             System.out.println("Linking table");
             //linking table
-            addPressReleasesTagsDataNewWay(NEW_FEEDS_PATH_TAGGED, 2);
+            addPressReleasesTagsDataNewWay(NEW_FEEDS_PATH_TAGGED, 2, 1);
 
             System.out.println("PressReleases ebola tags");
             //pressReleases ebola tags
             String[] ebolaFilePaths = new String[feedsNames.length];
             for (int i = 0; i < feedsNames.length; i++) {
                 ebolaFilePaths[i] = GEOMEDIA_FEEDS_FILE_PATH + feedsNames[i] + "/rss_unique_TAG_country_Ebola.csv";
-                System.out.println(ebolaFilePaths[i]);
             }
+
             for (int i1 = 0; i1 < ebolaFilePaths.length; i1++) {
                 String filePath = ebolaFilePaths[i1];
                 List<String> titles = ReaderCsvFiles.readAtPosition(filePath, 3, '\t');
                 List<String> myEbolaTags = ReaderCsvFiles.readAtPosition(filePath, 6, '\t');
-                System.err.println("#################################");
-                System.err.println(filePath);
-                System.err.println("#################################");
+                List<String> dates = ReaderCsvFiles.readAtPosition(filePath, 2, '\t');
                 Feed feed = feedsToDb.get(feedsNames[i1]);
                 if (feed == null) {
                     continue;
                 }
                 pressReleases.clear();
                 for (PressRelease pressRelease : feed.getPressReleases()) {
-                    pressReleases.put(pressRelease.getTitle(), pressRelease);
+                    pressReleases.put(new PressReleaseId(pressRelease.getTitle(), pressRelease.getDate()), pressRelease);
                 }
                 if (pressReleases.size() == 0) {
                     System.out.println("Baaaaad");
@@ -367,7 +420,7 @@ public class DatabaseTryController {
                         if (myEbolaTags.get(i).equals("") || titles.get(i).contains("\'")) {
                             continue;
                         }
-                        PressRelease pressRelease = pressReleases.get(titles.get(i));
+                        PressRelease pressRelease = pressReleases.get(new PressReleaseId(titles.get(i), convertStringToDate(dates.get(i))));
                         if (pressRelease == null) {
                             continue;
                         }
@@ -381,29 +434,26 @@ public class DatabaseTryController {
             //organization feed tags
             for (int i = 0; i < feedsNames.length; i++) {
                 ebolaFilePaths[i] = ORG_PATH + "SHORT/" + feedsNames[i] + "/rss_org_tagged.csv";
-                System.out.println(ebolaFilePaths[i]);
             }
             for (int i1 = 0; i1 < ebolaFilePaths.length; i1++) {
                 String filePath = ebolaFilePaths[i1];
                 List<String> titles = ReaderCsvFiles.readAtPosition(filePath, 3, '\t');
                 List<String> myOrgTags = ReaderCsvFiles.readAtPosition(filePath, 4, '\t');
-                System.err.println("#################################");
-                System.err.println(filePath);
-                System.err.println("#################################");
+                List<String> dates = ReaderCsvFiles.readAtPosition(filePath, 1, '\t');
                 Feed feed = feedsToDb.get(feedsNames[i1]);
                 if (feed == null) {
                     continue;
                 }
                 pressReleases.clear();
                 for (PressRelease pressRelease : feed.getPressReleases()) {
-                    pressReleases.put(pressRelease.getTitle(), pressRelease);
+                    pressReleases.put(new PressReleaseId(pressRelease.getTitle(), pressRelease.getDate()), pressRelease);
                 }
                 try {
                     for (int i = 0; i < titles.size(); i++) {
                         if (myOrgTags.get(i).equals("") || titles.get(i).contains("\'")) {
                             continue;
                         }
-                        PressRelease pressRelease = pressReleases.get(titles.get(i));
+                        PressRelease pressRelease = pressReleases.get(new PressReleaseId(titles.get(i), convertStringToDate(dates.get(i))));
                         Tag tag = tagMap.get(myOrgTags.get(i));
                         if (pressRelease == null || tag == null) {
                             continue;
@@ -416,6 +466,7 @@ public class DatabaseTryController {
                 }
             }
         }
+
         System.out.println("I will be saving this to DB now");
         flushed = false;
         System.out.println("Countries size: " + countriesToDb.values().size());
@@ -430,12 +481,49 @@ public class DatabaseTryController {
         Collection<Language> languageCollection = languagesToDb.values();
         Collection<Newspaper> newspaperCollection = newspapersToDb.values();
         Collection<Tag> tagCollection = tagMap.values();
+        for (PressRelease pressRelease : pressReleasesToDb) {
+            boolean lol = false;
+            if (pressRelease.getDate() == null) {
+                System.out.println("Date null, ");
+                lol = true;
+            }
+            if (pressRelease.getTitle() == null) {
+                System.out.println("Title null, ");
+                lol = true;
+            }
+            if (lol) {
+                System.out.println(pressRelease.getFeed().getName() + ": " + pressRelease.getFeed().getNewspaper().getName()
+                + ": " + pressRelease.getDate() + ": " + pressRelease.getFeed().getNewspaper().getCountry().getName());
+            }
+        }
+
+        long collectionTime = System.nanoTime();
+        System.out.println("I created collections, time: " + ((collectionTime - startDBTime) / denominator));
+
         countryRepository.save(countryCollection);
+        long countryTime = System.nanoTime();
+        System.out.println("I saved countries, time: " + ((countryTime - collectionTime)/denominator));
+
         feedRepository.save(feedCollection);
+        long feedTime = System.nanoTime();
+        System.out.println("I saved feeds, time: " + ((feedTime - countryTime) / denominator));
+
         languageRepository.save(languageCollection);
+        long languageTime = System.nanoTime();
+        System.out.println("I saved languages, time:" + ((languageTime - feedTime) / denominator));
+
         newspaperRepository.save(newspaperCollection);
+        long newspaperTime = System.nanoTime();
+        System.out.println("I saved newspapers, time: " + ((newspaperTime - languageTime) / denominator));
+
         pressReleaseRepository.save(pressReleasesToDb);
+        long pressReleaseTime = System.nanoTime();
+        System.out.println("I saved pressReleases, time: " + ((pressReleaseTime - newspaperTime) / denominator));
+
         tagRepository.save(tagCollection);
+        long tagTime = System.nanoTime();
+        System.out.println("I saved tags, time: " + ((tagTime - pressReleaseTime) / denominator));
+
         flushed = true;
         System.out.println("I have saved");
         this.feedsToDb = null;
@@ -448,6 +536,7 @@ public class DatabaseTryController {
         long currentTime = System.nanoTime();
         System.out.println("Czas zapisu do bazy: " + ((currentTime - startDBTime)/1000000000) + " s");
         System.out.println("Czas wykonania: " + ((currentTime - startTime)/1000000000) + " s");
+        System.gc();
         return "foo";
     }
 
@@ -464,7 +553,6 @@ public class DatabaseTryController {
                         && !f.getName().equals(COUNTRY_TAG_FILE_NAME)) {
 
                     String filePath = f.getAbsolutePath();
-                    System.out.println(filePath);
                     List<String> feedsNames = null;
                     List<String> dates = null;
                     List<String> titles = null;
@@ -485,6 +573,7 @@ public class DatabaseTryController {
                     for (int  i = 0; i < feedsNames.size(); i++){
                         Feed feed = feedsToDb.get(feedsNames.get(i));
                         if (feed == null){
+                            System.out.println("Nie ma feedu " + feedsNames.get(i) + ", plik: " + filePath);
                             continue;
                         }
                         try {
@@ -495,7 +584,6 @@ public class DatabaseTryController {
                             pressRelease.setContent(contents.get(i));
                             feed.getPressReleases().add(pressRelease);
                             pressRelease.setTags(new LinkedList<>());
-                            pressReleases.put(titles.get(i), pressRelease);
                             pressReleasesToDb.add(pressRelease);
                         }catch (DataException e){
                             e.printStackTrace();
@@ -517,13 +605,13 @@ public class DatabaseTryController {
         extractFeedsFilesAndSaveNewWay(file, newFeeds);
     }
 
-    private void addPressReleasesTagsDataNewWay(String path, int titlesPosition) throws IOException {
+    private void addPressReleasesTagsDataNewWay(String path, int titlesPosition, int datePosition) throws IOException {
         File file = new File(path);
-        extractTaggedFeedsFilesAndSaveNewWay(file, titlesPosition);
+        extractTaggedFeedsFilesAndSaveNewWay(file, titlesPosition, datePosition);
 
     }
 
-    private void extractTaggedFeedsFilesAndSaveNewWay(File file, int titlesPosition) throws IOException {
+    private void extractTaggedFeedsFilesAndSaveNewWay(File file, int titlesPosition, int datePosition) throws IOException {
         File[] files = file.listFiles();
         //assert files != null;
         if (files == null) {
@@ -536,18 +624,15 @@ public class DatabaseTryController {
                         && !f.getName().equals(COUNTRY_TAG_FILE_NAME)
                         && !f.getName().equals(GEOMEDIA_UNIQUE_FILE_NAME)) || (f.getName().equals(ORG_TAGGED_FILE_NAME))) {
                     String filePath = f.getAbsolutePath();
-                    System.out.println(filePath);
                     List<String> titles = ReaderCsvFiles.readAtPosition(filePath, titlesPosition, '\t');
                     List<String> tags = ReaderCsvFiles.readAtPosition(filePath, 4, '\t');
+                    List<String> dates = ReaderCsvFiles.readAtPosition(filePath, datePosition, '\t');
 
-                    System.err.println("#################################");
-                    System.err.println(filePath);
-                    System.err.println("#################################");
                     //ATTENTION - PARSING FILE SHOULD BE NAMED LIKE FEED NAME !!!
                     String feedName = f.getName().split("\\.")[0];
-                    System.out.println(feedName);
                     Feed feed = feedsToDb.get(feedName);
                     if (feed == null) {
+                        System.out.println("Nie ma feedu " + feedName);
                         continue;
                     }
                     if (feed.getPressReleases().size() == 0) {
@@ -555,7 +640,7 @@ public class DatabaseTryController {
                     }
                     pressReleases.clear();
                     for (PressRelease pressRelease : feed.getPressReleases()) {
-                        pressReleases.put(pressRelease.getTitle(), pressRelease);
+                        pressReleases.put(new PressReleaseId(pressRelease.getTitle(), pressRelease.getDate()), pressRelease);
                     }
                     if (tagMap == null || tagMap.size() == 0) {
                         throw new IOException("AAAAAAAAA");
@@ -564,7 +649,8 @@ public class DatabaseTryController {
                         if (tags.get(i).equals("") || titles.get(i).contains("\'")) {
                             continue;
                         }
-                        PressRelease pressRelease = pressReleases.get(titles.get(i));
+                        PressReleaseId pressReleaseId = new PressReleaseId(titles.get(i), convertStringToDate(dates.get(i)));
+                        PressRelease pressRelease = pressReleases.get(pressReleaseId);
                         Tag tag = tagMap.get(tags.get(i));
                         if (pressRelease == null || tag == null){
                             continue;
@@ -576,8 +662,48 @@ public class DatabaseTryController {
 
             }
             else if (f.isDirectory()) {
-                extractTaggedFeedsFilesAndSaveNewWay(f, titlesPosition);
+                extractTaggedFeedsFilesAndSaveNewWay(f, titlesPosition, datePosition);
             }
+        }
+    }
+
+    private void addFeedsToDb(String section, String[] myFeedNames, String[] myNewspapersNames){
+        for (int i = 0; i < myFeedNames.length; i++) {
+            Newspaper newspaper = newspapersToDb.get(myNewspapersNames[i]);
+            if (newspaper == null) {
+                continue;
+            }
+            Feed addingFeed = feedsToDb.get(myFeedNames[i]);
+            if (addingFeed == null) {
+                addingFeed = new Feed();
+                addingFeed.setName(myFeedNames[i]);
+                addingFeed.setPressReleases(new HashSet<>());
+            }
+            addingFeed.setNewspaper(newspaper);
+            addingFeed.setSection(section);
+            newspaper.getFeeds().add(addingFeed);
+            feedsToDb.put(myFeedNames[i], addingFeed);
+        }
+    }
+
+    public void addNewspapersToDb(String [] myNewspapersNames, String[] myNewspapersCountry, String[] myNewspapersLanguage){
+        for (int i = 0; i < myNewspapersNames.length; i++) {
+            Country country = countriesToDb.get(myNewspapersCountry[i]);
+            Language language = languagesToDb.get(myNewspapersLanguage[i]);
+            if (language == null || country == null) {
+                continue;
+            }
+            Newspaper newspaper = newspapersToDb.get(myNewspapersNames[i]);
+            if (newspaper == null) {
+                newspaper = new Newspaper();
+                newspaper.setName(myNewspapersNames[i]);
+                newspaper.setFeeds(new HashSet<>());
+            }
+            newspaper.setCountry(country);
+            newspaper.setLanguage(language);
+            language.getNewspapers().add(newspaper);
+            country.getNewspapers().add(newspaper);
+            newspapersToDb.put(myNewspapersNames[i], newspaper);
         }
     }
 }
