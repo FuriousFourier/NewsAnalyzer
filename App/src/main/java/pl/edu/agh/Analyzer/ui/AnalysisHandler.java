@@ -99,35 +99,36 @@ public class AnalysisHandler {
         }
        if (value.startsWith("$")){
             System.out.println("Redirection to controller...");
+           AnalysisController.setIsAskingForValue(true);
             URL url = null;
             if (field.startsWith("d")){
                 System.out.println("-----for dates-----");
-                AnalysisController.setIsAskingForValue(true);
                 url = new URL("http://localhost:8080/notesDate");
             }
             else if (field.startsWith("n")){
                 System.out.println("-----for newspapers-----");
-                AnalysisController.setIsAskingForValue(true);
                 url = new URL("http://localhost:8080/notesNews");
             }
             else if (field.startsWith("c")){
-                System.out.println("Sorry, not available");
+                System.out.println("-----for countries-----");
+                url = new URL("http://localhost:8080/notesCountr");
             }
             else if (field.startsWith("l")){
-                System.out.println("Sorry, not available");
+                System.out.println("-----for languages-----");
+                url = new URL("http://localhost:8080/notesLangs");
             }
             else {
                 System.out.println("field: " +field + " - returning...");
                 return;
             }
-            if (url != null) {
+
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestProperty("User-Agent", USER_AGENT);
                 int responseCode = connection.getResponseCode();
                 System.out.println("*************");
                 System.out.println("Response Code: " + responseCode);
                 System.out.println("*************");
-            }
+
         }
 
 

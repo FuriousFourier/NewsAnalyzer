@@ -5,11 +5,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import pl.edu.agh.Analyzer.model.Feed;
-import pl.edu.agh.Analyzer.model.Language;
-import pl.edu.agh.Analyzer.model.Country;
-import pl.edu.agh.Analyzer.model.Newspaper;
-import pl.edu.agh.Analyzer.model.PressRelease;
+import pl.edu.agh.Analyzer.model.*;
 import pl.edu.agh.Analyzer.repository.*;
 import pl.edu.agh.Analyzer.ui.AnalysisHandler;
 
@@ -148,14 +144,22 @@ public class AnalysisController {
       List<PressRelease> result = pressReleaseRepository.findByMonthAndYear(monthInt, yearInt);
       if (result == null || result.size() < 1){
           System.out.println("Couldn't find current date");
-          //result = (List<PressRelease>)pressReleaseRepository.findAll();
           return "foo";
       }
-        System.out.println("Result: ");
-            for (PressRelease pr : result) {
-                System.out.println("ID: " + pr.getId() + "; Title: " + pr.getTitle() + "; Content: " + pr.getContent());
-            }
-
+      int count = 0; //DO LATWIEJSZEGO DEBUGOWANIA!!!
+      if (isAskingForValue) {
+          System.out.println("Result: ");
+          for (PressRelease pr : result) {
+              if (count > 10)    //J.W.
+                  break;
+              System.out.print("ID: " + pr.getId() + "; ");
+              /*for (Tag t: pr.getTags()){
+                  System.out.print(t.getName()+", ");
+              }*/
+              System.out.print("Country:" + pr.getFeed().getNewspaper().getCountry().getName() + "; Newspaper:" + pr.getFeed().getNewspaper().getName());
+              count++;
+          }
+      }
         fetchedNotes = result;
         return "foo";
     }
@@ -175,30 +179,113 @@ public class AnalysisController {
         }
         else
             title = value;
-        //find newspaper
-        Newspaper newspaper = newspaperRepository.findByName(title);
-        //get feed
+        Newspaper newspaper = newspaperRepository.findByName(title); //find newspaper
         List<PressRelease> notesFromAllFeeds = new ArrayList<>();
         if (newspaper != null) {
-            List<Feed> feeds = newspaper.getFeeds();
-            //find notes for feed
+            List<Feed> feeds = newspaper.getFeeds();//get feeds
             List<PressRelease> result;
-            for (Feed f : feeds) {
+            for (Feed f : feeds) {//find notes for feed
                 result = pressReleaseRepository.findByFeed(f);
                 if (result != null)
                     notesFromAllFeeds.addAll(result);
             }
         }
-
         if (notesFromAllFeeds == null || notesFromAllFeeds.size() < 1) {
             System.out.println("Couldn't find current feed");
-            //notesFromAllFeeds = (List<PressRelease>) pressReleaseRepository.findAll();
             return "foo";
         }
-        System.out.println("Result: ");
+        if (isAskingForValue) {
+            System.out.println("Result: ");
             for (PressRelease pr : notesFromAllFeeds) {
                 System.out.println("ID: " + pr.getId() + "; Title: " + pr.getTitle() + "; Content: " + pr.getContent());
             }
+        }
+        return "foo";
+    }
+    @GetMapping("/notesLangs")
+    public String getPressReleasesByLangs(){
+        if (pressReleaseRepository == null){
+            System.out.println("repository not initialised");
+            return "foo";
+        }
+        String name = null;
+        if (isAskingForValue) {
+            try {
+                name = br.readLine();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        else
+            name = value;
+        List<PressRelease> notesFromAllFeeds = new ArrayList<>();
+        Language language = languageRepository.findByName(name);
+        if(language != null) {
+            for (Newspaper n : language.getNewspapers()) {
+                if (n != null) {
+                    List<Feed> feeds = n.getFeeds();//get feeds
+                    List<PressRelease> result;
+                    for (Feed f : feeds) {//find notes for feed
+                        result = pressReleaseRepository.findByFeed(f);
+                        if (result != null)
+                            notesFromAllFeeds.addAll(result);
+                    }
+                }
+            }
+        }
+        if (notesFromAllFeeds == null || notesFromAllFeeds.size() < 1) {
+            System.out.println("Couldn't find current feed");
+            return "foo";
+        }
+        if (isAskingForValue) {
+            System.out.println("Result: ");
+            for (PressRelease pr : notesFromAllFeeds) {
+                System.out.println("ID: " + pr.getId() + "; Title: " + pr.getTitle() + "; Content: " + pr.getContent());
+            }
+        }
+        return "foo";
+    }
+    @GetMapping("/notesCountr")
+    public String getPressReleasesByCountries(){
+        if (pressReleaseRepository == null){
+            System.out.println("repository not initialised");
+            return "foo";
+        }
+        String name = null;
+        if (isAskingForValue) {
+            try {
+                name = br.readLine();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        else
+            name = value;
+        List<PressRelease> notesFromAllFeeds = new ArrayList<>();
+        Country country = countryRepository.findByName(name);
+        if(country != null) {
+            for (Newspaper n : country.getNewspapers()) {
+                if (n != null) {
+                    List<Feed> feeds = n.getFeeds();//get feeds
+                    List<PressRelease> result;
+                    for (Feed f : feeds) {//find notes for feed
+                        result = pressReleaseRepository.findByFeed(f);
+                        if (result != null)
+                            notesFromAllFeeds.addAll(result);
+                    }
+                }
+            }
+        }
+        if (notesFromAllFeeds == null || notesFromAllFeeds.size() < 1) {
+            System.out.println("Couldn't find current feed");
+            return "foo";
+        }
+        if (isAskingForValue) {
+            System.out.println("Result: ");
+            for (PressRelease pr : notesFromAllFeeds) {
+                System.out.println("ID: " + pr.getId() + "; Title: " + pr.getTitle() + "; Content: " + pr.getContent());
+            }
+        }
         return "foo";
     }
 
@@ -211,9 +298,9 @@ public class AnalysisController {
 
     int firstMonth=0, firstYear=0, lastMonth=0, lastYear=0;
       if (getPressReleasesSortedByDate().equals("foo")){ //we're sure it's finished
-          firstMonth = firstDate.getMonth();
+          firstMonth = firstDate.getMonth()+1;
           firstYear = firstDate.getYear()+1900;
-          lastMonth  = lastDate.getMonth();
+          lastMonth  = lastDate.getMonth()+1;
           lastYear = lastDate.getYear()+1900;
         System.out.println("First month: " + firstMonth + "; first year: "+ firstYear);
         System.out.println("Last month: "+ lastMonth + "; last year: "+ lastYear);
@@ -231,10 +318,10 @@ public class AnalysisController {
           lastJ = 12;
 
         for (; j <= lastJ; j++) {
-            value = (j>10 ? "0" : "") + j + "-" + i;
+            value = (j<10 ? "0" : "") + j + "-" + i;
             setIsAskingForValue(false);
-            System.out.println("******************* *Date: "+value + " ************************");
-          if (getPressReleasesSortedByDate().equals("foo")) {
+          if (getPressReleasesByDate().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
+              System.out.println("******************* *Date: "+value + " ************************");
               AnalysisHandler.graphCreator(fetchedNotes);
           }
         }
@@ -253,8 +340,8 @@ public class AnalysisController {
       for (Newspaper n : fetchedNewspapers) {
             value = n.getName();
             setIsAskingForValue(false);
-            System.out.println("******************* *Newspaper: "+value + " ************************");
-          if (getPressReleasesByNews().equals("foo")) {
+          if (getPressReleasesByNews().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
+              System.out.println("******************* *Newspaper: "+value + " ************************");
               AnalysisHandler.graphCreator(fetchedNotes);
           }
       }
