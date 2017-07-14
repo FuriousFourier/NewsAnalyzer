@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import pl.edu.agh.Analyzer.model.*;
 import pl.edu.agh.Analyzer.repository.*;
 import pl.edu.agh.Analyzer.ui.AnalysisHandler;
@@ -95,7 +94,7 @@ public class AnalysisController {
         }
         List<Country> result = (List<Country>)countryRepository.findAll();
         for (Country c : result) {
-            System.out.println(c.getName() + "("+c.getTag()+")");
+            System.out.println(c.getName() + "("+c.getTag().getName()+")");
         }
         fetchedCountries = result;
         return "foo";
@@ -179,6 +178,7 @@ public class AnalysisController {
         }
         else
             title = value;
+        System.out.println("Title: " + title);
         Newspaper newspaper = newspaperRepository.findByName(title); //find newspaper
         List<PressRelease> notesFromAllFeeds = new ArrayList<>();
         if (newspaper != null) {
@@ -190,13 +190,14 @@ public class AnalysisController {
                     notesFromAllFeeds.addAll(result);
             }
         }
-        if (notesFromAllFeeds == null || notesFromAllFeeds.size() < 1) {
-            System.out.println("Couldn't find current feed");
+        if (notesFromAllFeeds.size() < 1) {
+            System.out.println("Couldn't find feeds");
             return "foo";
         }
+        int count = 0;
         if (isAskingForValue) {
           System.out.println("Result: ");
-          for (PressRelease pr : result) {
+          for (PressRelease pr : notesFromAllFeeds) {
               if (count > 10)    //J.W.
                   break;
               System.out.print("ID: " + pr.getId() + "; ");
@@ -240,13 +241,14 @@ public class AnalysisController {
                 }
             }
         }
-        if (notesFromAllFeeds == null || notesFromAllFeeds.size() < 1) {
+        if (notesFromAllFeeds.size() < 1) {
             System.out.println("Couldn't find current feed");
             return "foo";
         }
+        int count = 0;
         if (isAskingForValue) {
           System.out.println("Result: ");
-          for (PressRelease pr : result) {
+          for (PressRelease pr : notesFromAllFeeds) {
               if (count > 10)    //J.W.
                   break;
               System.out.print("ID: " + pr.getId() + "; ");
@@ -290,13 +292,14 @@ public class AnalysisController {
                 }
             }
         }
-        if (notesFromAllFeeds == null || notesFromAllFeeds.size() < 1) {
+        if (notesFromAllFeeds.size() < 1) {
             System.out.println("Couldn't find current feed");
             return "foo";
         }
+        int count = 0;
         if (isAskingForValue) {
           System.out.println("Result: ");
-          for (PressRelease pr : result) {
+          for (PressRelease pr : notesFromAllFeeds) {
               if (count > 10)    //J.W.
                   break;
               System.out.print("ID: " + pr.getId() + "; ");
@@ -378,7 +381,7 @@ public class AnalysisController {
         System.out.println("Countries have been fetched");
       }
       for (Country c : fetchedCountries) {
-            value = n.getName();
+            value = c.getName();
             setIsAskingForValue(false);
           if (getPressReleasesByCountries().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
               System.out.println("******************* *Newspaper: "+value + " ************************");
@@ -397,7 +400,7 @@ public class AnalysisController {
         System.out.println("Languages has been fetched");
       }
       for (Language l : fetchedLanguages) {
-            value = n.getName();
+            value = l.getName();
             setIsAskingForValue(false);
           if (getPressReleasesByLangs().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
               System.out.println("******************* *Newspaper: "+value + " ************************");

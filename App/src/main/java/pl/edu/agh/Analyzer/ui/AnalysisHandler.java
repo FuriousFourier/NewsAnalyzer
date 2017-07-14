@@ -54,23 +54,28 @@ public class AnalysisHandler {
             fieldName = "language";
         }
         System.out.println("Type:\n" +
-                "\t?? -> to show all possible values " +
-                "\t# -> to analyse all values" +
-                "\t$ -> to enter a value");
+                "\t?? -> to show all possible values \n" +
+                "\t# -> to analyse all values \n" +
+                "\t$ -> to enter a value\n");
         value = br.readLine();
         if (value.startsWith("??")){
+            URL url = null;
             if (field.startsWith("d")){
-                listDates();
+                url = new URL("http://localhost:8080/dates");
             }
             else if (field.startsWith("n")){
-                listNewspapers();
+                url = new URL("http://localhost:8080/news");
             }
             else if (field.startsWith("c")){
-                listCountries();
+                url = new URL("http://localhost:8080/countr");
             }
             else if (field.startsWith("l")){
-                listLanguages();
+                url = new URL("http://localhost:8080/langs");
             }
+            HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+            connection.setRequestProperty("User-Agent", USER_AGENT);
+            int responseCode = connection.getResponseCode();
+
             value = br.readLine();
         }
         else if (value.startsWith("#")){
@@ -280,31 +285,4 @@ public class AnalysisHandler {
         System.out.println("The density of the graph: "+ density.getDensity());
     }
 
-    private void listNewspapers() throws IOException {
-        URL url = new URL("http://localhost:8080/news");
-        HttpURLConnection connection = (HttpURLConnection)url.openConnection();
-        connection.setRequestProperty("User-Agent", USER_AGENT);
-        int responseCode = connection.getResponseCode();
-    }
-
-    private void listCountries() throws IOException {
-        //List<Country> result = controller.getAllCountries();
-        URL url = new URL("http://localhost:8080/countr");
-        HttpURLConnection connection = (HttpURLConnection)url.openConnection();
-        connection.setRequestProperty("User-Agent", USER_AGENT);
-        int responseCode = connection.getResponseCode();
-    }
-
-    private void listLanguages() throws IOException {
-        URL url = new URL("http://localhost:8080/langs");
-        HttpURLConnection connection = (HttpURLConnection)url.openConnection();
-        connection.setRequestProperty("User-Agent", USER_AGENT);
-        int responseCode = connection.getResponseCode();
-    }
-    private void listDates() throws IOException {
-        URL url = new URL("http://localhost:8080/dates");
-        HttpURLConnection connection = (HttpURLConnection)url.openConnection();
-        connection.setRequestProperty("User-Agent", USER_AGENT);
-        int responseCode = connection.getResponseCode();
-    }
 }
