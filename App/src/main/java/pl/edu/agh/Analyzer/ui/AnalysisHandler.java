@@ -53,11 +53,14 @@ public class AnalysisHandler {
         else if (field.startsWith("l")){
             fieldName = "language";
         }
-        System.out.println("Enter " + fieldName +  " (type ?? to show all possible values):");
+        System.out.println("Type:\n" +
+                "\t?? -> to show all possible values " +
+                "\t# -> to analyse all values" +
+                "\t$ -> to enter a value");
         value = br.readLine();
-        while (value.startsWith("??")){
+        if (value.startsWith("??")){
             if (field.startsWith("d")){
-               // listDates();
+                listDates();
             }
             else if (field.startsWith("n")){
                 listNewspapers();
@@ -70,31 +73,73 @@ public class AnalysisHandler {
             }
             value = br.readLine();
         }
-        System.out.println("You've chosen field " + fieldName + " and value "+ value);
-        System.out.println("All db entries will be fetched soon...");
-
-
-        if (field.startsWith("d")) {
-            String month = value.substring(0, 2);
-            String year = value.substring(3, 7);
-            System.out.println("Chosen month: " + month + ", year: " + year);
-            //List<PressRelease> result = controller.getPressReleases(month, year);
-            List<PressRelease> result = new ArrayList<>(); ///ATRAPA
-            System.out.println("Result: ");
-            for (PressRelease pr : result) {
-                System.out.println("ID: " + pr.getId() + "; Title: " + pr.getTitle() + "; Content: " + pr.getContent());
+        else if (value.startsWith("#")){
+            System.out.println("Redirection to controller...");
+            URL url = null;
+            if (field.startsWith("d")){
+                url = new URL("http://localhost:8080/analyseDate");
+            }
+            else if (field.startsWith("n")){
+                url = new URL("http://localhost:8080/analyseNewspaper");
+            }
+            else if (field.startsWith("c")){
+                System.out.println("Sorry, not available");
+            }
+            else if (field.startsWith("l")){
+               System.out.println("Sorry, not available");
+            }
+            if (url != null) {
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestProperty("User-Agent", USER_AGENT);
+                int responseCode = connection.getResponseCode();
+                System.out.println("*************");
+                System.out.println("Response Code: " + responseCode);
+                System.out.println("*************");
             }
         }
-        else {
-            System.out.println("Sorry, option for " + fieldName + " is currently unsupported");
+       if (value.startsWith("$")){
+            System.out.println("Redirection to controller...");
+            URL url = null;
+            if (field.startsWith("d")){
+                System.out.println("-----for dates-----");
+                AnalysisController.setIsAskingForValue(true);
+                url = new URL("http://localhost:8080/notesDate");
+            }
+            else if (field.startsWith("n")){
+                System.out.println("-----for newspapers-----");
+                AnalysisController.setIsAskingForValue(true);
+                url = new URL("http://localhost:8080/notesNews");
+            }
+            else if (field.startsWith("c")){
+                System.out.println("Sorry, not available");
+            }
+            else if (field.startsWith("l")){
+                System.out.println("Sorry, not available");
+            }
+            else {
+                System.out.println("field: " +field + " - returning...");
+                return;
+            }
+            if (url != null) {
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestProperty("User-Agent", USER_AGENT);
+                int responseCode = connection.getResponseCode();
+                System.out.println("*************");
+                System.out.println("Response Code: " + responseCode);
+                System.out.println("*************");
+            }
         }
-        
+
 
     }
 
-    private void graphCreator() {
+    public static void graphCreator(List<PressRelease> notes) {
+        if (notes.isEmpty()){
+            System.out.println("Empty result");
+            return;
+        }
         //fakeowe pressreleases
-        List<PressRelease> notes = new ArrayList<>();
+        /*List<PressRelease> notes = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
             String title = "titel" + i;
             String content = "content" + i;
@@ -107,7 +152,7 @@ public class AnalysisHandler {
             }
             PressRelease pr = new PressRelease(title, date, content, tags, feed);
             notes.add(pr);
-        }
+        }*/
         ProjectController pc = Lookup.getDefault().lookup(ProjectController.class);
         pc.newProject();
         Workspace workspace = pc.getCurrentWorkspace();
@@ -256,10 +301,10 @@ public class AnalysisHandler {
         connection.setRequestProperty("User-Agent", USER_AGENT);
         int responseCode = connection.getResponseCode();
     }
-/*    private void listDates(){
-        List<PressRelease> result = controller.getPressReleasesSortedByDate();
-        int size = result.size();
-        System.out.println("First date: " + result.get(0).getDate());
-        System.out.println("Last date: " + result.get(size-1).getDate());
-    }*/
+    private void listDates() throws IOException {
+        URL url = new URL("http://localhost:8080/dates");
+        HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+        connection.setRequestProperty("User-Agent", USER_AGENT);
+        int responseCode = connection.getResponseCode();
+    }
 }

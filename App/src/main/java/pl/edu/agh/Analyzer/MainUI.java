@@ -10,6 +10,11 @@ import tagger.Tagger;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Random;
+
+import static org.springframework.http.HttpHeaders.USER_AGENT;
 
 
 /**
@@ -17,8 +22,10 @@ import java.io.InputStreamReader;
  */
 @SpringBootApplication
 public class MainUI {
+    public static Long securityNumber;
     public static void main (String args[]){
-
+        Random random = new Random(System.currentTimeMillis());
+        securityNumber = random.nextLong();
         SpringApplication.run(MainUI.class, args);
         final BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         final AnalysisHandler handler = new AnalysisHandler(br);
@@ -47,7 +54,14 @@ public class MainUI {
                 }
                 else if (line.startsWith("u")) {
                     myPrint("Database will be updated with new data");
-                    HibernateUtil.main(null);
+                    //HibernateUtil.main(null);
+                    URL url = new URL("http://localhost:8080/addThingsToDB?secNum=" + securityNumber);
+                    HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+                    connection.setRequestProperty("User-Agent", USER_AGENT);
+                    int responseCode = connection.getResponseCode();
+                    System.out.println("*************");
+                    System.out.println("Response Code: " + responseCode);
+                    System.out.println("*************");
                     myPrint("Database updated successfully");
                 }
                 else if (line.startsWith("a")) {
@@ -62,7 +76,7 @@ public class MainUI {
         } catch (Exception e){
             e.printStackTrace();
         }
-
+        System.exit(0);
     }
 
     private static void listCommands(){
