@@ -83,19 +83,18 @@ public class AnalysisHandler {
                 url = new URL("http://localhost:8080/analyseNewspaper");
             }
             else if (field.startsWith("c")){
-                System.out.println("Sorry, not available");
+                url = new URL("http://localhost:8080/analyseCountry");
             }
             else if (field.startsWith("l")){
-               System.out.println("Sorry, not available");
+               url = new URL("http://localhost:8080/analyseLanguage");
             }
-            if (url != null) {
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestProperty("User-Agent", USER_AGENT);
                 int responseCode = connection.getResponseCode();
                 System.out.println("*************");
                 System.out.println("Response Code: " + responseCode);
                 System.out.println("*************");
-            }
+            
         }
        if (value.startsWith("$")){
             System.out.println("Redirection to controller...");

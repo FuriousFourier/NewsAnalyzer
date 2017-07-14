@@ -195,11 +195,18 @@ public class AnalysisController {
             return "foo";
         }
         if (isAskingForValue) {
-            System.out.println("Result: ");
-            for (PressRelease pr : notesFromAllFeeds) {
-                System.out.println("ID: " + pr.getId() + "; Title: " + pr.getTitle() + "; Content: " + pr.getContent());
-            }
-        }
+          System.out.println("Result: ");
+          for (PressRelease pr : result) {
+              if (count > 10)    //J.W.
+                  break;
+              System.out.print("ID: " + pr.getId() + "; ");
+              /*for (Tag t: pr.getTags()){
+                  System.out.print(t.getName()+", ");
+              }*/
+              System.out.print("Country:" + pr.getFeed().getNewspaper().getCountry().getName() + "; Newspaper:" + pr.getFeed().getNewspaper().getName());
+              count++;
+          }
+      }
         return "foo";
     }
     @GetMapping("/notesLangs")
@@ -238,11 +245,18 @@ public class AnalysisController {
             return "foo";
         }
         if (isAskingForValue) {
-            System.out.println("Result: ");
-            for (PressRelease pr : notesFromAllFeeds) {
-                System.out.println("ID: " + pr.getId() + "; Title: " + pr.getTitle() + "; Content: " + pr.getContent());
-            }
-        }
+          System.out.println("Result: ");
+          for (PressRelease pr : result) {
+              if (count > 10)    //J.W.
+                  break;
+              System.out.print("ID: " + pr.getId() + "; ");
+              /*for (Tag t: pr.getTags()){
+                  System.out.print(t.getName()+", ");
+              }*/
+              System.out.print("Country:" + pr.getFeed().getNewspaper().getCountry().getName() + "; Newspaper:" + pr.getFeed().getNewspaper().getName());
+              count++;
+          }
+      }
         return "foo";
     }
     @GetMapping("/notesCountr")
@@ -281,11 +295,18 @@ public class AnalysisController {
             return "foo";
         }
         if (isAskingForValue) {
-            System.out.println("Result: ");
-            for (PressRelease pr : notesFromAllFeeds) {
-                System.out.println("ID: " + pr.getId() + "; Title: " + pr.getTitle() + "; Content: " + pr.getContent());
-            }
-        }
+          System.out.println("Result: ");
+          for (PressRelease pr : result) {
+              if (count > 10)    //J.W.
+                  break;
+              System.out.print("ID: " + pr.getId() + "; ");
+              /*for (Tag t: pr.getTags()){
+                  System.out.print(t.getName()+", ");
+              }*/
+              System.out.print("Country:" + pr.getFeed().getNewspaper().getCountry().getName() + "; Newspaper:" + pr.getFeed().getNewspaper().getName());
+              count++;
+          }
+      }
         return "foo";
     }
 
@@ -335,12 +356,50 @@ public class AnalysisController {
         return "foo";
       }
       if (getAllNewspapers().equals("foo")){ //we're sure it's finished
-        System.out.println("Newspaper has been fetched");
+        System.out.println("Newspapers have been fetched");
       }
       for (Newspaper n : fetchedNewspapers) {
             value = n.getName();
             setIsAskingForValue(false);
           if (getPressReleasesByNews().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
+              System.out.println("******************* *Newspaper: "+value + " ************************");
+              AnalysisHandler.graphCreator(fetchedNotes);
+          }
+      }
+      return "foo";
+    }
+    @GetMapping("/analyseCountry")
+    public String analyseByCountry(){
+      if (pressReleaseRepository == null){
+        System.out.println("repository not initialised");
+        return "foo";
+      }
+      if (getAllCountries().equals("foo")){ //we're sure it's finished
+        System.out.println("Countries have been fetched");
+      }
+      for (Country c : fetchedCountries) {
+            value = n.getName();
+            setIsAskingForValue(false);
+          if (getPressReleasesByCountries().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
+              System.out.println("******************* *Newspaper: "+value + " ************************");
+              AnalysisHandler.graphCreator(fetchedNotes);
+          }
+      }
+      return "foo";
+    }
+    @GetMapping("/analyseLanguage")
+    public String analyseByLanguage(){
+      if (pressReleaseRepository == null){
+        System.out.println("repository not initialised");
+        return "foo";
+      }
+      if (getAllLanguages().equals("foo")){ //we're sure it's finished
+        System.out.println("Languages has been fetched");
+      }
+      for (Language l : fetchedLanguages) {
+            value = n.getName();
+            setIsAskingForValue(false);
+          if (getPressReleasesByLangs().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
               System.out.println("******************* *Newspaper: "+value + " ************************");
               AnalysisHandler.graphCreator(fetchedNotes);
           }
