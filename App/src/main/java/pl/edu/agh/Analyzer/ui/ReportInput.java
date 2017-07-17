@@ -3,6 +3,7 @@ package pl.edu.agh.Analyzer.ui;
 import org.gephi.graph.api.*;
 import org.gephi.statistics.plugin.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -15,7 +16,6 @@ public class ReportInput {
             GraphDistance.CLOSENESS,
             GraphDistance.ECCENTRICITY,
             GraphDistance.HARMONIC_CLOSENESS,
-            Degree.AVERAGE_DEGREE,
             Degree.INDEGREE,
             Degree.OUTDEGREE,
             Hits.AUTHORITY,
@@ -26,8 +26,8 @@ public class ReportInput {
             WeightedDegree.WINDEGREE,
             WeightedDegree.WOUTDEGREE,
     };
-    private Map<String, Node> nodeMaxValues;
-    private Map<String, Object> graphValues;
+    private Map<String, Node> nodeMaxValues = new HashMap<>();
+    private Map<String, Object> graphValues = new HashMap<>();
     public String paramValue;
     public String paramName;
     //pozniej zrobic z modularity, spojnymi skladowymi i ew. czyms jeszcze (clustering coefficient??)

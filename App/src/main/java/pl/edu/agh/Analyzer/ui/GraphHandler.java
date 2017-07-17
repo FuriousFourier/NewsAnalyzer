@@ -1,6 +1,13 @@
 package pl.edu.agh.Analyzer.ui;
 
+import com.itextpdf.text.PageSize;
 import org.gephi.graph.api.*;
+import org.gephi.io.exporter.api.ExportController;
+import org.gephi.io.exporter.preview.PDFExporter;
+import org.gephi.preview.api.PreviewController;
+import org.gephi.preview.api.PreviewModel;
+import org.gephi.preview.api.PreviewProperty;
+import org.gephi.preview.types.DependantOriginalColor;
 import org.gephi.project.api.ProjectController;
 import org.gephi.project.api.Workspace;
 import org.gephi.statistics.plugin.*;
@@ -10,6 +17,11 @@ import pl.edu.agh.Analyzer.model.Feed;
 import pl.edu.agh.Analyzer.model.PressRelease;
 import pl.edu.agh.Analyzer.model.Tag;
 
+import java.awt.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -26,7 +38,6 @@ public class GraphHandler {
             GraphDistance.CLOSENESS,
             GraphDistance.ECCENTRICITY,
             GraphDistance.HARMONIC_CLOSENESS,
-            Degree.AVERAGE_DEGREE,
             Degree.INDEGREE,
             Degree.OUTDEGREE,
             Hits.AUTHORITY,
@@ -46,6 +57,7 @@ public class GraphHandler {
     }
 
     public static void initFakePressReleases(){
+        notes = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
             String title = "titel" + i;
             String content = "content" + i;
@@ -90,12 +102,8 @@ public class GraphHandler {
 
 
     public static void graphCreator(String paramName, String paramValue, List<PressRelease> newNotes) {
-        if (notes == null){
-            System.out.println("notes is null!");
-        }
-        if (notes.isEmpty()){
+        if (notes == null || notes.isEmpty()){
             System.out.println("Empty result");
-            //return;
         }
         notes = newNotes;
         initFakePressReleases();
@@ -140,7 +148,7 @@ public class GraphHandler {
         //UndirectedGraph undirectedGraph = graphModel.getUndirectedGraph();
 
 
-        //Iterate over nodes
+        /*//Iterate over nodes
         for (Node n : directedGraph.getNodes()) {
             Node[] neighbors = directedGraph.getNeighbors(n).toArray();
             System.out.println(n.getLabel() + " has " + neighbors.length + " neighbors");
@@ -149,25 +157,31 @@ public class GraphHandler {
         //Iterate over edges
         for (Edge e : directedGraph.getEdges()) {
             System.out.println(e.getSource().getId() + " -> " + e.getTarget().getId());
-        }
+        }*/
 
         System.out.println("Nodes analysis:");
 
 
         GraphDistance distance = new GraphDistance();
         //distance.setDirected(true); //co to robi???
+        distance.setDirected(true);
         distance.execute(graphModel);
         Degree degree = new Degree();
         degree.execute(graphModel);
         Hits hits = new Hits();
+        hits.setUndirected(false);
         hits.execute(graphModel);
         PageRank pageRank = new PageRank();
+        pageRank.setDirected(true);
         pageRank.execute(graphModel);
         EigenvectorCentrality eigenvectorCentrality = new EigenvectorCentrality();
+        eigenvectorCentrality.setDirected(true);
         eigenvectorCentrality.execute(graphModel);
         ClusteringCoefficient clusteringCoefficient = new ClusteringCoefficient();
+        clusteringCoefficient.setDirected(true);
         clusteringCoefficient.execute(graphModel);
         ConnectedComponents connectedComponents = new ConnectedComponents();
+        connectedComponents.setDirected(true);
         connectedComponents.execute(graphModel);
         WeightedDegree weightedDegree = new WeightedDegree();
         weightedDegree.execute(graphModel);
@@ -178,6 +192,8 @@ public class GraphHandler {
         Table attributes = graphModel.getNodeTable();
         //Iterate over values
         for (String col : columnsToSee) {
+
+            //String col = GraphDistance.;
             Column current = attributes.getColumn(col);
             System.out.println(col+ ":");
             for (Node n : graphModel.getGraph().getNodes()) {
@@ -214,6 +230,42 @@ public class GraphHandler {
         input.setGraphValue("Modularity", modularity.getModularity());
         input.paramValue = paramValue;
         input.paramName = paramName;
+
+        PreviewController previewController = Lookup.getDefault().lookup(PreviewController.class);
+        PreviewModel previewModel = previewController.getModel();
+        previewModel.getProperties().putValue(PreviewProperty.SHOW_NODE_LABELS, Boolean.TRUE);
+        previewModel.getProperties().putValue(PreviewProperty.NODE_LABEL_COLOR, new DependantOriginalColor(Color.WHITE));
+        previewModel.getProperties().putValue(PreviewProperty.EDGE_CURVED, Boolean.FALSE);
+        previewModel.getProperties().putValue(PreviewProperty.EDGE_OPACITY, 50);
+        previewModel.getProperties().putValue(PreviewProperty.BACKGROUND_COLOR, Color.BLACK);
+
+
+        ExportController ec = Lookup.getDefault().lookup(ExportController.class);
+        try {
+            ec.exportFile(new File("simple.pdf"));
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            return;
+        }
+
+        //PDF Exporter config and export to Byte array
+
+        PDFExporter pdfExporter = (PDFExporter) ec.getExporter("pdf");
+        pdfExporter.setPageSize(PageSize.A0);
+        pdfExporter.setWorkspace(workspace);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ec.exportStream(baos, pdfExporter);
+        byte[] pdf = baos.toByteArray();
+        FileOutputStream fos = null;
+
+        try {
+            fos = new FileOutputStream("graf_" + paramName+ "_" + paramValue+".pdf");
+            fos.write(pdf);
+            fos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
 }

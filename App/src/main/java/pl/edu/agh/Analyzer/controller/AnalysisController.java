@@ -356,7 +356,7 @@ public class AnalysisController {
             setIsAskingForValue(false);
           if (getPressReleasesByDate().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
               System.out.println("******************* *Date: "+value + " ************************");
-              GraphHandler.graphCreator(fetchedNotes);
+              GraphHandler.graphCreator("Date", value, fetchedNotes);
           }
         }
       }
@@ -388,7 +388,7 @@ public class AnalysisController {
                   }
                   for (String d : newspaperNotes.keySet()){
                       System.out.println("------> " + d);
-                      GraphHandler.graphCreator(newspaperNotes.get(d));
+                      GraphHandler.graphCreator("Newspaper and date" , value+"("+d+")", newspaperNotes.get(d));
                   }
               }
           }
@@ -412,7 +412,7 @@ public class AnalysisController {
             setIsAskingForValue(false);
           if (getPressReleasesByCountries().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
               System.out.println("******************* *Country: "+value + " ************************");
-              GraphHandler.graphCreator(fetchedNotes);
+              GraphHandler.graphCreator("Countries", value, fetchedNotes);
           }
       }
       return "foo";
@@ -431,7 +431,7 @@ public class AnalysisController {
             setIsAskingForValue(false);
           if (getPressReleasesByLangs().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
               System.out.println("******************* *Language: "+value + " ************************");
-              GraphHandler.graphCreator(fetchedNotes);
+              GraphHandler.graphCreator("Language", value, fetchedNotes);
           }
       }
       return "foo";
