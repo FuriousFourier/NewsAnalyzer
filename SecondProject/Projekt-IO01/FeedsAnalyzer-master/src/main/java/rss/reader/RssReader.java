@@ -26,7 +26,7 @@ public class RssReader extends FeedWriter {
                 SyndFeed syndFeed = input.build(new XmlReader(new URL(downloadedFeed.getRssUrl())));
                 downloadedFeed.setSyndFeed(syndFeed);
             } catch (FeedException e) {
-                e.printStackTrace();
+                System.err.println("Error while handling " + downloadedFeed.getName() + "; " + downloadedFeed.getRssUrl());
             } catch (IOException e) {
                 e.printStackTrace();
             }

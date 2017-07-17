@@ -2,6 +2,7 @@ package pl.edu.agh.Analyzer.model;
 
 import javax.persistence.*;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by pawel on 10.07.17.
@@ -11,21 +12,21 @@ import java.util.List;
 @Table(name = "TAGs")
 public class Tag {
 
+    private static final String DUMMY_NAME = "UNNAMED_TAG";
+
     @Id
     @GeneratedValue
     private Integer id;
 
     private String name;
 
-    /*@OneToOne(targetEntity = Country.class, cascade = {CascadeType.ALL})
-    @JoinColumn(name = "countryid", referencedColumnName = "ID")*/
     @OneToOne (targetEntity = Country.class, mappedBy = "tag")
     private Country country;
 
     @ManyToMany(mappedBy = "tags")
-    private List<PressRelease> pressReleases;
+    private Set<PressRelease> pressReleases;
 
-    public Tag(String name, Country country, List<PressRelease> pressReleases) {
+    public Tag(String name, Country country, Set<PressRelease> pressReleases) {
         this.name = name;
         this.country = country;
         this.pressReleases = pressReleases;
@@ -39,15 +40,16 @@ public class Tag {
         this.country = country;
     }
 
-    public List<PressRelease> getPressReleases() {
+    public Set<PressRelease> getPressReleases() {
         return pressReleases;
     }
 
-    public void setPressReleases(List<PressRelease> pressReleases) {
+    public void setPressReleases(Set<PressRelease> pressReleases) {
         this.pressReleases = pressReleases;
     }
 
     public Tag() {
+        this.name = DUMMY_NAME;
     }
 
     public Integer getId() {

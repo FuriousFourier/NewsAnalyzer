@@ -1,4 +1,4 @@
-"﻿ID"	"TAG"	"WORD"	"TYPE"	"ACCURACY"	"LG"
+"ID"	"TAG"	"WORD"	"TYPE"	"ACCURACY"	"LG"
 1	"Ebola"	"Ébola"	"Virus_name"	"TRUE"	"es"
 2	"Ebola"	"Ebola"	"Virus_name"	"TRUE"	"fr"
 3	"Ebola"	"Ebola"	"Virus_name"	"TRUE"	"en"

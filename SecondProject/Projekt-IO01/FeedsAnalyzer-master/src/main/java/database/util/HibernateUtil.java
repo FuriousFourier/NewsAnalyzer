@@ -257,7 +257,7 @@ public class HibernateUtil {
 
     public static void addCountriesToDB() throws IOException {
         String filePath = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/tagsAndCountries.csv";
-        List<String> countries = ReaderCsvFiles.readAtPosition(filePath, 1, '\t');
+        List<String> countries = ReaderCsvFiles.readAtPosition(filePath, 1);
         GenericDAO<Country,Integer> dao = new GenericDAOHibernate<Country, Integer>(Country.class);
         for (int i = 0; i < countries.size(); i++){
             Country addingCountry = new Country();
@@ -273,8 +273,8 @@ public class HibernateUtil {
 
     public static void addTagsToDb() throws IOException {
         String filePath = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/tagsAndCountries.csv";
-        List<String> countries = ReaderCsvFiles.readAtPosition(filePath, 1, '\t');
-        List<String> tags = ReaderCsvFiles.readAtPosition(filePath, 0, '\t');
+        List<String> countries = ReaderCsvFiles.readAtPosition(filePath, 1);
+        List<String> tags = ReaderCsvFiles.readAtPosition(filePath, 0);
         GenericDAO<TAG,Integer> dao = new GenericDAOHibernate<TAG,Integer>(TAG.class);
         for (int i = 0; i < tags.size(); i++){
             String countryIdQuery = "select ID from Country where name = \'" + countries.get(i) +"\'";
@@ -334,16 +334,16 @@ public class HibernateUtil {
                     List<String> titles = null;
                     List<String> contents = null;
                     if (newFeeds) {
-                        feedsNames = ReaderCsvFiles.readAtPosition(filePath,0, ' ');
-                        dates = ReaderCsvFiles.readAtPosition(filePath, 1, ' ');
-                        titles = ReaderCsvFiles.readAtPosition(filePath, 2, ' ');
-                        contents = ReaderCsvFiles.readAtPosition(filePath, 3, ' ');
+                        feedsNames = ReaderCsvFiles.readAtPosition(filePath,0);
+                        dates = ReaderCsvFiles.readAtPosition(filePath, 1);
+                        titles = ReaderCsvFiles.readAtPosition(filePath, 2);
+                        contents = ReaderCsvFiles.readAtPosition(filePath, 3);
                     }
                     else {
-                        feedsNames = ReaderCsvFiles.readAtPosition(filePath,1, '\t');
-                        dates = ReaderCsvFiles.readAtPosition(filePath, 2, '\t');
-                        titles = ReaderCsvFiles.readAtPosition(filePath, 3, '\t');
-                        contents = ReaderCsvFiles.readAtPosition(filePath, 4, '\t');
+                        feedsNames = ReaderCsvFiles.readAtPosition(filePath,1);
+                        dates = ReaderCsvFiles.readAtPosition(filePath, 2);
+                        titles = ReaderCsvFiles.readAtPosition(filePath, 3);
+                        contents = ReaderCsvFiles.readAtPosition(filePath, 4);
                     }
                     GenericDAO<PressRelease,Integer> dao = new GenericDAOHibernate<PressRelease, Integer>(PressRelease.class);
                     System.err.println(filePath);
@@ -397,8 +397,8 @@ public class HibernateUtil {
                         && !f.getName().equals(GEOMEDIA_UNIQUE_FILE_NAME)) || (f.getName().equals(ORG_TAGGED_FILE_NAME))) {
                     String filePath = f.getAbsolutePath();
                     System.out.println(filePath);
-                    List<String> titles = ReaderCsvFiles.readAtPosition(filePath, titlesPosition, '\t');
-                    List<String> tags = ReaderCsvFiles.readAtPosition(filePath, 4, '\t');
+                    List<String> titles = ReaderCsvFiles.readAtPosition(filePath, titlesPosition);
+                    List<String> tags = ReaderCsvFiles.readAtPosition(filePath, 4);
                     GenericDAO<PressReleasesTag, Integer> dao = new GenericDAOHibernate<PressReleasesTag, Integer>(PressReleasesTag.class);
                     System.err.println("#################################");
                     System.err.println(filePath);
@@ -446,8 +446,8 @@ public class HibernateUtil {
         }
         for (int i1 = 0; i1 < ebolaFilePaths.length; i1++) {
             String filePath = ebolaFilePaths[i1];
-            List<String> titles = ReaderCsvFiles.readAtPosition(filePath, 3, '\t');
-            List<String> tags = ReaderCsvFiles.readAtPosition(filePath, 6, '\t');
+            List<String> titles = ReaderCsvFiles.readAtPosition(filePath, 3);
+            List<String> tags = ReaderCsvFiles.readAtPosition(filePath, 6);
             GenericDAO<PressReleasesTag, Integer> dao = new GenericDAOHibernate<PressReleasesTag, Integer>(PressReleasesTag.class);
             System.err.println("#################################");
             System.err.println(filePath);
@@ -488,8 +488,8 @@ public class HibernateUtil {
         }
         for (int i1 = 0; i1 < ebolaFilePaths.length; i1++) {
             String filePath = ebolaFilePaths[i1];
-            List<String> titles = ReaderCsvFiles.readAtPosition(filePath, 3, '\t');
-            List<String> tags = ReaderCsvFiles.readAtPosition(filePath, 4, '\t');
+            List<String> titles = ReaderCsvFiles.readAtPosition(filePath, 3);
+            List<String> tags = ReaderCsvFiles.readAtPosition(filePath, 4);
             GenericDAO<PressReleasesTag, Integer> dao = new GenericDAOHibernate<PressReleasesTag, Integer>(PressReleasesTag.class);
             System.err.println("#################################");
             System.err.println(filePath);

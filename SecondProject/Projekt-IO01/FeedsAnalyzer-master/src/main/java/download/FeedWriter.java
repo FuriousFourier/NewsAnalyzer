@@ -4,6 +4,7 @@ import au.com.bytecode.opencsv.CSVWriter;
 import com.sun.syndication.feed.synd.SyndEntry;
 import com.sun.syndication.feed.synd.SyndFeed;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DateFormat;
@@ -12,9 +13,13 @@ import java.util.List;
 
 public class FeedWriter {
 
-    public static void writeFeeds(DownloadedFeed[] downloadedFeeds){
-        for (DownloadedFeed feed: downloadedFeeds){
-            String filename = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/Feeds/" + feed.getName() +".csv";
+	public static final String FEED_DIRECTORY_PATH = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/Feeds";
+
+	public static void writeFeeds(DownloadedFeed[] downloadedFeeds){
+		File directory = new File(FEED_DIRECTORY_PATH);
+		directory.mkdirs();
+		for (DownloadedFeed feed: downloadedFeeds){
+            String filename = FEED_DIRECTORY_PATH + "/" + feed.getName() +".csv";
             if (feed.getSyndFeed() != null) {
                 writeFeed(filename, feed.getSyndFeed(), feed.getName());
             } else {
@@ -30,7 +35,10 @@ public class FeedWriter {
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         CSVWriter writer = null;
         try {
-            writer = new CSVWriter(new FileWriter(filename, true), ' ');
+			File file = new File(filename);
+			file.createNewFile();
+			FileWriter fileWriter = new FileWriter(file, true);
+            writer = new CSVWriter(fileWriter, ' ');
             List entries = syndFeed.getEntries();
             for (Object entry1 : entries) {
                 final SyndEntry entry = (SyndEntry) entry1;
@@ -41,8 +49,8 @@ public class FeedWriter {
             e.printStackTrace();
         } finally {
             try {
-                assert writer != null;
-                writer.close();
+                if (writer != null)
+                    writer.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }

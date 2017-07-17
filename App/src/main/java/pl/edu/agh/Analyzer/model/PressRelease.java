@@ -5,6 +5,7 @@ import org.hibernate.validator.constraints.Length;
 import javax.persistence.*;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by pawel on 10.07.17.
@@ -14,6 +15,10 @@ import java.util.List;
 @Entity
 @Table(name = "Pressreleases")
 public class PressRelease {
+
+    private static final Date dummyDate = new Date();
+    private static final String dummyTitle = "UNTITLED";
+    private static long counter = 0;
 
     @Id
     @GeneratedValue
@@ -30,13 +35,14 @@ public class PressRelease {
 
     @ManyToMany(targetEntity = Tag.class, cascade = {CascadeType.ALL})
     @JoinTable(name = "Pressreleasestag", joinColumns = @JoinColumn(name = "pressreleaseid", referencedColumnName = "ID"), inverseJoinColumns = @JoinColumn(name = "tagid", referencedColumnName = "ID"))
-    private List<Tag> tags;
+    private Set<Tag> tags;
 
     @ManyToOne(targetEntity = Feed.class, cascade = {CascadeType.ALL})
     @JoinColumn(name = "feedID", referencedColumnName = "ID")
     private Feed feed;
 
-    public PressRelease(String title, Date date, String content, List<Tag> tags, Feed feed) {
+
+    public PressRelease(String title, Date date, String content, Set<Tag> tags, Feed feed) {
         this.title = title;
         this.date = date;
         this.content = content;
@@ -45,13 +51,15 @@ public class PressRelease {
     }
 
     public PressRelease() {
+        this.date = dummyDate;
+        this.title = dummyTitle;
     }
 
-    public List<Tag> getTags() {
+    public Set<Tag> getTags() {
         return tags;
     }
 
-    public void setTags(List<Tag> tags) {
+    public void setTags(Set<Tag> tags) {
         this.tags = tags;
     }
 
@@ -102,6 +110,12 @@ public class PressRelease {
 
     @Override
     public int hashCode() {
-        return this.date.hashCode() / 2 + this.title.hashCode() / 2;
+        try {
+            return this.date.hashCode() / 2 + this.title.hashCode() / 2;
+        } catch (NullPointerException e) {
+            System.err.println("NullPointerExcpetion " + (this.date == null) + (this.title ==null) + (this.content==null)
+            + ": " + id);
+        }
+        return 0;
     }
 }

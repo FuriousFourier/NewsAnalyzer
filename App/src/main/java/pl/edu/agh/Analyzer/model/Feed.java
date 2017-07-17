@@ -12,6 +12,8 @@ import java.util.Set;
 @Table(name = "Feeds")
 public class Feed {
 
+    private final static String DUMMY_NAME = "UNNAMED_FEED";
+
     @Id
     @GeneratedValue
     private Integer id;
@@ -33,6 +35,7 @@ public class Feed {
     }
 
     public Feed() {
+        this.name = DUMMY_NAME;
     }
 
     public Integer getId() {

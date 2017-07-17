@@ -1,117 +1,133 @@
 package tagger;
 
-import au.com.bytecode.opencsv.CSVReader;
 import csv.reader.ReaderCsvFiles;
 import csv.writer.WriterCsvFiles;
-import org.hibernate.boot.jaxb.SourceType;
-import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
 //../../ -> ../SecondProject
 //./ -> ../SecondProject/Projekt-IO01/FeedsAnalyzer-master
 public class Tagger {
-    private static final Character feedFileSeparator = ' ';
-    private static final Character tagFileSeparator = '\t';
-    private static final String secondFeedsFolderPaths = "../SecondProject/geomedia/cist-sample_geomedia-db/Sample_GeomediaDB";
-    private static final String firstFeedsFolderPaths = "../SecondProject/geomedia/Geomedia_extract_AGENDA/Geomedia_extract_AGENDA";
-    private static final String countryTagFile = "../SecondProject/geomedia/cist-sample_geomedia-db/Sample_GeomediaDB/Dico_Country_Free.csv";
+
+    //private static final String secondFeedsFolderPaths = "../SecondProject/geomedia/cist-sample_geomedia-db/Sample_GeomediaDB";
+    private static final String oldFeedsFolderPaths = "../SecondProject/geomedia/Geomedia_extract_AGENDA/Geomedia_extract_AGENDA";
+    private static final String countryTagFile = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/Dico_Country_Free.csv";
     private static final String newFeedsFolderPaths = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/Feeds";
     private static final String destinationTagsFolderPaths = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/TaggedFeeds";
+    private static final String organizationTagsFilePath = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/orgs.csv";
+    private static final String organizationShortTagsFilePath = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/orgs_short.csv";
+    public static final String DEFAULT_CONTENT = "NO CONTENT";
+
+    private static final String[] tagFiles = {countryTagFile, organizationTagsFilePath, organizationShortTagsFilePath};
+    private static final String[] destinationSuffixes = {"taggedForCountry", "taggedForOrg", "taggedForOrg/SHORT"};
+
     public static void main(String[] args) throws IOException {
-        System.out.println(System.getProperty("user.dir"));
-        Map<String, String> tagsMap = ReaderCsvFiles.readAtTwoPosition("../SecondProject/geomedia/cist-sample_geomedia-db/Sample_GeomediaDB/Dico_Country_Free.csv",
-                1, 2, '\t');
-        /*tagFileByCountry("../../geomedia/cist-sample_geomedia-db/Sample_GeomediaDB/Dico_Country_Free.csv",
-                "./Feeds",
-                "./TaggedFeeds");
-        System.out.println("Robota 1");
-        tagFileByOrganization("./orgs.csv",
-                "../../geomedia/Geomedia_extract_AGENDA/Geomedia_extract_AGENDA",
-                "./TaggedFeeds/OrgTag");
-        System.out.println("Robota 2");
-        tagFileByOrganization("./orgs_short.csv",
-                firstFeedsFolderPaths,
-                "./TaggedFeeds/OrgTag/SHORT");
-        System.out.println("Robota 3");
-        tagFileByCountry(countryTagFile, "./Feeds",
-                "./TaggedFeeds/NewFeeds/CountryTag" );*/
-        System.out.println("Robota 1");
-        tagFileByCountry("../SecondProject/geomedia/cist-sample_geomedia-db/Sample_GeomediaDB/Dico_Country_Free.csv", newFeedsFolderPaths, destinationTagsFolderPaths + "/taggedForCountry");
-        System.out.println("Robota 2");
-        tagFileByOrganization("../SecondProject/Projekt-IO01/FeedsAnalyzer-master/orgs.csv",firstFeedsFolderPaths, destinationTagsFolderPaths + "/taggedForOrg");
-        System.out.println("Robota 3");
-        tagFileByOrganization("../SecondProject/Projekt-IO01/FeedsAnalyzer-master/orgs_short.csv", firstFeedsFolderPaths, destinationTagsFolderPaths + "/taggedForOrg/SHORT");
-        System.out.println("Finisz");
+        //Map<String, String> tagsMap = ReaderCsvFiles.readAtTwoPosition("../SecondProject/geomedia/cist-sample_geomedia-db/Sample_GeomediaDB/Dico_Country_Free.csv", 1, 2, '\t');
+
+        if (tagFiles.length != destinationSuffixes.length) {
+            System.err.println("Error in paths");
+            System.exit(1);
+        }
+
+        for (int i=0; i<tagFiles.length; ++i) {
+            System.out.println("Work 1." + i);
+            tagFileNormalWay(tagFiles[i], newFeedsFolderPaths, destinationTagsFolderPaths + "/" + destinationSuffixes[i]);
+        }
+        /*for (int i=0; i<tagFiles.length; ++i) {
+            System.out.println("Work 2." + i);
+            tagFileWithUniqueInName(tagFiles[i], oldFeedsFolderPaths, destinationTagsFolderPaths + "/" + destinationSuffixes[i]);
+        }*/
+        System.out.println("Finished");
 
     }
 
-    private static void tagFileByCountry(String tagsFilePath, String sourceFolderPath, String destinationFolderPath) throws IOException {
+    private static void tagFileNormalWay(String tagsFilePath, String sourceFolderPath, String destinationFolderPath) throws IOException {
         File file = new File(sourceFolderPath);
         File[] files = file.listFiles();
-        assert files != null;
+        if (files == null) {
+            System.out.println("Null files for " + sourceFolderPath);
+        }
         for (File f: files){
             if (f.isFile()) {
                 String sourceFilePath = f.getAbsolutePath();
                 String destinationFilePath = destinationFolderPath + "/" + f.getName();
-                System.out.println(sourceFilePath + " is tagging");
-                tagFile(tagsFilePath, sourceFilePath, destinationFilePath, feedFileSeparator, tagFileSeparator);
+                System.out.println(sourceFilePath + " is being tagged");
+                tagFile(tagsFilePath, sourceFilePath, destinationFilePath);
             }
         }
 
 
 
     }
-    private static void tagFileByOrganization(String tagsFilePath, String sourceFolderPath, String destinationfolderPath) throws IOException {
+    private static void tagFileWithUniqueInName(String tagsFilePath, String sourceFolderPath, String destinationfolderPath) throws IOException {
         File file = new File(sourceFolderPath);
         String[] directories = file.list(new FilenameFilter() {
             public boolean accept(File dir, String name) {
                 return new File(dir, name).isDirectory();
             }
         });
-        assert directories != null;
+        if (directories == null) {
+            System.out.println("No directories in " + file.getAbsolutePath());
+            return;
+        }
         for (String dir: directories){
             String sourceFilePath = sourceFolderPath + "/" + dir + "/rss_unique.csv";
-            String destinationFilePath = destinationfolderPath + "/" + dir + "/rss_org_tagged.csv";
-            System.out.println(sourceFilePath + " is tagging");
-            tagFile(tagsFilePath, sourceFilePath, destinationFilePath, feedFileSeparator, tagFileSeparator);
+            //String destinationFilePath = destinationfolderPath + "/" + dir + "/rss_org_tagged.csv";
+            String destinationFilePath = destinationfolderPath + "/" + dir + ".csv";
+            System.out.println(sourceFilePath + " is being tagged");
+            tagFile(tagsFilePath, sourceFilePath, destinationFilePath);
         }
 
     }
-    private static void tagFile(String tagsFilePath, String sourceFilePath, String destinationFilePath,
-                                Character feedFileSeparator, Character tagFileSeparator) throws IOException {
-/*        System.out.println("Source: " + sourceFilePath);
-        System.out.println("Destinaion: " + destinationFilePath);
-        System.out.println("tags file: " + tagsFilePath);*/
-
-        int[] positions;
+    private static void tagFile(String tagsFilePath, String sourceFilePath, String destinationFilePath) throws IOException {
+        int[] newsPositions;
+        int [] tagsPositions;
         char[] readBytes = new char[4];
+        String readBytesString;
 
         FileReader tmpFileReader = new FileReader(sourceFilePath);
         if (tmpFileReader.read(readBytes, 0, 4) != 4) {
-            System.out.println("Coś się popsuło");
-            System.exit(12);
+            System.out.println("Something strange is happening");
+            tmpFileReader.close();
+            return;
         }
-        if (new String(readBytes).equals("\"ID\"")) {
-            positions = new int[]{1, 2, 3, 4};
+        tmpFileReader.close();
+        readBytesString = new String(readBytes);
+        if (readBytesString.equals("\"ID\"")) {
+            newsPositions = new int[]{1, 2, 3, 4};
         } else {
-            positions = new int[]{0, 1, 2, 3};
+            newsPositions = new int[]{0, 1, 2, 3};
         }
 
-        List<String> feeds = ReaderCsvFiles.readAtPosition(sourceFilePath, positions[0], feedFileSeparator);
-        List<String> times = ReaderCsvFiles.readAtPosition(sourceFilePath, positions[1], feedFileSeparator);
-        List<String> titles = ReaderCsvFiles.readAtPosition(sourceFilePath, positions[2], feedFileSeparator);
-        List<String> descriptions = ReaderCsvFiles.readAtPosition(sourceFilePath, positions[3], feedFileSeparator);
-        List<String> tags = ReaderCsvFiles.readAtPosition(tagsFilePath, 0, tagFileSeparator);
-        List<String> tagsKeys = ReaderCsvFiles.readAtPosition(tagsFilePath,  1, tagFileSeparator);
+        readBytes = new char[2];
+        tmpFileReader = new FileReader(tagsFilePath);
+        if (tmpFileReader.read(readBytes, 0, 2) != 2) {
+            System.out.println("Something strange is happening");
+            tmpFileReader.close();
+            return;
+        }
+        tmpFileReader.close();
+        readBytesString = new String(readBytes);
+        if (readBytesString.equals("ID")) {
+            tagsPositions = new int[]{1, 2};
+        } else {
+            tagsPositions = new int[]{0, 1};
+        }
+
+        List<String> feeds = ReaderCsvFiles.readAtPosition(sourceFilePath, newsPositions[0]);
+        List<String> times = ReaderCsvFiles.readAtPosition(sourceFilePath, newsPositions[1]);
+        List<String> titles = ReaderCsvFiles.readAtPosition(sourceFilePath, newsPositions[2]);
+        List<String> descriptions = ReaderCsvFiles.readAtPosition(sourceFilePath, newsPositions[3]);
+        List<String> tags = ReaderCsvFiles.readAtPosition(tagsFilePath, tagsPositions[0]);
+        List<String> tagsKeys = ReaderCsvFiles.readAtPosition(tagsFilePath,  tagsPositions[1]);
+        Set<String> usedTags = new HashSet<>();
 
         for (int i = 0; i < titles.size(); i++) {
-            List<String> usedTags = new LinkedList<String>();
+            usedTags.clear();
             for (int j = 0; j < tags.size(); j++){
                 if (!usedTags.contains(tags.get(j))){
                     String tagKey = tagsKeys.get(j);
@@ -128,7 +144,7 @@ public class Tagger {
                             }
                         }
                     }catch (IndexOutOfBoundsException e){
-                        e.printStackTrace();
+                        System.err.println("Index out of bound: " + e.getMessage() + ", i: " + i + ", j: " + j);
                     }
 
                 }

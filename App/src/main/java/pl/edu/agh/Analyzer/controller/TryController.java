@@ -134,18 +134,19 @@ public class TryController {
         }
         System.out.println("No to robim");
 
-        Iterable<PressRelease> pressReleases = pressReleaseRepository.findAll();
+		Feed feed = feedRepository.findByName("pl_POL_fakt_int");
+		if (feed == null) {
+			System.out.println("Error lel");
+			printWriter.close();
+			return "myError";
+		}
 
-        for (PressRelease pressRelease : pressReleases) {
-            Date currentReleaseDate = pressRelease.getDate();
-
-            if (currentReleaseDate.after(patternDate)) {
-                printWriter.println(currentReleaseDate + ": " + pressRelease.getContent());
-            }
-        }
-        System.out.println();
-        pressReleases = null;
-        printWriter.close();
+		Set<PressRelease> pressReleases = feed.getPressReleases();
+		for (PressRelease pressRelease : pressReleases) {
+			if (pressRelease.getTags().size() != 0)
+				printWriter.println(pressRelease.getTitle() + ", " + pressRelease.getTags().size());
+		}
+		printWriter.close();
         System.out.println("Data is written");
         return viewName;
 
@@ -226,8 +227,10 @@ public class TryController {
         Set<Newspaper> newspapers = language.getNewspapers();
         for (Newspaper newspaper : newspapers) {
             Set<Feed> feeds = newspaper.getFeeds();
+            printWriter.println("Gazeta: " + newspaper.getName() + ", feedów: " + feeds.size());
             for (Feed feed : feeds) {
                 Set<PressRelease> pressReleases = feed.getPressReleases();
+                System.out.println("PressReleasów: " + pressReleases.size());
                 for (PressRelease pressRelease : pressReleases) {
                     printWriter.println(newspaper.getName() + ": " + feed.getName() + ": " + pressRelease.getDate() + ": " + pressRelease.getTitle());
                 }

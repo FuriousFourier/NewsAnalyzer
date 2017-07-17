@@ -1,8 +1,8 @@
 package csv.reader;
 
 import au.com.bytecode.opencsv.CSVReader;
+import tagger.Tagger;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -21,7 +21,7 @@ public class ReaderCsvFiles {
     public static Map<String,String> readTwoFilesAndReturnTagsWithCountries(String tagsFilePath, String countriesFilePath){
         Map<String,String> result = new HashMap<String, String>();
         try {
-            List<String> countries = readAtPosition(countriesFilePath, 1, ' ');
+            List<String> countries = readAtPosition(countriesFilePath, 1);
             for (String country: countries){
                 String foundTag = findTagFittingToCountry(country, tagsFilePath);
                 if (foundTag != null){
@@ -34,10 +34,10 @@ public class ReaderCsvFiles {
         return result;
     }
 
-    public static List<String> readAtPosition(String filepath, int position, char separator) throws IOException {
+    public static List<String> readAtPosition(String filepath, int position) throws IOException {
         List<String> result = null;
 
-        separator = 0;
+        char separator = 0;
         for (char tmpSeparator: separators)
         {
             FileReader tmpFileReader = new FileReader(filepath);
@@ -56,30 +56,20 @@ public class ReaderCsvFiles {
         if (separator == 0) {
             throw new ArrayIndexOutOfBoundsException();
         }
-        //System.out.println("Reader: Filepath = " + filepath + "\tseparator = " + (int)separator);
-        FileReader fileReader = new FileReader(filepath);
-        try {
+        try (FileReader fileReader = new FileReader(filepath)) {
             CSVReader reader = new CSVReader(fileReader, separator);
             result = new ArrayList<String>();
             String[] nextLine;
-            long lineNumber = 0;
             while ((nextLine = reader.readNext()) != null) {
                 try {
-                    //System.out.println("Ilość: " + nextLine.length + "\tposition: " + position);
                     result.add(nextLine[position]);
-                    ++lineNumber;
-                } catch (ArrayIndexOutOfBoundsException e){
-                    //System.out.println("Index error: " + filepath + ", " + lineNumber);
-                    //System.exit(33);
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    result.add(Tagger.DEFAULT_CONTENT);
                 }
 
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
-            fileReader.close();
         }
         return result;
     }
@@ -89,13 +79,11 @@ public class ReaderCsvFiles {
         FileReader fileReader = new FileReader(filePath);
         try {
             CSVReader reader = new CSVReader(fileReader, separator);
-            result = new HashMap<String, String>();
+            result = new HashMap<>();
             String[] nextLine;
             while ((nextLine = reader.readNext()) != null) {
                 result.put(nextLine[firstPosition], nextLine[secondPosition]);
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }finally {

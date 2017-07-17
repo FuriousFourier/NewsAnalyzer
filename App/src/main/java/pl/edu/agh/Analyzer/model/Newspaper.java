@@ -14,6 +14,8 @@ import java.util.Set;
 @Table(name = "Newspapers")
 public class Newspaper {
 
+    private final static String DUMMY_NAME = "UNNAMED_NEWSPAPER";
+
     @Id
     @GeneratedValue
     private Integer id;
@@ -63,6 +65,7 @@ public class Newspaper {
     }
 
     public Newspaper() {
+        this.name = DUMMY_NAME;
     }
 
     public Integer getId() {

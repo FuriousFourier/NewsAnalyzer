@@ -14,6 +14,8 @@ import java.util.Set;
 @Table(name = "Countries")
 public class Country {
 
+    final static private String DUMMY_NAME = "NOWHERE";
+
     @Id
     @GeneratedValue
     private Integer id;
@@ -34,6 +36,7 @@ public class Country {
     }
 
     public Country() {
+        this.name = DUMMY_NAME;
     }
 
     public Set<Newspaper> getNewspapers() {

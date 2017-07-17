@@ -12,6 +12,8 @@ import java.util.Set;
 @Table(name = "Languages")
 public class Language {
 
+    private final static String DUMMY_NAME = "UNNAMED_LANGUAGE";
+
     @Id
     @GeneratedValue
     private Integer id;
@@ -19,7 +21,6 @@ public class Language {
     private String name;
 
     @OneToMany(targetEntity = Newspaper.class, mappedBy = "language")
-    //private List<Newspaper> newspapers;
     private Set<Newspaper> newspapers;
 
     public Language(String name, Set<Newspaper> newspapers) {
@@ -28,6 +29,7 @@ public class Language {
     }
 
     public Language() {
+        this.name = DUMMY_NAME;
     }
 
     public Integer getId() {
