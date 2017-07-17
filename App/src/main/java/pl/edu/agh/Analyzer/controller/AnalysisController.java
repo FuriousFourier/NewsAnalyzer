@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import pl.edu.agh.Analyzer.model.*;
 import pl.edu.agh.Analyzer.repository.*;
 import pl.edu.agh.Analyzer.ui.AnalysisHandler;
+import pl.edu.agh.Analyzer.ui.GraphHandler;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -47,10 +48,13 @@ public class AnalysisController {
     private Date lastDate = new Date();
     private static boolean isAskingForValue = false;
     private String value;
+    private static boolean isIteratingOverDates = false;
 
     public static void setIsAskingForValue(boolean val){
         isAskingForValue = val;
     }
+    public static void setIsIteratingOverDates(boolean val) { isIteratingOverDates = val; }
+
 
     @RequestMapping("/ana")
     public String analysisIndex() {
@@ -352,7 +356,7 @@ public class AnalysisController {
             setIsAskingForValue(false);
           if (getPressReleasesByDate().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
               System.out.println("******************* *Date: "+value + " ************************");
-              AnalysisHandler.graphCreator(fetchedNotes);
+              GraphHandler.graphCreator(fetchedNotes);
           }
         }
       }
@@ -372,11 +376,28 @@ public class AnalysisController {
             setIsAskingForValue(false);
           if ((getPressReleasesByNews().equals("foo")) && (fetchedNotes != null) && (!fetchedNotes.isEmpty())){
               System.out.println("******************* *Newspaper: "+value + " ************************");
-              AnalysisHandler.graphCreator(fetchedNotes);
+              if (!isAskingForValue && isIteratingOverDates){
+                  Map<String, List<PressRelease>> newspaperNotes = new HashMap<String, List<PressRelease>>();
+                  //wrzucam notki do list w hashmapie
+                  for (PressRelease p : fetchedNotes){
+                      int pMonth = p.getDate().getMonth();
+                      int pYear = p.getDate().getYear();
+                      String date = (pMonth>10 ? pMonth : "0"+pMonth) + "-" + pYear;
+                      newspaperNotes.putIfAbsent(date, new ArrayList<PressRelease>());
+                      newspaperNotes.get(date).add(p);
+                  }
+                  for (String d : newspaperNotes.keySet()){
+                      System.out.println("------> " + d);
+                      GraphHandler.graphCreator(newspaperNotes.get(d));
+                  }
+              }
           }
       }
       return "foo";
     }
+
+
+
     @GetMapping("/analyseCountry")
     public String analyseByCountry(){
       if (pressReleaseRepository == null){
@@ -391,7 +412,7 @@ public class AnalysisController {
             setIsAskingForValue(false);
           if (getPressReleasesByCountries().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
               System.out.println("******************* *Country: "+value + " ************************");
-              AnalysisHandler.graphCreator(fetchedNotes);
+              GraphHandler.graphCreator(fetchedNotes);
           }
       }
       return "foo";
@@ -410,7 +431,7 @@ public class AnalysisController {
             setIsAskingForValue(false);
           if (getPressReleasesByLangs().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
               System.out.println("******************* *Language: "+value + " ************************");
-              AnalysisHandler.graphCreator(fetchedNotes);
+              GraphHandler.graphCreator(fetchedNotes);
           }
       }
       return "foo";
