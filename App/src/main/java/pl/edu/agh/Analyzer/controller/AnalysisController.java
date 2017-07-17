@@ -34,6 +34,9 @@ public class AnalysisController {
     @Autowired
     private PressReleaseRepository pressReleaseRepository;
 
+    @Autowired
+    private TagRepository tagRepository;
+
     private final BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
     private List<Newspaper> fetchedNewspapers = new ArrayList<>();
     private List<Feed> fetchedFeeds = new ArrayList<>();
@@ -151,11 +154,11 @@ public class AnalysisController {
           for (PressRelease pr : result) {
               if (count > 10)    //J.W.
                   break;
-              System.out.print("ID: " + pr.getId() + "; ");
-              /*for (Tag t: pr.getTags()){
+              System.out.print("ID: " + pr.getId() + "; Tags:");
+              for (Tag t: pr.getTags()){
                   System.out.print(t.getName()+", ");
-              }*/
-              System.out.print("Country:" + pr.getFeed().getNewspaper().getCountry().getName() + "; Newspaper:" + pr.getFeed().getNewspaper().getName());
+              }
+              System.out.print("Country:" + pr.getFeed().getNewspaper().getCountry().getName() + "; Newspaper:" + pr.getFeed().getNewspaper().getName() + "\n");
               count++;
           }
       }
@@ -200,14 +203,15 @@ public class AnalysisController {
           for (PressRelease pr : notesFromAllFeeds) {
               if (count > 10)    //J.W.
                   break;
-              System.out.print("ID: " + pr.getId() + "; ");
-              /*for (Tag t: pr.getTags()){
+              System.out.print("ID: " + pr.getId() + "; Tags:");
+              for (Tag t: pr.getTags()){
                   System.out.print(t.getName()+", ");
-              }*/
-              System.out.print("Country:" + pr.getFeed().getNewspaper().getCountry().getName() + "; Newspaper:" + pr.getFeed().getNewspaper().getName());
+              }
+              System.out.print("Country:" + pr.getFeed().getNewspaper().getCountry().getName() + "; Newspaper:" + pr.getFeed().getNewspaper().getName() + "\n");
               count++;
           }
       }
+        fetchedNotes = notesFromAllFeeds;
         return "foo";
     }
     @GetMapping("/notesLangs")
@@ -251,14 +255,15 @@ public class AnalysisController {
           for (PressRelease pr : notesFromAllFeeds) {
               if (count > 10)    //J.W.
                   break;
-              System.out.print("ID: " + pr.getId() + "; ");
+              System.out.print("ID: " + pr.getId() + "; Tags:");
               /*for (Tag t: pr.getTags()){
                   System.out.print(t.getName()+", ");
               }*/
-              System.out.print("Country:" + pr.getFeed().getNewspaper().getCountry().getName() + "; Newspaper:" + pr.getFeed().getNewspaper().getName());
+              System.out.print("Country:" + pr.getFeed().getNewspaper().getCountry().getName() + "; Newspaper:" + pr.getFeed().getNewspaper().getName() + "\n");
               count++;
           }
       }
+        fetchedNotes = notesFromAllFeeds;
         return "foo";
     }
     @GetMapping("/notesCountr")
@@ -302,14 +307,15 @@ public class AnalysisController {
           for (PressRelease pr : notesFromAllFeeds) {
               if (count > 10)    //J.W.
                   break;
-              System.out.print("ID: " + pr.getId() + "; ");
+              System.out.print("ID: " + pr.getId() + "; Tags:");
               /*for (Tag t: pr.getTags()){
                   System.out.print(t.getName()+", ");
               }*/
-              System.out.print("Country:" + pr.getFeed().getNewspaper().getCountry().getName() + "; Newspaper:" + pr.getFeed().getNewspaper().getName());
+              System.out.print("Country:" + pr.getFeed().getNewspaper().getCountry().getName() + "; Newspaper:" + pr.getFeed().getNewspaper().getName() + "\n");
               count++;
           }
       }
+      fetchedNotes = notesFromAllFeeds;
         return "foo";
     }
 
@@ -364,7 +370,7 @@ public class AnalysisController {
       for (Newspaper n : fetchedNewspapers) {
             value = n.getName();
             setIsAskingForValue(false);
-          if (getPressReleasesByNews().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
+          if ((getPressReleasesByNews().equals("foo")) && (fetchedNotes != null) && (!fetchedNotes.isEmpty())){
               System.out.println("******************* *Newspaper: "+value + " ************************");
               AnalysisHandler.graphCreator(fetchedNotes);
           }
@@ -384,7 +390,7 @@ public class AnalysisController {
             value = c.getName();
             setIsAskingForValue(false);
           if (getPressReleasesByCountries().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
-              System.out.println("******************* *Newspaper: "+value + " ************************");
+              System.out.println("******************* *Country: "+value + " ************************");
               AnalysisHandler.graphCreator(fetchedNotes);
           }
       }
@@ -403,11 +409,29 @@ public class AnalysisController {
             value = l.getName();
             setIsAskingForValue(false);
           if (getPressReleasesByLangs().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
-              System.out.println("******************* *Newspaper: "+value + " ************************");
+              System.out.println("******************* *Language: "+value + " ************************");
               AnalysisHandler.graphCreator(fetchedNotes);
           }
       }
       return "foo";
+    }
+
+    @GetMapping("/getTags")
+    public String getAllTags(){
+        if (tagRepository == null){
+            System.out.println("Kiepsko");
+            return  "foo";
+        }
+        List<Tag> tags = (List<Tag>)tagRepository.findAll();
+        System.out.println("Tags:");
+        for (Tag t: tags){
+            System.out.println(t.getName()+"; notes:");
+            for (PressRelease p: t.getPressReleases()){
+                System.out.println("\t"+p.getTitle());
+            }
+            System.out.println();
+        }
+        return "foo";
     }
 
 }

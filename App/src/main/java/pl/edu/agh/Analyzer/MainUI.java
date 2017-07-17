@@ -64,6 +64,18 @@ public class MainUI {
                     System.out.println("*************");
                     myPrint("Database updated successfully");
                 }
+                else if (line.startsWith("p")) {
+                    myPrint("Tags will be fetched soon...");
+                    //HibernateUtil.main(null);
+                    URL url = new URL("http://localhost:8080/getTags");
+                    HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+                    connection.setRequestProperty("User-Agent", USER_AGENT);
+                    int responseCode = connection.getResponseCode();
+                    System.out.println("*************");
+                    System.out.println("Response Code: " + responseCode);
+                    System.out.println("*************");
+                    myPrint("All  tags have been printed out");
+                }
                 else if (line.startsWith("a")) {
                     myPrint("Analysis will start  soon...");
                     handler.startHandling();
@@ -84,6 +96,7 @@ public class MainUI {
             "\t d -> download new press notes\n" +
             "\t t -> tag new notes\n" +
             "\t u -> update database with new data (notes and tags)\n" +
+            "\t p -> print out all tags\n" +
             "\t a -> analyse social network\n" +
             "\t q -> quit application\n" +
             "\t ? -> show this message\n");

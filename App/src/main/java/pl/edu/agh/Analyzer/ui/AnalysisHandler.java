@@ -139,9 +139,12 @@ public class AnalysisHandler {
     }
 
     public static void graphCreator(List<PressRelease> notes) {
+        if (notes == null){
+            System.out.println("notes is null!");
+        }
         if (notes.isEmpty()){
             System.out.println("Empty result");
-            return;
+            //return;
         }
         //fakeowe pressreleases
         /*List<PressRelease> notes = new ArrayList<>();
