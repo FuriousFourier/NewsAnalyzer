@@ -1,9 +1,15 @@
 package pl.edu.agh.Analyzer.ui;
 
 import com.itextpdf.text.PageSize;
+import com.itextpdf.text.pdf.PdfContentByte;
 import org.gephi.graph.api.*;
 import org.gephi.io.exporter.api.ExportController;
 import org.gephi.io.exporter.preview.PDFExporter;
+import org.gephi.plugins.prestige.PrestigeStatistics;
+import org.gephi.plugins.prestige.calculation.DomainCalculator;
+import org.gephi.plugins.prestige.calculation.IndegreeCalculator;
+import org.gephi.plugins.prestige.calculation.ProximityCalculator;
+import org.gephi.plugins.prestige.calculation.RankCalculator;
 import org.gephi.preview.api.PreviewController;
 import org.gephi.preview.api.PreviewModel;
 import org.gephi.preview.api.PreviewProperty;
@@ -12,6 +18,7 @@ import org.gephi.project.api.ProjectController;
 import org.gephi.project.api.Workspace;
 import org.gephi.statistics.plugin.*;
 import org.openide.util.Lookup;
+import org.wouterspekkink.plugins.metric.lineage.Lineage;
 import pl.edu.agh.Analyzer.model.Country;
 import pl.edu.agh.Analyzer.model.Feed;
 import pl.edu.agh.Analyzer.model.PressRelease;
@@ -50,6 +57,22 @@ public class GraphHandler {
             ConnectedComponents.WEAKLY,
             WeightedDegree.WINDEGREE,
             WeightedDegree.WOUTDEGREE,
+
+            //Prestige
+            DomainCalculator.DOMAIN_KEY,
+            IndegreeCalculator.INDEGREE_KEY,
+            IndegreeCalculator.INDEGREE_NORMALIZED_KEY,
+            ProximityCalculator.PROXIMITY_KEY,
+            RankCalculator.RANK_KEY,
+            RankCalculator.NORMALIZED_RANK_KEY,
+
+            //Lineage
+            Lineage.ADISTANCE,
+            Lineage.ANCESTOR,
+            Lineage.DESCENDANT,
+            Lineage.DDISTANCE,
+            Lineage.LINEAGE,
+            Lineage.ORIGIN,
     };
 
     public static ReportInput getInput(){
@@ -188,6 +211,22 @@ public class GraphHandler {
         Modularity modularity = new Modularity();
         modularity.execute(graphModel);
 
+        //PrestigeStatistics
+        PrestigeStatistics prestigeStatistics = new PrestigeStatistics();
+        prestigeStatistics.setCalculateDomain(true);
+        prestigeStatistics.setCalculateIndegree(true);
+        prestigeStatistics.setCalculateProximity(true);
+        prestigeStatistics.setRankProminenceAttributeId(GraphDistance.BETWEENNESS); //dla proby
+        prestigeStatistics.setCalculateRank(true);
+        prestigeStatistics.execute(graphModel);
+
+        //Lineage
+        Lineage lineage = new Lineage();
+        lineage.setDirected(true);
+        lineage.setOrigin("tag2");
+        lineage.execute(graphModel);
+
+
 
         Table attributes = graphModel.getNodeTable();
         //Iterate over values
@@ -212,6 +251,7 @@ public class GraphHandler {
         System.out.println("The average clustering coefficient: " + clusteringCoefficient.getAverageClusteringCoefficient());
         System.out.println("The average degree: " + degree.getAverageDegree());
         System.out.println("Modularity: "+ modularity.getModularity());
+        System.out.println("Lineage origin: " + lineage.getOrigin());
 
         GraphDensity density = new GraphDensity();
         density.execute(graphModel);
@@ -228,6 +268,8 @@ public class GraphHandler {
         input.setGraphValue("Average clustering coefficient", clusteringCoefficient.getAverageClusteringCoefficient());
         input.setGraphValue("Average degree", degree.getAverageDegree());
         input.setGraphValue("Modularity", modularity.getModularity());
+        //z pluginów
+        input.setGraphValue("Lineage origin", lineage.getOrigin());
         input.paramValue = paramValue;
         input.paramName = paramName;
 
@@ -241,8 +283,8 @@ public class GraphHandler {
 
 
         ExportController ec = Lookup.getDefault().lookup(ExportController.class);
-        try {
-            ec.exportFile(new File("simple.pdf"));
+        /*try {
+            ec.exportFile(new File("graf_" + paramName+ "_" + paramValue+"_simple.pdf"));
         } catch (IOException ex) {
             ex.printStackTrace();
             return;
@@ -251,7 +293,7 @@ public class GraphHandler {
         //PDF Exporter config and export to Byte array
 
         PDFExporter pdfExporter = (PDFExporter) ec.getExporter("pdf");
-        pdfExporter.setPageSize(PageSize.A0);
+        pdfExporter.setPageSize(PageSize.A4);
         pdfExporter.setWorkspace(workspace);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ec.exportStream(baos, pdfExporter);
@@ -265,7 +307,7 @@ public class GraphHandler {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
+        */
     }
 
 }
