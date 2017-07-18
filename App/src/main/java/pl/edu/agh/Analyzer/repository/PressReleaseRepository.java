@@ -6,11 +6,14 @@ import pl.edu.agh.Analyzer.model.PressRelease;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by pawel on 11.07.17.
  */
 public interface PressReleaseRepository extends PagingAndSortingRepository<PressRelease, Integer> {
 
-    List<PressRelease> findByFeed(Feed feed);
+    Set<PressRelease> findByFeed(Feed feed);
+
+	Set<PressRelease> findByTitle(String name);
 }

@@ -5,12 +5,13 @@ import pl.edu.agh.Analyzer.model.Feed;
 import pl.edu.agh.Analyzer.model.Newspaper;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by pawel on 11.07.17.
  */
 public interface FeedRepository extends PagingAndSortingRepository<Feed, Integer> {
-    List<Feed> findByNewspaper(Newspaper newspaper);
+    Set<Feed> findByNewspaper(Newspaper newspaper);
 
     Feed findByName(String name);
 }

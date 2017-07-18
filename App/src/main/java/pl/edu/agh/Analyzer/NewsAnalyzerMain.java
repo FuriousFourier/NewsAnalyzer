@@ -39,7 +39,6 @@ public class NewsAnalyzerMain {
         Random random = new Random(System.currentTimeMillis());
         securityNumber = random.nextLong();
         configurableApplicationContext = SpringApplication.run(NewsAnalyzerMain.class, args);
-        DbUtil dbUtil = DbUtil.getInstance(configurableApplicationContext);
 
         while (true) {
             System.out.println("Napisz \"p\" to to zrobię (możesz też napisać \"d\")");
@@ -47,7 +46,7 @@ public class NewsAnalyzerMain {
             if (line.equals("p")) {
                 getNewFeeds();
             } else if (line.equals("q")) {
-                System.out.println("Cześć");
+                System.out.println("Bye");
                 System.exit(0);
             } else if (line.equals("d")) {
                 URL url = new URL("http://localhost:8080/addThingsToDB?secNum=" + securityNumber);
@@ -68,11 +67,11 @@ public class NewsAnalyzerMain {
     private static void getNewFeeds(){
         String [] tmp = new String[0];
         try {
-            System.out.println("Pobieram feedy");
+            System.out.println("Im gonna download feeds");
             rss.Main.main(tmp);
-            System.out.println("Taguję");
-            Tagger.main(tmp);
-            System.out.println("Lecim z bazą");
+            System.out.println("Im tagging");
+            Tagger.tagNewFeeds(1);
+            System.out.println("Lets go with db");
 
             URL url = new URL("http://localhost:8080/addThingsToDB?secNum=" + securityNumber);
             HttpURLConnection connection = (HttpURLConnection)url.openConnection();
@@ -81,7 +80,7 @@ public class NewsAnalyzerMain {
             System.out.println("*************");
             System.out.println("Response Code: " + responseCode);
             System.out.println("*************");
-            System.out.println("Koniec pracy");
+            System.out.println("Work finished");
         } catch (IOException e) {
             System.err.println("Exception in Tagger");
             e.printStackTrace();

@@ -11,9 +11,7 @@ import pl.edu.agh.Analyzer.model.*;
 import pl.edu.agh.Analyzer.repository.*;
 import pl.edu.agh.Analyzer.support.PressReleaseId;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -48,11 +46,13 @@ public class DatabaseTryController {
     private Map<String, Country> countryMap = new HashMap<>();
     private Map<String, Newspaper> newspaperMap = new HashMap<>();
     private Map<String, Feed> feedMap = new HashMap<>();
-    //private Set<PressRelease> pressReleaseSet = new HashSet<>();
     private boolean flushed = true;
 
     private static Map<PressReleaseId, PressRelease> pressReleaseMap = new HashMap<>();
     private static Map<String, Tag> tagMap = new HashMap<>();
+
+    private static final String myTitle = "Stracimy dwa lata zanim pan Trump pozna świat";
+
 
     private static final String GEOMEDIA_FEEDS_FILE_PATH = "../SecondProject/geomedia/Geomedia_extract_AGENDA/Geomedia_extract_AGENDA/";
     private static final String ORG_PATH = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/TaggedFeeds/taggedForOrg/";
@@ -271,7 +271,7 @@ public class DatabaseTryController {
             "Polish"
     };
 
-    private static Date convertStringToDate(String date) {
+    public static Date convertStringToDate(String date) {
         DateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.ENGLISH);
         Date resultDate = null;
         try {
@@ -294,7 +294,6 @@ public class DatabaseTryController {
             countryMap = new HashMap<>();
             newspaperMap = new HashMap<>();
             feedMap = new HashMap<>();
-            //pressReleaseSet = new HashSet<>();
             tagMap = new HashMap<>();
             pressReleaseMap = new HashMap<>();
         }
@@ -303,7 +302,6 @@ public class DatabaseTryController {
             countryMap.clear();
             newspaperMap.clear();
             feedMap.clear();
-            //pressReleaseSet.clear();
             tagMap.clear();
             pressReleaseMap.clear();
 
@@ -333,8 +331,7 @@ public class DatabaseTryController {
                 tagMap.put(tag.getName(), tag);
             }
             for (PressRelease pressRelease : pressReleasesFromDb) {
-                //pressReleaseSet.add(pressRelease);
-                pressReleaseMap.put(new PressReleaseId(pressRelease.getTitle(), pressRelease.getDate()), pressRelease);
+                pressReleaseMap.put(new PressReleaseId(pressRelease.getTitle(), pressRelease.getDate(), pressRelease.getFeed()), pressRelease);
             }
 
             System.out.println("Lets go with updating database");
@@ -396,11 +393,25 @@ public class DatabaseTryController {
             addFeedsToDb("Polish", nonGeomediaFeedsNames, nonGeomediaNewspapersNames);
 
             System.out.println("PressReleases");
-            //pressReleaseMap
+            //pressReleases
             addPressReleasesToDBNewWay(GEOMEDIA_FEEDS_FILE_PATH, false);
             addPressReleasesToDBNewWay(NEW_FEEDS_PATH, true);
 
-            System.out.println("Linking table");
+			List<String> myTitles = new ArrayList<>(pressReleaseMap.values().size());
+			for (PressRelease pressRelease : pressReleaseMap.values()) {
+				myTitles.add(pressRelease.getTitle());
+			}
+			Collections.sort(myTitles);
+			File file = new File("titles.txt");
+			file.delete();
+			PrintWriter printWriter = new PrintWriter(file, "UTF-8");
+			for (String s : myTitles) {
+				printWriter.println(s);
+			}
+			printWriter.close();
+			System.out.println(pressReleaseMap.size() + " " + pressReleaseMap.values().size() + " " + myTitles.size());
+
+			System.out.println("Linking table");
             //linking table
             addPressReleasesTagsDataNewWay(NEW_FEEDS_PATH_TAGGED, 2, 1);
 
@@ -420,14 +431,6 @@ public class DatabaseTryController {
                 if (feed == null) {
                     continue;
                 }
-                /*pressReleaseMap.clear();
-                for (PressRelease pressRelease : feed.getPressReleases()) {
-                    pressReleaseMap.put(new PressReleaseId(pressRelease.getTitle(), pressRelease.getDate()), pressRelease);
-                }
-                if (pressReleaseMap.size() == 0) {
-                    System.out.println("Baaaaad");
-                    continue;
-                }*/
 
                 Tag ebolaTag = tagMap.get("EBOLA");
                 if (ebolaTag != null) {
@@ -435,7 +438,7 @@ public class DatabaseTryController {
                         if (myEbolaTags.get(i).equals("") || titles.get(i).contains("\'")) {
                             continue;
                         }
-                        PressRelease pressRelease = pressReleaseMap.get(new PressReleaseId(titles.get(i), convertStringToDate(dates.get(i))));
+                        PressRelease pressRelease = pressReleaseMap.get(new PressReleaseId(titles.get(i), convertStringToDate(dates.get(i)), feed));
                         if (pressRelease == null || !pressRelease.getFeed().equals(feed)) {
                             continue;
                         }
@@ -471,17 +474,13 @@ public class DatabaseTryController {
                 if (feed == null) {
                     continue;
                 }
-                /*pressReleaseMap.clear();
-                for (PressRelease pressRelease : feed.getPressReleases()) {
-                    pressReleaseMap.put(new PressReleaseId(pressRelease.getTitle(), pressRelease.getDate()), pressRelease);
-                }*/
                 try {
                     for (int i = 0; i < titles.size(); i++) {
                         if (myOrgTags.get(i).equals("") || titles.get(i).contains("\'")) {
                             continue;
                         }
                         Date date = convertStringToDate(dates.get(i));
-                        PressRelease pressRelease = pressReleaseMap.get(new PressReleaseId(titles.get(i), date));
+                        PressRelease pressRelease = pressReleaseMap.get(new PressReleaseId(titles.get(i), date, feed));
                         Tag tag = tagMap.get(myOrgTags.get(i));
                         if (pressRelease == null || tag == null || !pressRelease.getFeed().equals(feed)) {
                             continue;
@@ -495,7 +494,15 @@ public class DatabaseTryController {
             }
         }
 
-        System.out.println("I will be saving this to DB now");
+		for (PressRelease pressRelease : pressReleaseMap.values()) {
+			if (pressRelease.getTitle().contains(myTitle)) {
+				System.out.println("No cześ");
+				for (Tag tag : pressRelease.getTags()) {
+					System.out.println("\t" + tag.getName());
+				}
+			}
+		}
+		System.out.println("I will be saving this to DB now");
         flushed = false;
         System.out.println("Countries size: " + countryMap.values().size());
         System.out.println("Feeds size: " + feedMap.values().size());
@@ -557,7 +564,7 @@ public class DatabaseTryController {
     private void extractFeedsFilesAndSaveNewWay(File file, boolean newFeeds) throws IOException {
         File[] files = file.listFiles();
         if (files == null) {
-            System.out.println("Null dla " + file.getAbsolutePath());
+            System.out.println("Null for " + file.getAbsolutePath());
             return;
         }
         for (File f : files) {
@@ -591,7 +598,7 @@ public class DatabaseTryController {
                         }
                         try {
                             Date date = convertStringToDate(dates.get(i));
-                            PressReleaseId pressReleaseId = new PressReleaseId(titles.get(i), date);
+                            PressReleaseId pressReleaseId = new PressReleaseId(titles.get(i), date, feed);
                             PressRelease pressRelease = pressReleaseMap.get(pressReleaseId);
                             if (pressRelease == null){
                                 pressRelease = new PressRelease();
@@ -601,9 +608,17 @@ public class DatabaseTryController {
                                 pressRelease.setContent(contents.get(i));
                                 feed.getPressReleases().add(pressRelease);
                                 pressRelease.setTags(new HashSet<>());
-                                //pressReleaseSet.add(pressRelease);
                                 pressReleaseMap.put(pressReleaseId, pressRelease);
                             }
+							pressRelease = pressReleaseMap.get(pressReleaseId);
+							if (titles.get(i).contains(myTitle)) {
+								System.out.println(date + "; " + titles.get(i) + "; " + feed.getName() + "; " + (pressRelease == null));
+								for (PressRelease pressRelease1 : pressReleaseMap.values()) {
+									if (pressRelease1.getTitle().equals(titles.get(i))) {
+										System.out.println("LOOOOL: " + pressRelease1.getDate());
+									}
+								}
+							}
                         } catch (DataException e) {
                             e.printStackTrace();
                         } catch (IndexOutOfBoundsException e) {
@@ -631,9 +646,9 @@ public class DatabaseTryController {
 
     private void extractTaggedFeedsFilesAndSaveNewWay(File file, int titlesPosition, int datePosition) throws IOException {
         File[] files = file.listFiles();
-        //assert files != null;
         if (files == null) {
             System.out.println("There is null here, file: " + file.getAbsolutePath());
+            return;
         }
         for (File f : files) {
             if (f.isFile()) {
@@ -653,23 +668,16 @@ public class DatabaseTryController {
                         System.out.println("There is no feed called \"" + feedName + "\"");
                         continue;
                     }
-                    /*if (feed.getPressReleases().size() == 0) {
-                        continue;
-                    }
-                    pressReleaseMap.clear();
-                    for (PressRelease pressRelease : feed.getPressReleases()) {
-                        pressReleaseMap.put(new PressReleaseId(pressRelease.getTitle(), pressRelease.getDate()), pressRelease);
-                    }*/
                     for (int i = 0; i < titles.size(); i++) {
                         if (tags.get(i).equals("") || titles.get(i).contains("\'")) {
                             continue;
                         }
                         Date date = convertStringToDate(dates.get(i));
-                        PressReleaseId pressReleaseId = new PressReleaseId(titles.get(i), date);
+                        PressReleaseId pressReleaseId = new PressReleaseId(titles.get(i), date, feed);
                         PressRelease pressRelease = pressReleaseMap.get(pressReleaseId);
                         Tag tag = tagMap.get(tags.get(i));
                         if (pressRelease == null || tag == null || !pressRelease.getFeed().equals(feed)) {
-                            continue;
+							continue;
                         }
                         pressRelease.getTags().add(tag);
                         tag.getPressReleases().add(pressRelease);

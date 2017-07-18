@@ -5,15 +5,15 @@ import pl.edu.agh.Analyzer.model.Country;
 import pl.edu.agh.Analyzer.model.Language;
 import pl.edu.agh.Analyzer.model.Newspaper;
 
-import java.util.List;
+import java.util.Set;
 
 /**
  * Created by pawel on 10.07.17.
  */
 public interface NewspaperRepository extends PagingAndSortingRepository<Newspaper, Integer> {
-    List<Newspaper> findByLanguage(Language language);
+    Set<Newspaper> findByLanguage(Language language);
 
-    List<Newspaper> findByCountry(Country country);
+    Set<Newspaper> findByCountry(Country country);
 
     Newspaper findByName(String name);
 

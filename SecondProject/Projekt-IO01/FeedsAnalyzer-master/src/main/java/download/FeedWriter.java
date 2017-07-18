@@ -30,7 +30,8 @@ public class FeedWriter {
 
     protected static void writeFeed(String filename, SyndFeed syndFeed, String feedTitle){
         if (syndFeed == null) {
-            return;
+			System.out.println("No syndFeed in " + filename);
+			return;
         }
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         CSVWriter writer = null;

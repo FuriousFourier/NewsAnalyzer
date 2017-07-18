@@ -16,9 +16,10 @@ import java.util.Set;
 @Table(name = "Pressreleases")
 public class PressRelease {
 
-    private static final Date dummyDate = new Date();
+    private static final Date dummyDate = new Date(0, 0, 0, 0, 0, 0);
     private static final String dummyTitle = "UNTITLED";
-    private static long counter = 0;
+	private static final Feed dummyFeed = new Feed();
+	private static long counter = 0;
 
     @Id
     @GeneratedValue
@@ -53,6 +54,7 @@ public class PressRelease {
     public PressRelease() {
         this.date = dummyDate;
         this.title = dummyTitle;
+        this.feed = dummyFeed;
     }
 
     public Set<Tag> getTags() {
@@ -105,17 +107,11 @@ public class PressRelease {
 
     @Override
     public boolean equals(Object object) {
-        return object instanceof PressRelease && (this.date.compareTo(((PressRelease) object).getDate()) == 0) && (this.title.equals(((PressRelease) object).getTitle()));
+        return object instanceof PressRelease && (this.date.compareTo(((PressRelease) object).getDate()) == 0) && (this.title.equals(((PressRelease) object).getTitle())) && this.feed.getName().equals(((PressRelease)object).getFeed().getName());
     }
 
     @Override
     public int hashCode() {
-        try {
-            return this.date.hashCode() / 2 + this.title.hashCode() / 2;
-        } catch (NullPointerException e) {
-            System.err.println("NullPointerExcpetion " + (this.date == null) + (this.title ==null) + (this.content==null)
-            + ": " + id);
-        }
-        return 0;
-    }
+		return this.date.hashCode() / 2 + this.title.hashCode() / 2 + this.feed.hashCode() / 2;
+	}
 }
