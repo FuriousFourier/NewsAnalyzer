@@ -10,6 +10,7 @@ import org.gephi.statistics.plugin.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by karolina on 17.07.17.
@@ -76,7 +77,7 @@ public class ReportInput {
     public Object getGraphValue(String attrName) {
         return graphValues.get(attrName);
     }
-    public List<String> getGraphParams(){
+    public Set<String> getGraphParams(){
         return graphValues.keySet();
     }
 

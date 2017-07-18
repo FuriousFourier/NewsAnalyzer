@@ -354,7 +354,8 @@ public class AnalysisController {
           lastJ = 12;
 
         for (; j <= lastJ; j++) {
-            value = (j<10 ? "0" : "") + j + "-" + i;
+            //value = (j<10 ? "0" : "") + j + "-" + i;
+            value = i + "-" + (j<10 ? "0" : "") + j;
             setIsAskingForValue(false);
           if (getPressReleasesByDate().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
               System.out.println("******************* *Date: "+value + " ************************");
@@ -375,6 +376,7 @@ public class AnalysisController {
       }
       for (Newspaper n : fetchedNewspapers) {
             value = n.getName();
+
             setIsAskingForValue(false);
           if ((getPressReleasesByNews().equals("foo")) && (fetchedNotes != null) && (!fetchedNotes.isEmpty())){
               System.out.println("******************* *Newspaper: "+value + " ************************");
@@ -384,20 +386,35 @@ public class AnalysisController {
                   for (PressRelease p : fetchedNotes){
                       int pMonth = p.getDate().getMonth()+1;
                       int pYear = p.getDate().getYear()+1900;
-                      String date = (pMonth>10 ? pMonth : "0"+pMonth) + "-" + pYear;
+                      String date = pYear + "-" + (pMonth>10 ? "" : "0") + pMonth;
                       newspaperNotes.putIfAbsent(date, new ArrayList<PressRelease>());
                       newspaperNotes.get(date).add(p);
+                      if (p.getTags()!=null && !p.isEmpty()){
+                          System.out.print("ID: " + p.getId() + "; Tags:");
+                          for (Tag t: p.getTags()){
+                              System.out.print(t.getName()+", ");
+                          }
+                          System.out.println();
+                      }
+
                   }
+                  fetchedNotes =null;
                   SortedSet<String> notesKeySet = new TreeSet<>(newspaperNotes.keySet());
-                  List<ReportInput> inputs = new ArrayList<>();
+                  //List<ReportInput> inputs = new ArrayList<>();
                   for (String d : notesKeySet){
                       System.out.println("------> " + d);
                       GraphHandler.resetInput();
                       GraphHandler.graphCreator("Newspaper and date" , value+"("+d+")", newspaperNotes.get(d));
-                      if (GraphHandler.getInput() != null)
-                        inputs.add(GraphHandler.getInput());
+                      /*ReportInput input = GraphHandler.getInput();
+                      if (input != null)
+                        inputs.add(GraphHandler.getInput());*/
                   }
-                  ReportCreator.showChart(inputs);
+                  //ReportCreator.showChart(inputs);
+
+                  //remove values
+                  newspaperNotes = null;
+                  notesKeySet = null;
+                  //inputs = null;
               }
           }
       }
@@ -456,7 +473,7 @@ public class AnalysisController {
         for (Tag t: tags){
             System.out.println(t.getName()+"; notes:");
             for (PressRelease p: t.getPressReleases()){
-                System.out.println("\t"+p.getTitle());
+                System.out.println("\t"+p.getFeed().getNewspaper().getName());
             }
             System.out.println();
         }

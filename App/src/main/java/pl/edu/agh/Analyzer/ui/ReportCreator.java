@@ -26,8 +26,12 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 
     public static void showChart(List<ReportInput> input){
             reportInput = input;
+            if (input == null || input.isEmpty()){
+                System.out.println("Input is empty - returning...");
+                return;
+            }
             ExampleChart<CategoryChart> exampleChart = new BarChart01();
-            for (String p: input.nodesParams) {
+            for (String p: ReportInput.nodesParams) {
                 currentParam = p;
                 CategoryChart chart = exampleChart.getChart();
                 if (chart == null) {
@@ -37,7 +41,8 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
                 try {
                     new SwingWrapper<CategoryChart>(chart).displayChart();
                 } catch (HeadlessException e){
-
+                    System.out.println("HeadlessExcpetion has been thrown!");
+                    return;
                 }
                 try {
                     System.out.println("Press space to continue");
