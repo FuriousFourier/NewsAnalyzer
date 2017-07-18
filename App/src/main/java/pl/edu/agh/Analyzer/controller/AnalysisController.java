@@ -8,6 +8,8 @@ import pl.edu.agh.Analyzer.model.*;
 import pl.edu.agh.Analyzer.repository.*;
 import pl.edu.agh.Analyzer.ui.AnalysisHandler;
 import pl.edu.agh.Analyzer.ui.GraphHandler;
+import pl.edu.agh.Analyzer.ui.ReportCreator;
+import pl.edu.agh.Analyzer.ui.ReportInput;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -387,10 +389,15 @@ public class AnalysisController {
                       newspaperNotes.get(date).add(p);
                   }
                   SortedSet<String> notesKeySet = new TreeSet<>(newspaperNotes.keySet());
+                  List<ReportInput> inputs = new ArrayList<>();
                   for (String d : notesKeySet){
                       System.out.println("------> " + d);
+                      GraphHandler.resetInput();
                       GraphHandler.graphCreator("Newspaper and date" , value+"("+d+")", newspaperNotes.get(d));
+                      if (GraphHandler.getInput() != null)
+                        inputs.add(GraphHandler.getInput());
                   }
+                  ReportCreator.showChart(inputs);
               }
           }
       }

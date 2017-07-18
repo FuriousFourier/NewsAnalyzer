@@ -79,6 +79,9 @@ public class GraphHandler {
     public static ReportInput getInput(){
         return input;
     }
+    public static void resetInput() {
+        input = null;
+    }
 
     public static void initFakePressReleases(){
         notes = new ArrayList<>();
@@ -225,10 +228,10 @@ public class GraphHandler {
         prestigeStatistics.execute(graphModel);
 
         //Lineage
-        Lineage lineage = new Lineage();
+        /*Lineage lineage = new Lineage();
         lineage.setDirected(true);
         lineage.setOrigin("tag2");
-        lineage.execute(graphModel);
+        lineage.execute(graphModel);*/
 
 
 

@@ -15,7 +15,7 @@ import java.util.Map;
  * Created by karolina on 17.07.17.
  */
 public class ReportInput {
-    private static String[] nodesParams = {
+    public static final String[] nodesParams = {
             GraphDistance.BETWEENNESS,
             GraphDistance.CLOSENESS,
             GraphDistance.ECCENTRICITY,
@@ -38,6 +38,7 @@ public class ReportInput {
             RankCalculator.RANK_KEY,
             RankCalculator.NORMALIZED_RANK_KEY,
     };
+
     private Map<String, Node> nodeMaxValues = new HashMap<>();
     private Map<String, Object> graphValues = new HashMap<>();
     public String paramValue;
@@ -68,6 +69,15 @@ public class ReportInput {
 
     public void setGraphValue(String attrName, Object val){
         graphValues.put(attrName, val);
+    }
+    public Object getNodeMaxValue(String attrName){
+        return nodeMaxValues.get(attrName);
+    }
+    public Object getGraphValue(String attrName) {
+        return graphValues.get(attrName);
+    }
+    public List<String> getGraphParams(){
+        return graphValues.keySet();
     }
 
 }
