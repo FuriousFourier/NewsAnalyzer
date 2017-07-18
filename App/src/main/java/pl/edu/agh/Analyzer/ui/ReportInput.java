@@ -1,6 +1,10 @@
 package pl.edu.agh.Analyzer.ui;
 
 import org.gephi.graph.api.*;
+import org.gephi.plugins.prestige.calculation.DomainCalculator;
+import org.gephi.plugins.prestige.calculation.IndegreeCalculator;
+import org.gephi.plugins.prestige.calculation.ProximityCalculator;
+import org.gephi.plugins.prestige.calculation.RankCalculator;
 import org.gephi.statistics.plugin.*;
 
 import java.util.HashMap;
@@ -25,6 +29,14 @@ public class ReportInput {
             ClusteringCoefficient.CLUSTERING_COEFF,
             WeightedDegree.WINDEGREE,
             WeightedDegree.WOUTDEGREE,
+
+            //Prestige
+            DomainCalculator.DOMAIN_KEY,
+            IndegreeCalculator.INDEGREE_KEY,
+            IndegreeCalculator.INDEGREE_NORMALIZED_KEY,
+            ProximityCalculator.PROXIMITY_KEY,
+            RankCalculator.RANK_KEY,
+            RankCalculator.NORMALIZED_RANK_KEY,
     };
     private Map<String, Node> nodeMaxValues = new HashMap<>();
     private Map<String, Object> graphValues = new HashMap<>();

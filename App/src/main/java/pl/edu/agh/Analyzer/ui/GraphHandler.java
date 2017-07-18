@@ -2,6 +2,7 @@ package pl.edu.agh.Analyzer.ui;
 
 import com.itextpdf.text.PageSize;
 import com.itextpdf.text.pdf.PdfContentByte;
+import org.gephi.appearance.api.Partition;
 import org.gephi.graph.api.*;
 import org.gephi.io.exporter.api.ExportController;
 import org.gephi.io.exporter.preview.PDFExporter;
@@ -67,12 +68,12 @@ public class GraphHandler {
             RankCalculator.NORMALIZED_RANK_KEY,
 
             //Lineage
-            Lineage.ADISTANCE,
+            /*Lineage.ADISTANCE,
             Lineage.ANCESTOR,
             Lineage.DESCENDANT,
             Lineage.DDISTANCE,
             Lineage.LINEAGE,
-            Lineage.ORIGIN,
+            Lineage.ORIGIN,*/
     };
 
     public static ReportInput getInput(){
@@ -127,9 +128,10 @@ public class GraphHandler {
     public static void graphCreator(String paramName, String paramValue, List<PressRelease> newNotes) {
         if (notes == null || notes.isEmpty()){
             System.out.println("Empty result");
+            return;
         }
         notes = newNotes;
-        initFakePressReleases();
+       // initFakePressReleases();
 
         ProjectController pc = Lookup.getDefault().lookup(ProjectController.class);
         pc.newProject();
@@ -166,7 +168,10 @@ public class GraphHandler {
                 }
             }
         }
-
+        if (directedGraph.getNodeCount() == 0){
+            System.out.println("Node's count: 0  - the end of analysis");
+            return;
+        }
         System.out.println();
         //UndirectedGraph undirectedGraph = graphModel.getUndirectedGraph();
 
@@ -186,7 +191,6 @@ public class GraphHandler {
 
 
         GraphDistance distance = new GraphDistance();
-        //distance.setDirected(true); //co to robi???
         distance.setDirected(true);
         distance.execute(graphModel);
         Degree degree = new Degree();
@@ -251,7 +255,7 @@ public class GraphHandler {
         System.out.println("The average clustering coefficient: " + clusteringCoefficient.getAverageClusteringCoefficient());
         System.out.println("The average degree: " + degree.getAverageDegree());
         System.out.println("Modularity: "+ modularity.getModularity());
-        System.out.println("Lineage origin: " + lineage.getOrigin());
+        //System.out.println("Lineage origin: " + lineage.getOrigin());
 
         GraphDensity density = new GraphDensity();
         density.execute(graphModel);
@@ -269,27 +273,27 @@ public class GraphHandler {
         input.setGraphValue("Average degree", degree.getAverageDegree());
         input.setGraphValue("Modularity", modularity.getModularity());
         //z pluginów
-        input.setGraphValue("Lineage origin", lineage.getOrigin());
+        //input.setGraphValue("Lineage origin", lineage.getOrigin());
         input.paramValue = paramValue;
         input.paramName = paramName;
 
-        PreviewController previewController = Lookup.getDefault().lookup(PreviewController.class);
+        /*PreviewController previewController = Lookup.getDefault().lookup(PreviewController.class);
         PreviewModel previewModel = previewController.getModel();
         previewModel.getProperties().putValue(PreviewProperty.SHOW_NODE_LABELS, Boolean.TRUE);
         previewModel.getProperties().putValue(PreviewProperty.NODE_LABEL_COLOR, new DependantOriginalColor(Color.WHITE));
         previewModel.getProperties().putValue(PreviewProperty.EDGE_CURVED, Boolean.FALSE);
         previewModel.getProperties().putValue(PreviewProperty.EDGE_OPACITY, 50);
-        previewModel.getProperties().putValue(PreviewProperty.BACKGROUND_COLOR, Color.BLACK);
+        previewModel.getProperties().putValue(PreviewProperty.BACKGROUND_COLOR, Color.BLACK);*/
 
 
         ExportController ec = Lookup.getDefault().lookup(ExportController.class);
-        /*try {
+        try {
             ec.exportFile(new File("graf_" + paramName+ "_" + paramValue+"_simple.pdf"));
         } catch (IOException ex) {
             ex.printStackTrace();
             return;
         }
-
+    /*
         //PDF Exporter config and export to Byte array
 
         PDFExporter pdfExporter = (PDFExporter) ec.getExporter("pdf");

@@ -380,13 +380,14 @@ public class AnalysisController {
                   Map<String, List<PressRelease>> newspaperNotes = new HashMap<String, List<PressRelease>>();
                   //wrzucam notki do list w hashmapie
                   for (PressRelease p : fetchedNotes){
-                      int pMonth = p.getDate().getMonth();
-                      int pYear = p.getDate().getYear();
+                      int pMonth = p.getDate().getMonth()+1;
+                      int pYear = p.getDate().getYear()+1900;
                       String date = (pMonth>10 ? pMonth : "0"+pMonth) + "-" + pYear;
                       newspaperNotes.putIfAbsent(date, new ArrayList<PressRelease>());
                       newspaperNotes.get(date).add(p);
                   }
-                  for (String d : newspaperNotes.keySet()){
+                  SortedSet<String> notesKeySet = new TreeSet<>(newspaperNotes.keySet());
+                  for (String d : notesKeySet){
                       System.out.println("------> " + d);
                       GraphHandler.graphCreator("Newspaper and date" , value+"("+d+")", newspaperNotes.get(d));
                   }

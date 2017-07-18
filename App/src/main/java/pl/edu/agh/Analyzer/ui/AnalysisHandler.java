@@ -32,9 +32,9 @@ public class AnalysisHandler {
     }
 
     public void startHandling() throws IOException {
-        graphCreator("Date", "02-2017", null); // zmienic, aby bazowal na wynikach z zapytania dla dat
-        return;
-        /*String field = "", value = "", fieldName = "";
+        //graphCreator("Date", "02-2017", null); // zmienic, aby bazowal na wynikach z zapytania dla dat
+        //return;
+        String field = "", value = "", fieldName = "";
 
         System.out.println("Enter the field you'd like to focus on: \n" +
                 "\t d -> month and year\n" +
@@ -138,7 +138,7 @@ public class AnalysisHandler {
             System.out.println("Response Code: " + responseCode);
             System.out.println("*************");
 
-        }*/
+        }
 
     }
 }
