@@ -154,18 +154,14 @@ public class AnalysisController {
           System.out.println("Couldn't find current date");
           return "foo";
       }
-      int count = 0; //DO LATWIEJSZEGO DEBUGOWANIA!!!
       if (isAskingForValue) {
           System.out.println("Result: ");
           for (PressRelease pr : result) {
-              if (count > 10)    //J.W.
-                  break;
               System.out.print("ID: " + pr.getId() + "; Tags:");
               for (Tag t: pr.getTags()){
                   System.out.print(t.getName()+", ");
               }
               System.out.print("Country:" + pr.getFeed().getNewspaper().getCountry().getName() + "; Newspaper:" + pr.getFeed().getNewspaper().getName() + "\n");
-              count++;
           }
       }
         fetchedNotes = result;
@@ -203,18 +199,14 @@ public class AnalysisController {
             System.out.println("Couldn't find feeds");
             return "foo";
         }
-        int count = 0;
         if (isAskingForValue) {
           System.out.println("Result: ");
           for (PressRelease pr : notesFromAllFeeds) {
-              if (count > 10)    //J.W.
-                  break;
               System.out.print("ID: " + pr.getId() + "; Tags:");
               for (Tag t: pr.getTags()){
                   System.out.print(t.getName()+", ");
               }
               System.out.print("Country:" + pr.getFeed().getNewspaper().getCountry().getName() + "; Newspaper:" + pr.getFeed().getNewspaper().getName() + "\n");
-              count++;
           }
       }
         fetchedNotes = notesFromAllFeeds;
@@ -255,18 +247,14 @@ public class AnalysisController {
             System.out.println("Couldn't find current feed");
             return "foo";
         }
-        int count = 0;
         if (isAskingForValue) {
           System.out.println("Result: ");
           for (PressRelease pr : notesFromAllFeeds) {
-              if (count > 10)    //J.W.
-                  break;
               System.out.print("ID: " + pr.getId() + "; Tags:");
               /*for (Tag t: pr.getTags()){
                   System.out.print(t.getName()+", ");
               }*/
               System.out.print("Country:" + pr.getFeed().getNewspaper().getCountry().getName() + "; Newspaper:" + pr.getFeed().getNewspaper().getName() + "\n");
-              count++;
           }
       }
         fetchedNotes = notesFromAllFeeds;
@@ -307,18 +295,14 @@ public class AnalysisController {
             System.out.println("Couldn't find current feed");
             return "foo";
         }
-        int count = 0;
         if (isAskingForValue) {
           System.out.println("Result: ");
           for (PressRelease pr : notesFromAllFeeds) {
-              if (count > 10)    //J.W.
-                  break;
               System.out.print("ID: " + pr.getId() + "; Tags:");
               /*for (Tag t: pr.getTags()){
                   System.out.print(t.getName()+", ");
               }*/
               System.out.print("Country:" + pr.getFeed().getNewspaper().getCountry().getName() + "; Newspaper:" + pr.getFeed().getNewspaper().getName() + "\n");
-              count++;
           }
       }
       fetchedNotes = notesFromAllFeeds;
@@ -389,7 +373,8 @@ public class AnalysisController {
                       String date = pYear + "-" + (pMonth>10 ? "" : "0") + pMonth;
                       newspaperNotes.putIfAbsent(date, new ArrayList<PressRelease>());
                       newspaperNotes.get(date).add(p);
-                      if (p.getTags()!=null && !p.isEmpty()){
+                      List<Tag> tags = p.getTags();
+                      if (tags!=null && !tags.isEmpty()){
                           System.out.print("ID: " + p.getId() + "; Tags:");
                           for (Tag t: p.getTags()){
                               System.out.print(t.getName()+", ");
@@ -400,21 +385,21 @@ public class AnalysisController {
                   }
                   fetchedNotes =null;
                   SortedSet<String> notesKeySet = new TreeSet<>(newspaperNotes.keySet());
-                  //List<ReportInput> inputs = new ArrayList<>();
+                  List<ReportInput> inputs = new ArrayList<>();
                   for (String d : notesKeySet){
                       System.out.println("------> " + d);
                       GraphHandler.resetInput();
                       GraphHandler.graphCreator("Newspaper and date" , value+"("+d+")", newspaperNotes.get(d));
-                      /*ReportInput input = GraphHandler.getInput();
+                      ReportInput input = GraphHandler.getInput();
                       if (input != null)
-                        inputs.add(GraphHandler.getInput());*/
+                        inputs.add(GraphHandler.getInput());
                   }
-                  //ReportCreator.showChart(inputs);
+                  ReportCreator.showChart(inputs);
 
                   //remove values
                   newspaperNotes = null;
                   notesKeySet = null;
-                  //inputs = null;
+                  inputs = null;
               }
           }
       }
