@@ -30,15 +30,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
+import java.util.*;
 import java.util.List;
 
 /**
  * Created by karolina on 17.07.17.
  */
 public class GraphHandler {
-    private static List<PressRelease> notes;
+    private static Set<PressRelease> notes;
     private static ReportInput input;
 
     private static String[] columnsToSee = {
@@ -84,16 +83,16 @@ public class GraphHandler {
     }
 
     public static void initFakePressReleases(){
-        notes = new ArrayList<>();
+        notes = new HashSet<>();
         for (int i = 0; i < 100; i++) {
             String title = "titel" + i;
             String content = "content" + i;
             Date date = new Date();
             Feed feed = new Feed("name", "section");
-            List<Tag> tags = new ArrayList<Tag>();
+            Set<Tag> tags = new HashSet<Tag>();
             for (int j = 0; j < 3; j++) {
                 String tagName = "tag" + (new Integer((i + j)%10)).toString();
-                tags.add(new Tag(tagName, new Country(), new ArrayList<>()));
+                tags.add(new Tag(tagName, new Country(), new HashSet<>()));
             }
             PressRelease pr = new PressRelease(title, date, content, tags, feed);
             notes.add(pr);
@@ -104,10 +103,10 @@ public class GraphHandler {
             String content = "content" + i;
             Date date = new Date();
             Feed feed = new Feed("name", "section");
-            List<Tag> tags = new ArrayList<Tag>();
+            Set<Tag> tags = new HashSet<Tag>();
             for (int j = 0; j < 3; j++) {
                 String tagName = "tag" + (new Integer((i + j))).toString();
-                tags.add(new Tag(tagName, new Country(), new ArrayList<>()));
+                tags.add(new Tag(tagName, new Country(), new HashSet<>()));
             }
             PressRelease pr = new PressRelease(title, date, content, tags, feed);
             notes.add(pr);
@@ -128,7 +127,7 @@ public class GraphHandler {
     }
 
 
-    public static void graphCreator(String paramName, String paramValue, List<PressRelease> newNotes) {
+    public static void graphCreator(String paramName, String paramValue, Set<PressRelease> newNotes) {
         notes = newNotes;
         if (notes == null || notes.isEmpty()){
             System.out.println("Empty result");
@@ -145,11 +144,12 @@ public class GraphHandler {
 
         DirectedGraph directedGraph= graphModel.getDirectedGraph();
         for (PressRelease pr : notes) {
-            List<Tag> noteTags = pr.getTags();
+            Set<Tag> noteTags = pr.getTags();
+            List<Tag> noteTagsList = new ArrayList<>(noteTags);
             for (int i = 0; i < noteTags.size(); i++) {
                 for (int j = i + 1; j < noteTags.size(); j++) {
-                    Tag tag1 = noteTags.get(i);
-                    Tag tag2 = noteTags.get(j);
+                    Tag tag1 = noteTagsList.get(i);
+                    Tag tag2 = noteTagsList.get(j);
 
                     Node n1 = directedGraph.getNode(tag1.getName());
                     if (n1 == null){

@@ -45,7 +45,7 @@ public class AnalysisController {
     private List<Feed> fetchedFeeds = new ArrayList<>();
     private List<Country> fetchedCountries = new ArrayList<>();
     private List<Language> fetchedLanguages = new ArrayList<>();
-    private List<PressRelease> fetchedNotes = new ArrayList<>();
+    private Set<PressRelease> fetchedNotes = new HashSet<>();
     private Date firstDate = new Date();
     private Date lastDate = new Date();
     private static boolean isAskingForValue = false;
@@ -150,7 +150,7 @@ public class AnalysisController {
         Integer monthInt = Integer.parseInt(month);
         Integer yearInt = Integer.parseInt(year);
 
-      List<PressRelease> result = pressReleaseRepository.findByMonthAndYear(monthInt, yearInt);
+      Set<PressRelease> result = pressReleaseRepository.findByMonthAndYear(monthInt, yearInt);
       if (result == null || result.size() < 1){
           System.out.println("Couldn't find current date");
           return "foo";
@@ -186,10 +186,10 @@ public class AnalysisController {
             title = value;
         System.out.println("Title: " + title);
         Newspaper newspaper = newspaperRepository.findByName(title); //find newspaper
-        List<PressRelease> notesFromAllFeeds = new ArrayList<>();
+        Set<PressRelease> notesFromAllFeeds = new HashSet<>();
         if (newspaper != null) {
-            List<Feed> feeds = newspaper.getFeeds();//get feeds
-            List<PressRelease> result;
+            Set<Feed> feeds = newspaper.getFeeds();//get feeds
+            Set<PressRelease> result;
             for (Feed f : feeds) {//find notes for feed
                 result = pressReleaseRepository.findByFeed(f);
                 if (result != null)
@@ -229,13 +229,13 @@ public class AnalysisController {
         }
         else
             name = value;
-        List<PressRelease> notesFromAllFeeds = new ArrayList<>();
+        Set<PressRelease> notesFromAllFeeds = new HashSet<>();
         Language language = languageRepository.findByName(name);
         if(language != null) {
             for (Newspaper n : language.getNewspapers()) {
                 if (n != null) {
-                    List<Feed> feeds = n.getFeeds();//get feeds
-                    List<PressRelease> result;
+                    Set<Feed> feeds = n.getFeeds();//get feeds
+                    Set<PressRelease> result;
                     for (Feed f : feeds) {//find notes for feed
                         result = pressReleaseRepository.findByFeed(f);
                         if (result != null)
@@ -277,13 +277,13 @@ public class AnalysisController {
         }
         else
             name = value;
-        List<PressRelease> notesFromAllFeeds = new ArrayList<>();
+        Set<PressRelease> notesFromAllFeeds = new HashSet<>();
         Country country = countryRepository.findByName(name);
         if(country != null) {
             for (Newspaper n : country.getNewspapers()) {
                 if (n != null) {
-                    List<Feed> feeds = n.getFeeds();//get feeds
-                    List<PressRelease> result;
+                    Set<Feed> feeds = n.getFeeds();//get feeds
+                    Set<PressRelease> result;
                     for (Feed f : feeds) {//find notes for feed
                         result = pressReleaseRepository.findByFeed(f);
                         if (result != null)
@@ -377,15 +377,15 @@ public class AnalysisController {
           if ((getPressReleasesByNews().equals("foo")) && (fetchedNotes != null) && (!fetchedNotes.isEmpty())){
               System.out.println("******************* *Newspaper: "+value + " ************************");
               if (!isAskingForValue && isIteratingOverDates){
-                  Map<String, List<PressRelease>> newspaperNotes = new HashMap<String, List<PressRelease>>();
+                  Map<String, Set<PressRelease>> newspaperNotes = new HashMap<String, Set<PressRelease>>();
                   //wrzucam notki do list w hashmapie
                   for (PressRelease p : fetchedNotes){
                       int pMonth = p.getDate().getMonth()+1;
                       int pYear = p.getDate().getYear()+1900;
                       String date = pYear + "-" + (pMonth>10 ? "" : "0") + pMonth;
-                      newspaperNotes.putIfAbsent(date, new ArrayList<PressRelease>());
+                      newspaperNotes.putIfAbsent(date, new HashSet<PressRelease>());
                       newspaperNotes.get(date).add(p);
-                      List<Tag> tags = p.getTags();
+                      Set<Tag> tags = p.getTags();
                       if (tags!=null && !tags.isEmpty()){
                           System.out.print("ID: " + p.getId() + "; Date: "+ date+"; Tags:");
                           for (Tag t: p.getTags()){
@@ -474,7 +474,7 @@ public class AnalysisController {
             System.out.println("Kiepsko");
             return  "foo";
         }
-        List<Tag> tags = (List<Tag>)tagRepository.findAll();
+        Set<Tag> tags = (Set<Tag>)tagRepository.findAll();
         System.out.println("Tags:");
         for (Tag t: tags){
             System.out.println(t.getName()+"; notes:");

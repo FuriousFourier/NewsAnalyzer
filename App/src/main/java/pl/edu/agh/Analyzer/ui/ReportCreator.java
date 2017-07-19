@@ -39,7 +39,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 
             xAxis = reportInput.get(0).paramName;
             String fileName;
-            if (!input.get(0).paramValue.equals(input.get(1).paramValue))
+            if (input.size() > 1 && !input.get(0).paramValue.equals(input.get(1).paramValue))
                 fileName = input.get(0).paramName;
             else
                 fileName = input.get(0).paramValue;
