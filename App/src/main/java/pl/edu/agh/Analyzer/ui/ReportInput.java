@@ -6,11 +6,10 @@ import org.gephi.plugins.prestige.calculation.IndegreeCalculator;
 import org.gephi.plugins.prestige.calculation.ProximityCalculator;
 import org.gephi.plugins.prestige.calculation.RankCalculator;
 import org.gephi.statistics.plugin.*;
+import org.jfree.base.modules.SubSystem;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.math.BigDecimal;
+import java.util.*;
 
 /**
  * Created by karolina on 17.07.17.
@@ -44,6 +43,7 @@ public class ReportInput {
     private Map<String, Object> graphValues = new HashMap<>();
     public String paramValue;
     public String paramName;
+    private NumberComparator numberComparator = new NumberComparator();
     //pozniej zrobic z modularity, spojnymi skladowymi i ew. czyms jeszcze (clustering coefficient??)
 
 
@@ -59,10 +59,32 @@ public class ReportInput {
             for (Node currentNode : graphModel.getGraph().getNodes()) {
                 Node n = nodeMaxValues.get(col);
                 if (n != null){
+                    //System.out.println("Report Input - old value may be replaced");
                     //sprawdzam, czy dla currenta jest lepsza wartosc
-                    if ((Double)n.getAttribute(col) < (Double)currentNode.getAttribute(col)){
+                    //sprawdzam, czy double, czy integer
+                   /* if (n.getAttribute(col) instanceof Integer){
+                        if ((Integer)n.getAttribute(col) < (Integer) currentNode.getAttribute(col)){
+                            nodeMaxValues.put(col, currentNode);
+                        }
+                    }
+                    else if (n.getAttribute(col) instanceof Double){
+                        if ((Double)n.getAttribute(col) < (Double) currentNode.getAttribute(col)){
+                            nodeMaxValues.put(col, currentNode);
+                        }
+                    }
+                    else {
+                        System.out.println("Unknown object type: " + n.getAttribute(col).getClass());
+                        break;
+                    }*/
+                   Number n1 = (Number)n.getAttribute(col);
+                   Number n2 = (Number)currentNode.getAttribute(col);
+                    if (numberComparator.compare(n1, n2) < 0){
                         nodeMaxValues.put(col, currentNode);
                     }
+                }
+                else {
+                    //System.out.println("Rpeort input - appropraite init");
+                    nodeMaxValues.put(col, currentNode);
                 }
             }
         }
@@ -79,6 +101,14 @@ public class ReportInput {
     }
     public Set<String> getGraphParams(){
         return graphValues.keySet();
+    }
+
+    class NumberComparator implements Comparator<Number> {
+
+        public int compare(Number a, Number b){
+            return new BigDecimal(a.toString()).compareTo(new BigDecimal(b.toString()));
+        }
+
     }
 
 }

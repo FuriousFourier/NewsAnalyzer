@@ -100,7 +100,7 @@ public class GraphHandler {
         }
 
         for (int i = 101; i < 110; i++) {
-            String title = "titel" + i;
+            String title = "title" + i;
             String content = "content" + i;
             Date date = new Date();
             Feed feed = new Feed("name", "section");
@@ -129,11 +129,11 @@ public class GraphHandler {
 
 
     public static void graphCreator(String paramName, String paramValue, List<PressRelease> newNotes) {
+        notes = newNotes;
         if (notes == null || notes.isEmpty()){
             System.out.println("Empty result");
             return;
         }
-        notes = newNotes;
        // initFakePressReleases();
 
         ProjectController pc = Lookup.getDefault().lookup(ProjectController.class);
@@ -176,8 +176,6 @@ public class GraphHandler {
             return;
         }
         System.out.println();
-        //UndirectedGraph undirectedGraph = graphModel.getUndirectedGraph();
-
 
         /*//Iterate over nodes
         for (Node n : directedGraph.getNodes()) {
@@ -191,7 +189,6 @@ public class GraphHandler {
         }*/
 
         System.out.println("Nodes analysis:");
-
 
         GraphDistance distance = new GraphDistance();
         distance.setDirected(true);
@@ -233,8 +230,6 @@ public class GraphHandler {
         lineage.setOrigin("tag2");
         lineage.execute(graphModel);*/
 
-
-
         Table attributes = graphModel.getNodeTable();
         //Iterate over values
         for (String col : columnsToSee) {
@@ -245,7 +240,6 @@ public class GraphHandler {
             for (Node n : graphModel.getGraph().getNodes()) {
                 System.out.println(n.getLabel() + ": " + n.getAttribute(current));
             }
-
         }
 
         System.out.println("Nr of nodes: " + directedGraph.getNodeCount());
@@ -287,7 +281,6 @@ public class GraphHandler {
         previewModel.getProperties().putValue(PreviewProperty.EDGE_CURVED, Boolean.FALSE);
         previewModel.getProperties().putValue(PreviewProperty.EDGE_OPACITY, 50);
         previewModel.getProperties().putValue(PreviewProperty.BACKGROUND_COLOR, Color.BLACK);*/
-
 
         ExportController ec = Lookup.getDefault().lookup(ExportController.class);
         try {

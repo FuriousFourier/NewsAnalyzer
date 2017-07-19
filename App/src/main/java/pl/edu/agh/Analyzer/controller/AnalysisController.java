@@ -51,6 +51,7 @@ public class AnalysisController {
     private static boolean isAskingForValue = false;
     private String value;
     private static boolean isIteratingOverDates = false;
+    ReportCreator reportCreator = new ReportCreator();
 
     public static void setIsAskingForValue(boolean val){
         isAskingForValue = val;
@@ -338,7 +339,6 @@ public class AnalysisController {
           lastJ = 12;
 
         for (; j <= lastJ; j++) {
-            //value = (j<10 ? "0" : "") + j + "-" + i;
             value = i + "-" + (j<10 ? "0" : "") + j;
             setIsAskingForValue(false);
           if (getPressReleasesByDate().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
@@ -358,9 +358,9 @@ public class AnalysisController {
       if (getAllNewspapers().equals("foo")){ //we're sure it's finished
         System.out.println("Newspapers have been fetched");
       }
-      for (Newspaper n : fetchedNewspapers) {
-            value = n.getName();
-
+      //for (Newspaper n : fetchedNewspapers) {
+            value =  "South China Morning Post";
+            //value = n.getName();
             setIsAskingForValue(false);
           if ((getPressReleasesByNews().equals("foo")) && (fetchedNotes != null) && (!fetchedNotes.isEmpty())){
               System.out.println("******************* *Newspaper: "+value + " ************************");
@@ -375,13 +375,12 @@ public class AnalysisController {
                       newspaperNotes.get(date).add(p);
                       List<Tag> tags = p.getTags();
                       if (tags!=null && !tags.isEmpty()){
-                          System.out.print("ID: " + p.getId() + "; Tags:");
+                          System.out.print("ID: " + p.getId() + "; Date: "+ date+"; Tags:");
                           for (Tag t: p.getTags()){
                               System.out.print(t.getName()+", ");
                           }
                           System.out.println();
                       }
-
                   }
                   fetchedNotes =null;
                   SortedSet<String> notesKeySet = new TreeSet<>(newspaperNotes.keySet());
@@ -394,7 +393,7 @@ public class AnalysisController {
                       if (input != null)
                         inputs.add(GraphHandler.getInput());
                   }
-                  ReportCreator.showChart(inputs);
+                  reportCreator.showChart(inputs);
 
                   //remove values
                   newspaperNotes = null;
@@ -402,7 +401,7 @@ public class AnalysisController {
                   inputs = null;
               }
           }
-      }
+      //}
       return "foo";
     }
 
