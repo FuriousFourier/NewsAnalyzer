@@ -1,5 +1,6 @@
 package pl.edu.agh.Analyzer.ui;
 
+import com.itextpdf.text.Document;
 import org.gephi.graph.api.*;
 import org.gephi.plugins.prestige.calculation.DomainCalculator;
 import org.gephi.plugins.prestige.calculation.IndegreeCalculator;
@@ -46,9 +47,7 @@ public class ReportInput {
     public String paramValue;
     public String paramName;
     private NumberComparator numberComparator = new NumberComparator();
-    //pozniej zrobic z modularity, spojnymi skladowymi i ew. czyms jeszcze (clustering coefficient??)
-
-
+    private Document report;
     public void initNodeMaxValues(GraphModel graphModel){
         for (String s : nodesParams){
             nodeMaxValues.put(s, null);
@@ -61,34 +60,14 @@ public class ReportInput {
             for (Node currentNode : graphModel.getGraph().getNodes()) {
                 Node n = nodeMaxValues.get(col);
                 if (n != null){
-                    //System.out.println("Report Input - old value may be replaced");
-                    //sprawdzam, czy dla currenta jest lepsza wartosc
-                    //sprawdzam, czy double, czy integer
-                   /* if (n.getAttribute(col) instanceof Integer){
-                        if ((Integer)n.getAttribute(col) < (Integer) currentNode.getAttribute(col)){
-                            nodeMaxValues.put(col, currentNode);
-                        }
-                    }
-                    else if (n.getAttribute(col) instanceof Double){
-                        if ((Double)n.getAttribute(col) < (Double) currentNode.getAttribute(col)){
-                            nodeMaxValues.put(col, currentNode);
-                        }
-                    }
-                    else {
-                        System.out.println("Unknown object type: " + n.getAttribute(col).getClass());
-                        break;
-                    }*/
+
                    Number n1 = (Number)n.getAttribute(col);
                    Number n2 = (Number)currentNode.getAttribute(col);
-                   try {
-                       if (numberComparator.compare(n1, n2) < 0 && !((Number)currentNode.getAttribute(col)).toString().equals("NaN")) {
-                           nodeMaxValues.put(col, currentNode);
-                       }
-                   } catch (Exception e){
-                       continue; //prawdopodobnie NaN
+                   if (numberComparator.compare(n1, n2) < 0 && !((Number)currentNode.getAttribute(col)).toString().equals("NaN")) {
+                       nodeMaxValues.put(col, currentNode);
                    }
                 }
-                else if (!((Number)currentNode.getAttribute(col)).toString().equals("NaN")){
+                else if (!currentNode.getAttribute(col).toString().equals("NaN")){
                     //System.out.println("Rpeort input - appropraite init");
                     nodeMaxValues.put(col, currentNode);
                 }

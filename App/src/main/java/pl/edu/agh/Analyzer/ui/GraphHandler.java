@@ -1,7 +1,8 @@
 package pl.edu.agh.Analyzer.ui;
 
-import com.itextpdf.text.PageSize;
+import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.PdfContentByte;
+import com.itextpdf.text.pdf.PdfWriter;
 import org.gephi.appearance.api.Partition;
 import org.gephi.graph.api.*;
 import org.gephi.io.exporter.api.ExportController;
@@ -127,7 +128,7 @@ public class GraphHandler {
     }
 
 
-    public static void graphCreator(String paramName, String paramValue, Set<PressRelease> newNotes) {
+    public static void graphCreator(String paramName, String paramValue, Set<PressRelease> newNotes, Document report) throws DocumentException {
         notes = newNotes;
         if (notes == null || notes.isEmpty()){
             System.out.println("Empty result");
@@ -165,7 +166,6 @@ public class GraphHandler {
                         directedGraph.addNode(n2);
                     }
 
-
                     addEdge(graphModel, n1, n2);
                     addEdge(graphModel, n2, n1);
                 }
@@ -189,6 +189,9 @@ public class GraphHandler {
         }*/
 
         System.out.println("Nodes analysis:");
+        com.itextpdf.text.Font font = FontFactory.getFont(FontFactory.COURIER, 12, BaseColor.BLACK);
+        Chunk chunk = new Chunk("Nodes analysis:\n", font);
+        report.add(chunk);
 
         GraphDistance distance = new GraphDistance();
         distance.setDirected(true);
@@ -238,8 +241,12 @@ public class GraphHandler {
             //String col = GraphDistance.;
             Column current = attributes.getColumn(col);
             System.out.println(col+ ":");
+            chunk = new Chunk(col+ ":\n", font);
+            report.add(chunk);
             for (Node n : graphModel.getGraph().getNodes()) {
                 System.out.println(n.getLabel() + ": " + n.getAttribute(current));
+                chunk = new Chunk(n.getLabel() + ": " + n.getAttribute(current) + "\n");
+                report.add(chunk);
             }
         }
 
@@ -255,9 +262,31 @@ public class GraphHandler {
         System.out.println("Modularity: "+ modularity.getModularity());
         //System.out.println("Lineage origin: " + lineage.getOrigin());
 
+        chunk = new Chunk("Nr of nodes: " + directedGraph.getNodeCount() + "\n", font);
+        report.add(chunk);
+        chunk = new Chunk("Nr of edges: " + directedGraph.getEdgeCount() + "\n", font);
+        report.add(chunk);
+        chunk = new Chunk("Nr of connected components: " + connectedComponents.getConnectedComponentsCount() + "\n", font);
+        report.add(chunk);
+
+        chunk = new Chunk("The average shortest path length in the network: " + distance.getPathLength() + "\n", font);
+        report.add(chunk);
+        chunk = new Chunk("The diameter of the network: "+ distance.getDiameter() + "\n", font);
+        report.add(chunk);
+        chunk = new Chunk("The radius of the network: "+ distance.getRadius() + "\n", font);
+        report.add(chunk);
+        chunk = new Chunk("The average clustering coefficient: " + clusteringCoefficient.getAverageClusteringCoefficient() + "\n", font);
+        report.add(chunk);
+        chunk = new Chunk("The average degree: " + degree.getAverageDegree() + "\n", font);
+        report.add(chunk);
+        chunk = new Chunk("Modularity: "+ modularity.getModularity() + "\n", font);
+        report.add(chunk);
+
         GraphDensity density = new GraphDensity();
         density.execute(graphModel);
         System.out.println("The density of the graph: "+ density.getDensity());
+        chunk = new Chunk("The density of the graph: "+ density.getDensity() + "\n", font);
+        report.add(chunk);
 
         input = new ReportInput();
         input.initNodeMaxValues(graphModel);
@@ -270,6 +299,7 @@ public class GraphHandler {
         input.setGraphValue("Average clustering coefficient", clusteringCoefficient.getAverageClusteringCoefficient());
         input.setGraphValue("Average degree", degree.getAverageDegree());
         input.setGraphValue("Modularity", modularity.getModularity());
+        input.setGraphValue("The density of the graph: ", density.getDensity());
         //z pluginów
         //input.setGraphValue("Lineage origin", lineage.getOrigin());
         input.paramValue = paramValue;

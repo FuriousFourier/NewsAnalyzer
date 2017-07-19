@@ -1,18 +1,23 @@
 package pl.edu.agh.Analyzer.ui;
 
+import com.itextpdf.text.BadElementException;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.Image;
 import org.gephi.graph.api.Node;
 import org.knowm.xchart.BitmapEncoder;
 import org.knowm.xchart.CategoryChart;
 import org.knowm.xchart.CategoryChartBuilder;
 import org.knowm.xchart.SwingWrapper;
 import org.knowm.xchart.demo.charts.ExampleChart;
-import org.knowm.xchart.demo.charts.bar.BarChart01;
 import org.knowm.xchart.style.Styler;
 import org.wouterspekkink.plugins.metric.lineage.Lineage;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -30,7 +35,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
     private boolean isNodeAnalysis;
     String xAxis;
 
-    public void showChart(List<ReportInput> input){
+    public void showChart(List<ReportInput> input, Document report){
             reportInput = input;
             if (input == null || input.isEmpty()){
                 System.out.println("Input is empty - returning...");
@@ -55,13 +60,16 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
                     continue;
                 }
                 try {
-                    BitmapEncoder.saveBitmap(chart, "./Sample_Chart_"+fileName+"_"+p, BitmapEncoder.BitmapFormat.PNG);
+                    BitmapEncoder.saveBitmap(chart, "./charts/"+fileName+"_"+p, BitmapEncoder.BitmapFormat.PNG);
+                    Path path = Paths.get(ClassLoader.getSystemResource("./charts/"+fileName+"_"+p+".png").toURI());
+                    Image img = Image.getInstance(path.toAbsolutePath().toString());
+                    report.add(img);
                     //new SwingWrapper<CategoryChart>(chart).displayChart();
                 } catch (HeadlessException e){
                     System.out.println("HeadlessExcpetion has been thrown!");
                     continue;
-                }catch (IOException e){
-                    System.out.println("IOException has been thrown!");
+                }catch (Exception e){
+                    e.printStackTrace();
                 }
                 /*try {
                     System.out.println("Press space to continue");
@@ -83,13 +91,17 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
                 continue;
             }
             try {
-                BitmapEncoder.saveBitmap(chart, "./Sample_Chart_"+fileName+"_"+p, BitmapEncoder.BitmapFormat.PNG);
+                BitmapEncoder.saveBitmap(chart, "./charts/"+fileName+"_"+p, BitmapEncoder.BitmapFormat.PNG);
+                Path path = Paths.get(ClassLoader.getSystemResource("./charts/"+fileName+"_"+p+".png").toURI());
+                Image img = Image.getInstance(path.toAbsolutePath().toString());
+                report.add(img);
+
                 //new SwingWrapper<CategoryChart>(chart).displayChart();
             } catch (HeadlessException e){
                 System.out.println("HeadlessExcpetion has been thrown!");
                 continue;
-            }catch (IOException e){
-                System.out.println("IOException has been thrown!");
+            }catch (Exception e){
+                e.printStackTrace();
             }
                 /*try {
                     System.out.println("Press space to continue");

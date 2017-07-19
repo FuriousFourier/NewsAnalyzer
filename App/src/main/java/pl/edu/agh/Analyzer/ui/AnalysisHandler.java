@@ -38,9 +38,9 @@ public class AnalysisHandler {
 
         System.out.println("Enter the field you'd like to focus on: \n" +
                 "\t d -> month and year\n" +
-                "\t n -> newspaper title\n" +
-                "\t c -> country\n" +
-                "\t l -> language");
+                "\t n -> newspaper title\n");
+                //"\t c -> country\n" + //needs amending (due to graphHandler)
+                //"\t l -> language"); //j.w.
         field = br.readLine();
 
         if (field.startsWith("d")) {

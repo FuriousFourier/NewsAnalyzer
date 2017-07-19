@@ -1,5 +1,7 @@
 package pl.edu.agh.Analyzer.controller;
 
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.PdfWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,10 +13,9 @@ import pl.edu.agh.Analyzer.ui.GraphHandler;
 import pl.edu.agh.Analyzer.ui.ReportCreator;
 import pl.edu.agh.Analyzer.ui.ReportInput;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.*;
+import java.util.List;
 
 /**
  * Created by karolina on 12.07.17.
@@ -327,6 +328,13 @@ public class AnalysisController {
         System.out.println("Last month: "+ lastMonth + "; last year: "+ lastYear);
       }
       List<ReportInput> inputs = new ArrayList<>();
+        Document report = new Document();
+        try {
+            PdfWriter.getInstance(report, new FileOutputStream("./reports/"+value+".pdf"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        report.open();
       for (int i = firstYear; i <= lastYear; i++) {
         int j;
         int lastJ;
@@ -346,18 +354,25 @@ public class AnalysisController {
               System.out.println("******************* *Date: "+value + " ************************");
               //GraphHandler.graphCreator("Date", value, fetchedNotes);
                   GraphHandler.resetInput();
-                  GraphHandler.graphCreator("Date" , value, fetchedNotes);
-                  ReportInput input = GraphHandler.getInput();
+              try {
+                  GraphHandler.graphCreator("Date" , value, fetchedNotes, report);
+              } catch (DocumentException e) {
+                  e.printStackTrace();
+              }
+              ReportInput input = GraphHandler.getInput();
                   if (input != null)
                       inputs.add(GraphHandler.getInput());
-
           }
         }
 
       }
-        if (!isIteratingOverDates){
-            reportCreator.showChart(inputs);
+      reportCreator.showChart(inputs, report);
+        try {
+            report.close();
+        }catch (Exception e){
+            System.out.println("Exception raised - probably report is empty");
         }
+
       return "foo";
     }
     @GetMapping("/analyseNewspaper")
@@ -370,19 +385,28 @@ public class AnalysisController {
         System.out.println("Newspapers have been fetched");
       }
         List<ReportInput> newsInputs = new ArrayList<>();
-      for (Newspaper n : fetchedNewspapers) {
-            //value =  "South China Morning Post";
-            value = n.getName();
+      Document newsReport = new Document();
+      if (!isIteratingOverDates) {
+          try {
+              PdfWriter.getInstance(newsReport, new FileOutputStream("./reports/"+value + ".pdf"));
+          } catch (Exception e) {
+              e.printStackTrace();
+          }
+          newsReport.open();
+      }
+      //for (Newspaper n : fetchedNewspapers) {
+            value =  "South China Morning Post";
+            //value = n.getName();
             setIsAskingForValue(false);
           if ((getPressReleasesByNews().equals("foo")) && (fetchedNotes != null) && (!fetchedNotes.isEmpty())){
               System.out.println("******************* *Newspaper: "+value + " ************************");
-              if (!isAskingForValue && isIteratingOverDates){
+              if (isIteratingOverDates){
                   Map<String, Set<PressRelease>> newspaperNotes = new HashMap<String, Set<PressRelease>>();
                   //wrzucam notki do list w hashmapie
                   for (PressRelease p : fetchedNotes){
                       int pMonth = p.getDate().getMonth()+1;
                       int pYear = p.getDate().getYear()+1900;
-                      String date = pYear + "-" + (pMonth>10 ? "" : "0") + pMonth;
+                      String date = pYear + "-" + (pMonth<10 ? "0" : "") + pMonth;
                       newspaperNotes.putIfAbsent(date, new HashSet<PressRelease>());
                       newspaperNotes.get(date).add(p);
                       Set<Tag> tags = p.getTags();
@@ -397,15 +421,34 @@ public class AnalysisController {
                   fetchedNotes =null;
                   SortedSet<String> notesKeySet = new TreeSet<>(newspaperNotes.keySet());
                   List<ReportInput> inputs = new ArrayList<>();
+                  Document report = new Document();
+                  try {
+                      PdfWriter.getInstance(report, new FileOutputStream("./reports/"+value+".pdf"));
+                  } catch (Exception e) {
+                      e.printStackTrace();
+                  }
+                  report.open();
+
                   for (String d : notesKeySet){
                       System.out.println("------> " + d);
+
                       GraphHandler.resetInput();
-                      GraphHandler.graphCreator("Newspaper&date" , value+"("+d+")", newspaperNotes.get(d));
+                      try {
+                          GraphHandler.graphCreator("Newspaper&date" , value+"("+d+")", newspaperNotes.get(d), report);
+                      } catch (DocumentException e) {
+                          e.printStackTrace();
+                      }
                       ReportInput input = GraphHandler.getInput();
-                      if (input != null)
-                        inputs.add(GraphHandler.getInput());
+                      if (input != null) {
+                          inputs.add(GraphHandler.getInput());
+                      }
                   }
-                  reportCreator.showChart(inputs);
+                  reportCreator.showChart(inputs, report);
+                  try {
+                      report.close();
+                  }catch (Exception e){
+                      System.out.println("Exception raised - probably report is empty");
+                  }
 
                   //remove values
                   newspaperNotes = null;
@@ -414,15 +457,24 @@ public class AnalysisController {
               }
               else {
                   GraphHandler.resetInput();
-                  GraphHandler.graphCreator("Newspaper" , value, fetchedNotes);
+                  try {
+                      GraphHandler.graphCreator("Newspaper" , value, fetchedNotes, newsReport);
+                  } catch (DocumentException e) {
+                      e.printStackTrace();
+                  }
                   ReportInput input = GraphHandler.getInput();
                   if (input != null)
                       newsInputs.add(GraphHandler.getInput());
               }
           }
-      }
+     // }
       if (!isIteratingOverDates){
-          reportCreator.showChart(newsInputs);
+          reportCreator.showChart(newsInputs, newsReport);
+          try {
+              newsReport.close();
+          }catch (Exception e){
+              System.out.println("Exception raised - probably report is empty");
+          }
       }
       return "foo";
     }
@@ -443,7 +495,11 @@ public class AnalysisController {
             setIsAskingForValue(false);
           if (getPressReleasesByCountries().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
               System.out.println("******************* *Country: "+value + " ************************");
-              GraphHandler.graphCreator("Countries", value, fetchedNotes);
+              try {
+                  GraphHandler.graphCreator("Countries", value, fetchedNotes, null);
+              } catch (DocumentException e) {
+                  e.printStackTrace();
+              }
           }
       }
       return "foo";
@@ -462,7 +518,11 @@ public class AnalysisController {
             setIsAskingForValue(false);
           if (getPressReleasesByLangs().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
               System.out.println("******************* *Language: "+value + " ************************");
-              GraphHandler.graphCreator("Language", value, fetchedNotes);
+              try {
+                  GraphHandler.graphCreator("Language", value, fetchedNotes, null);
+              } catch (DocumentException e) {
+                  e.printStackTrace();
+              }
           }
       }
       return "foo";
