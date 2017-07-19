@@ -326,6 +326,7 @@ public class AnalysisController {
         System.out.println("First month: " + firstMonth + "; first year: "+ firstYear);
         System.out.println("Last month: "+ lastMonth + "; last year: "+ lastYear);
       }
+      List<ReportInput> inputs = new ArrayList<>();
       for (int i = firstYear; i <= lastYear; i++) {
         int j;
         int lastJ;
@@ -343,10 +344,20 @@ public class AnalysisController {
             setIsAskingForValue(false);
           if (getPressReleasesByDate().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
               System.out.println("******************* *Date: "+value + " ************************");
-              GraphHandler.graphCreator("Date", value, fetchedNotes);
+              //GraphHandler.graphCreator("Date", value, fetchedNotes);
+                  GraphHandler.resetInput();
+                  GraphHandler.graphCreator("Newspaper" , value, fetchedNotes);
+                  ReportInput input = GraphHandler.getInput();
+                  if (input != null)
+                      inputs.add(GraphHandler.getInput());
+
           }
         }
+
       }
+        if (!isIteratingOverDates){
+            reportCreator.showChart(inputs);
+        }
       return "foo";
     }
     @GetMapping("/analyseNewspaper")
@@ -358,9 +369,10 @@ public class AnalysisController {
       if (getAllNewspapers().equals("foo")){ //we're sure it's finished
         System.out.println("Newspapers have been fetched");
       }
-      //for (Newspaper n : fetchedNewspapers) {
-            value =  "South China Morning Post";
-            //value = n.getName();
+        List<ReportInput> newsInputs = new ArrayList<>();
+      for (Newspaper n : fetchedNewspapers) {
+            //value =  "South China Morning Post";
+            value = n.getName();
             setIsAskingForValue(false);
           if ((getPressReleasesByNews().equals("foo")) && (fetchedNotes != null) && (!fetchedNotes.isEmpty())){
               System.out.println("******************* *Newspaper: "+value + " ************************");
@@ -400,8 +412,18 @@ public class AnalysisController {
                   notesKeySet = null;
                   inputs = null;
               }
+              else {
+                  GraphHandler.resetInput();
+                  GraphHandler.graphCreator("Newspaper" , value, fetchedNotes);
+                  ReportInput input = GraphHandler.getInput();
+                  if (input != null)
+                      newsInputs.add(GraphHandler.getInput());
+              }
           }
-      //}
+      }
+      if (!isIteratingOverDates){
+          reportCreator.showChart(newsInputs);
+      }
       return "foo";
     }
 

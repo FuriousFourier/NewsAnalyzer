@@ -280,7 +280,7 @@ public class GraphHandler {
         previewModel.getProperties().putValue(PreviewProperty.NODE_LABEL_COLOR, new DependantOriginalColor(Color.WHITE));
         previewModel.getProperties().putValue(PreviewProperty.EDGE_CURVED, Boolean.FALSE);
         previewModel.getProperties().putValue(PreviewProperty.EDGE_OPACITY, 50);
-        previewModel.getProperties().putValue(PreviewProperty.BACKGROUND_COLOR, Color.BLACK);*/
+        previewModel.getProperties().putValue(PreviewProperty.BACKGROUND_COLOR, Color.BLACK);
 
         ExportController ec = Lookup.getDefault().lookup(ExportController.class);
         try {
@@ -289,7 +289,7 @@ public class GraphHandler {
             ex.printStackTrace();
             return;
         }
-    /*
+
         //PDF Exporter config and export to Byte array
 
         PDFExporter pdfExporter = (PDFExporter) ec.getExporter("pdf");

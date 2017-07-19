@@ -35,37 +35,36 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
                 System.out.println("Input is empty - returning...");
                 return;
             }
-            //ExampleChart<CategoryChart> exampleChart = this;//new BarChart01();
+
             xAxis = reportInput.get(0).paramName;
             for (String p: ReportInput.nodesParams) {
                 paramValues = new ArrayList<>();
                 values = new ArrayList<>();
                 currentParam = p;
-                CategoryChart chart = this.getChart(); //exampleChart.getCHart()
+                CategoryChart chart = this.getChart();
                 if (chart == null) {
                     System.out.println("No chart to display for " + input.get(0).paramValue + ", param: " + p);
                     continue;
                 }
                 try {
                     BitmapEncoder.saveBitmap(chart, "./Sample_Chart_"+input.get(0).paramValue+"_"+p, BitmapEncoder.BitmapFormat.PNG);
-
-                    new SwingWrapper<CategoryChart>(chart).displayChart();
+                    //new SwingWrapper<CategoryChart>(chart).displayChart();
                 } catch (HeadlessException e){
                     System.out.println("HeadlessExcpetion has been thrown!");
                     continue;
                 }catch (IOException e){
                     System.out.println("IOException has been thrown!");
                 }
-                try {
+                /*try {
                     System.out.println("Press space to continue");
                     waitForSpace();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
-                }
+                }*/
             }
         }
 
-        private void waitForSpace() throws InterruptedException {
+/*        private void waitForSpace() throws InterruptedException {
             final CountDownLatch latch = new CountDownLatch(1);
             KeyEventDispatcher dispatcher = new KeyEventDispatcher() {
                 @Override
@@ -78,7 +77,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
             KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(dispatcher);
             latch.await();
             KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(dispatcher);
-        }
+        }*/
 
         @Override
         public CategoryChart getChart() {
@@ -97,9 +96,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
                 System.out.print(s + ", ");
             }
             System.out.println();
-
             System.out.println("Values:");
-
             for (Number d : values) {
                 System.out.println(d + " ");
             }
@@ -111,11 +108,10 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
             // Customize Chart
             chart.getStyler().setLegendVisible(false);
             chart.getStyler().setHasAnnotations(true);
+            chart.getStyler().setXAxisLabelRotation(90);
 
             // Series
             chart.addSeries("test 1", paramValues, values);
-            //chart.addSeries("test 1", Arrays.asList(new Integer[] { 0, 1, 2, 3, 4 }), Arrays.asList(new Integer[] { 4, 5, 9, 6, 5 }));
-
             return chart;
         }
 
