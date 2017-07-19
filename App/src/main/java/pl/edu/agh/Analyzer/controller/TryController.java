@@ -47,14 +47,10 @@ public class TryController {
 		String viewName = "foo";
 		final long denominator = 1000000000;
 
-		Set<PressRelease> pressReleases = pressReleaseRepository.findByTitle("India, China can handle border differences, senior Indian official says");
-		if (pressReleases.isEmpty()) {
-			viewName = "myError";
-			System.out.println("Error :/");
-		} else{
-			for (PressRelease pressRelease : pressReleases) {
-				System.out.println(pressRelease.getDate() + "; " + pressRelease.getTitle() + "; " + pressRelease.getFeed().getName());
-
+		Iterable<Feed> feeds = feedRepository.findAll();
+		for (Feed feed : feeds) {
+			if (feed.getName().equals("fr_FRA_lmonde_int")) {
+				System.out.println("Here it is: " + feed.getNewspaper().getLanguage().getName());
 			}
 		}
 		return viewName;
@@ -64,6 +60,7 @@ public class TryController {
     public String bar() {
         final String viewName = "foo";
         final File file = new File("bar.txt");
+		final Date patternDate = new Date(117, 5, 1);
 
         file.delete();
         PrintWriter printWriter = null;
@@ -79,26 +76,16 @@ public class TryController {
             return viewName;
         }
         System.out.println("No to robim");
-
-		Feed feed = feedRepository.findByName("pl_POL_fakt_int");
-		if (feed == null) {
-			System.out.println("Error lel");
-			printWriter.close();
-			return "myError";
-		}
-
-		Set<PressRelease> pressReleases = feed.getPressReleases();
-		System.out.println("PressReleasów jest " + pressReleases.size());
+        List<PressRelease> pressReleases = (List<PressRelease>)pressReleaseRepository.findAll();
 		for (PressRelease pressRelease : pressReleases) {
-			Set<Tag> tags = pressRelease.getTags();
-			if (tags.size() != 0) {
-				printWriter.print(pressRelease.getDate() + ", " + pressRelease.getTitle() + ", ");
-				for (Tag tag : tags) {
-					printWriter.print(tag.getName());
+			if (pressRelease.getDate().before(patternDate)) {
+				printWriter.println(pressRelease.getDate() + "; " + pressRelease.getTitle());
+				for (Tag tag : pressRelease.getTags()) {
+					printWriter.println("\t" + tag.getName() + "\t");
 				}
-				printWriter.print("\n");
 			}
 		}
+
 		printWriter.close();
         System.out.println("Data is written");
         return viewName;

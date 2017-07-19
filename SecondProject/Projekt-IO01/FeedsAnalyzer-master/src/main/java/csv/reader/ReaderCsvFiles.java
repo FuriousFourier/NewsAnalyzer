@@ -13,7 +13,7 @@ import java.util.Map;
 
 public class ReaderCsvFiles {
 
-	private final static char[] separators = {9, 32};
+	private final static char[] separators = {9, 32, ','};
 
 	private ReaderCsvFiles() {
 	}

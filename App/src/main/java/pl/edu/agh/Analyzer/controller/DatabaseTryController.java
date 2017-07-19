@@ -1,6 +1,7 @@
 package pl.edu.agh.Analyzer.controller;
 
 import csv.reader.ReaderCsvFiles;
+import static info.FeedInfoContainer.*;
 import org.hibernate.exception.DataException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -16,6 +17,8 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+
+import static info.FeedInfoContainer.languages;
 
 /**
  * Created by pawel on 12.07.17.
@@ -51,9 +54,6 @@ public class DatabaseTryController {
     private static Map<PressReleaseId, PressRelease> pressReleaseMap = new HashMap<>();
     private static Map<String, Tag> tagMap = new HashMap<>();
 
-    private static final String myTitle = "Stracimy dwa lata zanim pan Trump pozna świat";
-
-
     private static final String GEOMEDIA_FEEDS_FILE_PATH = "../SecondProject/geomedia/Geomedia_extract_AGENDA/Geomedia_extract_AGENDA/";
     private static final String ORG_PATH = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/TaggedFeeds/taggedForOrg/";
     private static final String NEW_FEEDS_PATH_TAGGED = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/TaggedFeeds/taggedForCountry";
@@ -64,212 +64,6 @@ public class DatabaseTryController {
     private static final String GEOMEDIA_RSS_FILE_NAME = "rss.csv";
     private static final String GEOMEDIA_UNIQUE_FILE_NAME = "rss_unique.csv";
     private static final String ORG_TAGGED_FILE_NAME = "rss_org_tagged.csv";
-    private static String[] newspapersNames = {
-            "South China Morning Post",
-            "Le Monde",
-            "The Times of India",
-            "El Universal",
-            "The New York Times",
-            "The Australian",
-            "Herald Sun",
-            "The Star",
-            "China Daily",
-            "Daily Telegraph",
-            "The Guardian",
-            "Hindustan Times",
-            "Japan Times",
-            "Times of Malta",
-            "The Star(malaise)",
-            "This Day",
-            "New Zealand Herald",
-            "The News International",
-            "Today",
-            "Washington Post",
-            "Chronicle",
-            "Le Nacion",
-            "La Razon",
-            "La patria",
-            "El mercurio",
-            "La tercera",
-            "El periodico de Catalunya",
-            "El Pais",
-            "La Jordana (Mex)",
-            "El Universal(MEX)",
-            "El Universal",
-            "Dernière Heure",
-            "Le soir",
-            "Le Journal de Montreal",
-            "El Watan",
-            "LExpression",
-            "Le Parisien",
-    };
-
-    private static String[] nonGeomediaNewspapersNames = {
-            "Do rzeczy",
-            "Fakt",
-            "Interia",
-            "Newsweek",
-            "RMF24",
-            "TVN24",
-            "WP"
-    };
-
-    private static String[] feedsNames = {
-            "fr_FRA_lmonde_int",
-            "en_CHN_mopost_int",
-            "en_IND_tindia_int",
-            "es_MEX_univer_int",
-            "en_USA_nytime_int",
-            "en_AUS_austra_int",
-            "en_AUS_hersun_int",
-            "en_CAN_starca_int",
-            "en_CHN_chinad_int",
-            "en_GBR_dailyt_int",
-            "en_GBR_guardi_int",
-            "en_IND_hindti_int",
-            "en_JPN_jatime_int",
-            "en_MLT_tmalta_int",
-            "en_MYS_starmy_int",
-            "en_NGA_thiday_int",
-            "en_NZL_nzhera_int",
-            "en_PAK_newint_int",
-            "en_SGP_twoday_int",
-            "en_USA_wapost_int",
-            "en_ZWE_chroni_int",
-            "es_ARG_nacion_int",
-            "es_BOL_larazo_int",
-            "es_BOL_patria_int",
-            "es_CHL_mercur_int",
-            "es_CHL_tercer_int",
-            "es_ESP_catalu_int",
-            "es_ESP_elpais_int",
-            "es_MEX_jormex_int",
-            "es_MEX_univer_int",
-            "es_VEN_univer_int",
-            "fr_BEL_derheu_int",
-            "fr_BEL_lesoir_int",
-            "fr_CAN_jmontr_int",
-            "fr_DZA_elwata_int",
-            "fr_DZA_xpress_int",
-            "fr_FRA_lepari_int",
-    };
-
-    private static final String[] nonGeomediaFeedsNames = {
-            "pl_POL_dorzeczy_int",
-            "pl_POL_fakt_int",
-            "pl_POL_interia_int",
-            "pl_POL_newsweek_int",
-            "pl_POL_rmf24_int",
-            "pl_POL_tvn24_int",
-            "pl_POL_wp_int"
-    };
-
-    private static final String[] newspapersCountry = {
-            "China",
-            "France",
-            "India",
-            "Mexico",
-            "United States of America",
-            "Australia",
-            "Australia",
-            "Canada",
-            "China",
-            "United Kingdom",
-            "United Kingdom",
-            "India",
-            "Japan",
-            "Malta",
-            "Malaysia",
-            "Nigeria",
-            "New Zealand",
-            "Pakistan",
-            "Singapore",
-            "United States of America",
-            "Zimbabwe",
-            "Argentina",
-            "Bolivia",
-            "Bolivia",
-            "Chile",
-            "Chile",
-            "Spain",
-            "Spain",
-            "Mexico",
-            "Mexico",
-            "Venezuela",
-            "Belgium",
-            "Belgium",
-            "Canada",
-            "Algeria",
-            "Algeria",
-            "France",
-    };
-
-    private static final String[] nonGeomediaNewspapersCountry = {
-            "Poland",
-            "Poland",
-            "Poland",
-            "Poland",
-            "Poland",
-            "Poland",
-            "Poland"
-    };
-
-    private static final String[] newspapersLanguage = {
-            "English",
-            "French",
-            "English",
-            "Spanish",
-            "English",
-            "English",
-            "English",
-            "English",
-            "English",
-            "English",
-            "English",
-            "English",
-            "English",
-            "English",
-            "English",
-            "English",
-            "English",
-            "English",
-            "English",
-            "English",
-            "English",
-            "Spanish",
-            "Spanish",
-            "Spanish",
-            "Spanish",
-            "Spanish",
-            "Spanish",
-            "Spanish",
-            "Spanish",
-            "Spanish",
-            "Spanish",
-            "French",
-            "French",
-            "French",
-            "French",
-            "French",
-            "French",
-    };
-
-    private static final String[] nonGeomediaNewspapersLanguage = {
-            "Polish",
-            "Polish",
-            "Polish",
-            "Polish",
-            "Polish",
-            "Polish",
-            "Polish"
-    };
-
-    private static final String[] languages = {
-            "English",
-            "Spanish",
-            "French",
-            "Polish"
-    };
 
     public static Date convertStringToDate(String date) {
         DateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.ENGLISH);
@@ -494,14 +288,6 @@ public class DatabaseTryController {
             }
         }
 
-		for (PressRelease pressRelease : pressReleaseMap.values()) {
-			if (pressRelease.getTitle().contains(myTitle)) {
-				System.out.println("No cześ");
-				for (Tag tag : pressRelease.getTags()) {
-					System.out.println("\t" + tag.getName());
-				}
-			}
-		}
 		System.out.println("I will be saving this to DB now");
         flushed = false;
         System.out.println("Countries size: " + countryMap.values().size());
@@ -610,15 +396,6 @@ public class DatabaseTryController {
                                 pressRelease.setTags(new HashSet<>());
                                 pressReleaseMap.put(pressReleaseId, pressRelease);
                             }
-							pressRelease = pressReleaseMap.get(pressReleaseId);
-							if (titles.get(i).contains(myTitle)) {
-								System.out.println(date + "; " + titles.get(i) + "; " + feed.getName() + "; " + (pressRelease == null));
-								for (PressRelease pressRelease1 : pressReleaseMap.values()) {
-									if (pressRelease1.getTitle().equals(titles.get(i))) {
-										System.out.println("LOOOOL: " + pressRelease1.getDate());
-									}
-								}
-							}
                         } catch (DataException e) {
                             e.printStackTrace();
                         } catch (IndexOutOfBoundsException e) {

@@ -33,6 +33,7 @@ public class Main {
                 new DownloadedFeed("pl_POL_tvn24_int", "http://www.tvn24.pl/najnowsze.xml"),
                 new DownloadedFeed("pl_POL_rmf24_int", "http://www.rmf24.pl/fakty/swiat/feed")
 
+
         };
         RssReader reader = new RssReader();
         reader.readAndWriteToFile(downloadedFeeds);
