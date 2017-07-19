@@ -192,6 +192,7 @@ public class GraphHandler {
 
         GraphDistance distance = new GraphDistance();
         distance.setDirected(true);
+        distance.setNormalized(true); //NORMALIZED
         distance.execute(graphModel);
         Degree degree = new Degree();
         degree.execute(graphModel);

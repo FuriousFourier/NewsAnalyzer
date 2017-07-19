@@ -145,8 +145,8 @@ public class AnalysisController {
         else
             date = value;
 
-        String month = date.substring(0, 2);
-        String year = date.substring(3, 7);
+        String year = date.substring(0, 4);
+        String month = date.substring(5, 7);
         Integer monthInt = Integer.parseInt(month);
         Integer yearInt = Integer.parseInt(year);
 
@@ -346,7 +346,7 @@ public class AnalysisController {
               System.out.println("******************* *Date: "+value + " ************************");
               //GraphHandler.graphCreator("Date", value, fetchedNotes);
                   GraphHandler.resetInput();
-                  GraphHandler.graphCreator("Newspaper" , value, fetchedNotes);
+                  GraphHandler.graphCreator("Date" , value, fetchedNotes);
                   ReportInput input = GraphHandler.getInput();
                   if (input != null)
                       inputs.add(GraphHandler.getInput());
@@ -400,7 +400,7 @@ public class AnalysisController {
                   for (String d : notesKeySet){
                       System.out.println("------> " + d);
                       GraphHandler.resetInput();
-                      GraphHandler.graphCreator("Newspaper and date" , value+"("+d+")", newspaperNotes.get(d));
+                      GraphHandler.graphCreator("Newspaper&date" , value+"("+d+")", newspaperNotes.get(d));
                       ReportInput input = GraphHandler.getInput();
                       if (input != null)
                         inputs.add(GraphHandler.getInput());

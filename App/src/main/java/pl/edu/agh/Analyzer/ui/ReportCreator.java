@@ -27,6 +27,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
     private String currentParam;
     private List<String> paramValues;
     private List<Number> values;
+    private boolean isNodeAnalysis;
     String xAxis;
 
     public void showChart(List<ReportInput> input){
@@ -37,6 +38,13 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
             }
 
             xAxis = reportInput.get(0).paramName;
+            String fileName;
+            if (!input.get(0).paramValue.equals(input.get(1).paramValue))
+                fileName = input.get(0).paramName;
+            else
+                fileName = input.get(0).paramValue;
+            //node params
+        isNodeAnalysis = true;
             for (String p: ReportInput.nodesParams) {
                 paramValues = new ArrayList<>();
                 values = new ArrayList<>();
@@ -47,7 +55,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
                     continue;
                 }
                 try {
-                    BitmapEncoder.saveBitmap(chart, "./Sample_Chart_"+input.get(0).paramValue+"_"+p, BitmapEncoder.BitmapFormat.PNG);
+                    BitmapEncoder.saveBitmap(chart, "./Sample_Chart_"+fileName+"_"+p, BitmapEncoder.BitmapFormat.PNG);
                     //new SwingWrapper<CategoryChart>(chart).displayChart();
                 } catch (HeadlessException e){
                     System.out.println("HeadlessExcpetion has been thrown!");
@@ -62,6 +70,34 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
                     e.printStackTrace();
                 }*/
             }
+
+            //graph params
+        isNodeAnalysis = false;
+        for (String p: input.get(0).getGraphParams()) {
+            paramValues = new ArrayList<>();
+            values = new ArrayList<>();
+            currentParam = p;
+            CategoryChart chart = this.getChart();
+            if (chart == null) {
+                System.out.println("No chart to display for " + input.get(0).paramValue + ", param: " + p);
+                continue;
+            }
+            try {
+                BitmapEncoder.saveBitmap(chart, "./Sample_Chart_"+fileName+"_"+p, BitmapEncoder.BitmapFormat.PNG);
+                //new SwingWrapper<CategoryChart>(chart).displayChart();
+            } catch (HeadlessException e){
+                System.out.println("HeadlessExcpetion has been thrown!");
+                continue;
+            }catch (IOException e){
+                System.out.println("IOException has been thrown!");
+            }
+                /*try {
+                    System.out.println("Press space to continue");
+                    waitForSpace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }*/
+        }
         }
 
 /*        private void waitForSpace() throws InterruptedException {
@@ -83,12 +119,24 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
         public CategoryChart getChart() {
         //iteracja po parametrach grafu/wezlow/itp.
             //iteracja po podgrafach
+            System.out.println("================================getChart===============");
                 for (ReportInput r: reportInput){
                     if (r == null)
                         continue;
                     paramValues.add(r.paramValue);
-                    Node n = (Node)r.getNodeMaxValue(currentParam);
-                    values.add((Number) n.getAttribute(currentParam));
+                    Node n;
+                    Number number;
+                    if (isNodeAnalysis) {
+                        n = (Node) r.getNodeMaxValue(currentParam);
+                        if (n == null)
+                            number = 0;
+                        else
+                            number = (Number) n.getAttribute(currentParam);
+                    }
+                    else {
+                        number = (Number) r.getGraphValue(currentParam);
+                    }
+                    values.add(number);
                 }
 
             System.out.println("X Labels:");

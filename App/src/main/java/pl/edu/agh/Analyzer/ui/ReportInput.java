@@ -11,6 +11,8 @@ import org.jfree.base.modules.SubSystem;
 import java.math.BigDecimal;
 import java.util.*;
 
+import static java.lang.Float.NaN;
+
 /**
  * Created by karolina on 17.07.17.
  */
@@ -78,11 +80,15 @@ public class ReportInput {
                     }*/
                    Number n1 = (Number)n.getAttribute(col);
                    Number n2 = (Number)currentNode.getAttribute(col);
-                    if (numberComparator.compare(n1, n2) < 0){
-                        nodeMaxValues.put(col, currentNode);
-                    }
+                   try {
+                       if (numberComparator.compare(n1, n2) < 0 && !((Number)currentNode.getAttribute(col)).toString().equals("NaN")) {
+                           nodeMaxValues.put(col, currentNode);
+                       }
+                   } catch (Exception e){
+                       continue; //prawdopodobnie NaN
+                   }
                 }
-                else {
+                else if (!((Number)currentNode.getAttribute(col)).toString().equals("NaN")){
                     //System.out.println("Rpeort input - appropraite init");
                     nodeMaxValues.put(col, currentNode);
                 }
