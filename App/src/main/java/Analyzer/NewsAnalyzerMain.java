@@ -3,7 +3,7 @@ package Analyzer;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
-import Analyzer.secondProject.tagger.Tagger;
+import Analyzer.secondProject.tagger.MainTagger;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -29,9 +29,10 @@ public class NewsAnalyzerMain {
         Random random = new Random(System.currentTimeMillis());
         securityNumber = random.nextLong();
         configurableApplicationContext = SpringApplication.run(NewsAnalyzerMain.class, args);
+        MainTagger.initializeMainTagger();
 
         while (true) {
-            System.out.println("Napisz \"p\" to to zrobię (możesz też napisać \"d\")");
+            System.out.println("Napisz \"p\" to to zrobię (możesz też napisać \"d\" albo \"t\")");
             String line = scanner.nextLine();
             if (line.equals("p")) {
                 getNewFeeds();
@@ -46,7 +47,9 @@ public class NewsAnalyzerMain {
                 System.out.println("*************");
                 System.out.println("Response Code: " + responseCode);
                 System.out.println("*************");
-            } else {
+            } else if (line.equals("t")) {
+            	MainTagger.tagNewFeedsCurrency(0);
+			} else {
                 System.out.println("Błędna opcja");
             }
             System.gc();
@@ -60,7 +63,7 @@ public class NewsAnalyzerMain {
             System.out.println("Im gonna download feeds");
             Analyzer.secondProject.rss.Main.main(tmp);
             System.out.println("Im tagging");
-            Tagger.tagNewFeeds(1);
+            MainTagger.tagNewFeeds(1);
             System.out.println("Lets go with db");
 
             URL url = new URL("http://localhost:8080/addThingsToDB?secNum=" + securityNumber);
@@ -72,7 +75,7 @@ public class NewsAnalyzerMain {
             System.out.println("*************");
             System.out.println("Work finished");
         } catch (IOException e) {
-            System.err.println("Exception in Tagger");
+            System.err.println("Exception in MainTagger");
             e.printStackTrace();
         }
     }

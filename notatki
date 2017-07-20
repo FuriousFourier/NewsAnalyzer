@@ -5,6 +5,7 @@ HibernateUtil
 Analizy:
 analysis.AnalysisService
 
+Chodzi o to żeby predykować czy kursy urosną czy zmaleją (optional)
 
 RSS:
 http://www.gazetaprawna.pl/wiadomosci/najwazniejsze/rss.xml

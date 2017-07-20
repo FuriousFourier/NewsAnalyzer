@@ -1,6 +1,7 @@
 package Analyzer.secondProject.tagger;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by pawel on 19.07.17.
@@ -10,16 +11,16 @@ public class TagDataContainer {
 	private List<String> times;
 	private List<String> titles;
 	private List<String> descriptions;
-	private List<String> tags;
-	private List<String> tagsKeys;
+	private Set<ComplexTag> complexTags;
+	private String destinationFilePath;
 
-	public TagDataContainer(List<String> feeds, List<String> times, List<String> titles, List<String> descriptions, List<String> tags, List<String> tagsKeys) {
+	public TagDataContainer(List<String> feeds, List<String> times, List<String> titles, List<String> descriptions, Set<ComplexTag> complexTags, String destinationFilePath) {
 		this.feeds = feeds;
 		this.times = times;
 		this.titles = titles;
 		this.descriptions = descriptions;
-		this.tags = tags;
-		this.tagsKeys = tagsKeys;
+		this.complexTags = complexTags;
+		this.destinationFilePath = destinationFilePath;
 	}
 
 	public List<String> getFeeds() {
@@ -54,19 +55,19 @@ public class TagDataContainer {
 		this.descriptions = descriptions;
 	}
 
-	public List<String> getTags() {
-		return tags;
+	public Set<ComplexTag> getComplexTags() {
+		return complexTags;
 	}
 
-	public void setTags(List<String> tags) {
-		this.tags = tags;
+	public void setComplexTags(Set<ComplexTag> complexTags) {
+		this.complexTags = complexTags;
 	}
 
-	public List<String> getTagsKeys() {
-		return tagsKeys;
+	public String getDestinationFilePath() {
+		return destinationFilePath;
 	}
 
-	public void setTagsKeys(List<String> tagsKeys) {
-		this.tagsKeys = tagsKeys;
+	public void setDestinationFilePath(String destinationFilePath) {
+		this.destinationFilePath = destinationFilePath;
 	}
 }
