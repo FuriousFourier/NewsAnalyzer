@@ -1,6 +1,7 @@
 package pl.edu.agh.Analyzer.ui;
 
 import com.itextpdf.text.*;
+import com.itextpdf.text.Font;
 import com.itextpdf.text.pdf.PdfContentByte;
 import com.itextpdf.text.pdf.PdfWriter;
 import org.gephi.appearance.api.Partition;
@@ -20,7 +21,6 @@ import org.gephi.project.api.ProjectController;
 import org.gephi.project.api.Workspace;
 import org.gephi.statistics.plugin.*;
 import org.openide.util.Lookup;
-import org.wouterspekkink.plugins.metric.lineage.Lineage;
 import pl.edu.agh.Analyzer.model.Country;
 import pl.edu.agh.Analyzer.model.Feed;
 import pl.edu.agh.Analyzer.model.PressRelease;
@@ -67,13 +67,6 @@ public class GraphHandler {
             RankCalculator.RANK_KEY,
             RankCalculator.NORMALIZED_RANK_KEY,
 
-            //Lineage
-            /*Lineage.ADISTANCE,
-            Lineage.ANCESTOR,
-            Lineage.DESCENDANT,
-            Lineage.DDISTANCE,
-            Lineage.LINEAGE,
-            Lineage.ORIGIN,*/
     };
 
     public static ReportInput getInput(){
@@ -182,15 +175,16 @@ public class GraphHandler {
             Node[] neighbors = directedGraph.getNeighbors(n).toArray();
             System.out.println(n.getLabel() + " has " + neighbors.length + " neighbors");
         }
-
         //Iterate over edges
         for (Edge e : directedGraph.getEdges()) {
             System.out.println(e.getSource().getId() + " -> " + e.getTarget().getId());
         }*/
 
         System.out.println("Nodes analysis:");
-        com.itextpdf.text.Font font = FontFactory.getFont(FontFactory.COURIER, 12, BaseColor.BLACK);
-        Chunk chunk = new Chunk("Nodes analysis:\n", font);
+        Font subtitleFont = FontFactory.getFont(FontFactory.HELVETICA, 12, BaseColor.BLACK);
+        Font font = FontFactory.getFont(FontFactory.COURIER, 12, BaseColor.BLACK);
+        Font fontSmall = FontFactory.getFont(FontFactory.COURIER, 8, BaseColor.BLUE);
+        Paragraph chunk = new Paragraph(paramValue, subtitleFont);
         report.add(chunk);
 
         GraphDistance distance = new GraphDistance();
@@ -204,6 +198,7 @@ public class GraphHandler {
         hits.execute(graphModel);
         PageRank pageRank = new PageRank();
         pageRank.setDirected(true);
+	    pageRank.setUseEdgeWeight(true);
         pageRank.execute(graphModel);
         EigenvectorCentrality eigenvectorCentrality = new EigenvectorCentrality();
         eigenvectorCentrality.setDirected(true);
@@ -217,8 +212,9 @@ public class GraphHandler {
         WeightedDegree weightedDegree = new WeightedDegree();
         weightedDegree.execute(graphModel);
         Modularity modularity = new Modularity();
+	    modularity.setUseWeight(true);
         modularity.execute(graphModel);
-
+ 
         //PrestigeStatistics
         PrestigeStatistics prestigeStatistics = new PrestigeStatistics();
         prestigeStatistics.setCalculateDomain(true);
@@ -228,28 +224,30 @@ public class GraphHandler {
         prestigeStatistics.setCalculateRank(true);
         prestigeStatistics.execute(graphModel);
 
-        //Lineage
-        /*Lineage lineage = new Lineage();
-        lineage.setDirected(true);
-        lineage.setOrigin("tag2");
-        lineage.execute(graphModel);*/
 
         Table attributes = graphModel.getNodeTable();
         //Iterate over values
         for (String col : columnsToSee) {
-
-            //String col = GraphDistance.;
             Column current = attributes.getColumn(col);
             System.out.println(col+ ":");
-            chunk = new Chunk(col+ ":\n", font);
+            chunk = new Paragraph(col+ ":\n", font);
             report.add(chunk);
             for (Node n : graphModel.getGraph().getNodes()) {
                 System.out.println(n.getLabel() + ": " + n.getAttribute(current));
-                chunk = new Chunk(n.getLabel() + ": " + n.getAttribute(current) + "\n");
+                chunk = new Paragraph(n.getLabel() + ": " + n.getAttribute(current) + "\n", fontSmall);
                 report.add(chunk);
             }
         }
 
+	//get nodes for each connected component and for each modularity class
+	Map<Integer, List<Node>> componentsMap = new HashMap<Integer, List<Node>>();
+	Map<Integer, List<Node>> modularityMap = new HashMap<Integer, List<Node>>(); //jak znalezc liczbe spolecznosci?
+	for (int i = 0; i < connectedComponents.getConnectedComponentsCount(); i++){
+		componentsMap.put(new Integer(i), new ArrayList<>());
+	}
+	for (Node n: graphModel.getGraph().getNodes()){
+        componentsMap.get(n.getAttribute(ConnectedComponents.STRONG)).add(n);
+	}
         System.out.println("Nr of nodes: " + directedGraph.getNodeCount());
         System.out.println("Nr of edges: " + directedGraph.getEdgeCount());
         System.out.println("Nr of connected components: " + connectedComponents.getConnectedComponentsCount());
@@ -262,31 +260,31 @@ public class GraphHandler {
         System.out.println("Modularity: "+ modularity.getModularity());
         //System.out.println("Lineage origin: " + lineage.getOrigin());
 
-        chunk = new Chunk("Nr of nodes: " + directedGraph.getNodeCount() + "\n", font);
+       /* chunk = new Paragraph("Nr of nodes: " + directedGraph.getNodeCount() + "\n", fontSmall);
         report.add(chunk);
-        chunk = new Chunk("Nr of edges: " + directedGraph.getEdgeCount() + "\n", font);
+        chunk = new Paragraph("Nr of edges: " + directedGraph.getEdgeCount() + "\n", fontSmall);
         report.add(chunk);
-        chunk = new Chunk("Nr of connected components: " + connectedComponents.getConnectedComponentsCount() + "\n", font);
+        chunk = new Paragraph("Nr of connected components: " + connectedComponents.getConnectedComponentsCount() + "\n", fontSmall);
         report.add(chunk);
 
-        chunk = new Chunk("The average shortest path length in the network: " + distance.getPathLength() + "\n", font);
+        chunk = new Paragraph("The average shortest path length in the network: " + distance.getPathLength() + "\n", fontSmall);
         report.add(chunk);
-        chunk = new Chunk("The diameter of the network: "+ distance.getDiameter() + "\n", font);
+        chunk = new Paragraph("The diameter of the network: "+ distance.getDiameter() + "\n", fontSmall);
         report.add(chunk);
-        chunk = new Chunk("The radius of the network: "+ distance.getRadius() + "\n", font);
+        chunk = new Paragraph("The radius of the network: "+ distance.getRadius() + "\n", fontSmall);
         report.add(chunk);
-        chunk = new Chunk("The average clustering coefficient: " + clusteringCoefficient.getAverageClusteringCoefficient() + "\n", font);
+        chunk = new Paragraph("The average clustering coefficient: " + clusteringCoefficient.getAverageClusteringCoefficient() + "\n", fontSmall);
         report.add(chunk);
-        chunk = new Chunk("The average degree: " + degree.getAverageDegree() + "\n", font);
+        chunk = new Paragraph("The average degree: " + degree.getAverageDegree() + "\n", fontSmall);
         report.add(chunk);
-        chunk = new Chunk("Modularity: "+ modularity.getModularity() + "\n", font);
-        report.add(chunk);
+        chunk = new Paragraph("Modularity: "+ modularity.getModularity() + "\n", fontSmall);
+        report.add(chunk);*/
 
         GraphDensity density = new GraphDensity();
         density.execute(graphModel);
         System.out.println("The density of the graph: "+ density.getDensity());
-        chunk = new Chunk("The density of the graph: "+ density.getDensity() + "\n", font);
-        report.add(chunk);
+       /* chunk = new Paragraph("The density of the graph: "+ density.getDensity() + "\n", fontSmall);
+        report.add(chunk);*/
 
         input = new ReportInput();
         input.initNodeMaxValues(graphModel);

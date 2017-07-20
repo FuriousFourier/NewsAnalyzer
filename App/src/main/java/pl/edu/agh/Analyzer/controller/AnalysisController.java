@@ -330,11 +330,18 @@ public class AnalysisController {
       List<ReportInput> inputs = new ArrayList<>();
         Document report = new Document();
         try {
-            PdfWriter.getInstance(report, new FileOutputStream("./reports/"+value+".pdf"));
+            PdfWriter.getInstance(report, new FileOutputStream("./reports/Months.pdf"));
         } catch (Exception e) {
             e.printStackTrace();
         }
         report.open();
+        Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD,14,BaseColor.BLACK);
+        Paragraph p = new Paragraph("Months", titleFont);
+        try {
+            report.add(p);
+        } catch (DocumentException e) {
+            e.printStackTrace();
+        }
       for (int i = firstYear; i <= lastYear; i++) {
         int j;
         int lastJ;
@@ -388,15 +395,22 @@ public class AnalysisController {
       Document newsReport = new Document();
       if (!isIteratingOverDates) {
           try {
-              PdfWriter.getInstance(newsReport, new FileOutputStream("./reports/"+value + ".pdf"));
+              PdfWriter.getInstance(newsReport, new FileOutputStream("./reports/Newspaper.pdf"));
           } catch (Exception e) {
               e.printStackTrace();
           }
           newsReport.open();
+          Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD,14,BaseColor.BLACK);
+          Paragraph p = new Paragraph("Newspaper", titleFont);
+          try {
+              newsReport.add(p);
+          } catch (DocumentException e) {
+              e.printStackTrace();
+          }
       }
-      //for (Newspaper n : fetchedNewspapers) {
-            value =  "South China Morning Post";
-            //value = n.getName();
+      for (Newspaper n : fetchedNewspapers) {
+            //value =  "South China Morning Post";
+            value = n.getName();
             setIsAskingForValue(false);
           if ((getPressReleasesByNews().equals("foo")) && (fetchedNotes != null) && (!fetchedNotes.isEmpty())){
               System.out.println("******************* *Newspaper: "+value + " ************************");
@@ -428,6 +442,13 @@ public class AnalysisController {
                       e.printStackTrace();
                   }
                   report.open();
+                  Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD,14,BaseColor.BLACK);
+                  Paragraph p = new Paragraph("Newspaper&date: " + value, titleFont);
+                  try {
+                      report.add(p);
+                  } catch (DocumentException e) {
+                      e.printStackTrace();
+                  }
 
                   for (String d : notesKeySet){
                       System.out.println("------> " + d);
@@ -467,7 +488,7 @@ public class AnalysisController {
                       newsInputs.add(GraphHandler.getInput());
               }
           }
-     // }
+      }
       if (!isIteratingOverDates){
           reportCreator.showChart(newsInputs, newsReport);
           try {

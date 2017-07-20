@@ -1,7 +1,6 @@
 package pl.edu.agh.Analyzer.ui;
 
-import com.itextpdf.text.BadElementException;
-import com.itextpdf.text.Document;
+import com.itextpdf.text.*;
 import com.itextpdf.text.Image;
 import org.gephi.graph.api.Node;
 import org.knowm.xchart.BitmapEncoder;
@@ -15,6 +14,7 @@ import org.wouterspekkink.plugins.metric.lineage.Lineage;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -36,6 +36,8 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
     String xAxis;
 
     public void showChart(List<ReportInput> input, Document report){
+        com.itextpdf.text.Rectangle rect = report.getPageSize();
+        float margin = report.rightMargin() + report.leftMargin();
             reportInput = input;
             if (input == null || input.isEmpty()){
                 System.out.println("Input is empty - returning...");
@@ -45,11 +47,11 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
             xAxis = reportInput.get(0).paramName;
             String fileName;
             if (input.size() > 1 && !input.get(0).paramValue.equals(input.get(1).paramValue))
-                fileName = input.get(0).paramName;
-            else
                 fileName = input.get(0).paramValue;
-            //node params
-        isNodeAnalysis = true;
+            else
+                fileName = input.get(0).paramName;
+            //node params - currently not drawing
+        /*isNodeAnalysis = true;
             for (String p: ReportInput.nodesParams) {
                 paramValues = new ArrayList<>();
                 values = new ArrayList<>();
@@ -61,24 +63,27 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
                 }
                 try {
                     BitmapEncoder.saveBitmap(chart, "./charts/"+fileName+"_"+p, BitmapEncoder.BitmapFormat.PNG);
-                    Path path = Paths.get(ClassLoader.getSystemResource("./charts/"+fileName+"_"+p+".png").toURI());
-                    Image img = Image.getInstance(path.toAbsolutePath().toString());
-                    report.add(img);
+                    URI uri;
+                    for (int i = 0; i < 100; i++) {
+                        if (ClassLoader.getSystemResource(fileName + "_" + p + ".png") != null) {
+                            uri = ClassLoader.getSystemResource(fileName+"_"+p+".png").toURI();
+                            Path path = Paths.get(uri);
+                            Image img = Image.getInstance(path.toAbsolutePath().toString());
+                            img.scaleToFit(rect.getWidth()-margin, rect.getHeight());
+                            report.add(img);
+                            break;
+                        }
+                    }
                     //new SwingWrapper<CategoryChart>(chart).displayChart();
                 } catch (HeadlessException e){
                     System.out.println("HeadlessExcpetion has been thrown!");
                     continue;
                 }catch (Exception e){
                     e.printStackTrace();
+                    return;
                 }
-                /*try {
-                    System.out.println("Press space to continue");
-                    waitForSpace();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }*/
             }
-
+*/
             //graph params
         isNodeAnalysis = false;
         for (String p: input.get(0).getGraphParams()) {
@@ -92,9 +97,17 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
             }
             try {
                 BitmapEncoder.saveBitmap(chart, "./charts/"+fileName+"_"+p, BitmapEncoder.BitmapFormat.PNG);
-                Path path = Paths.get(ClassLoader.getSystemResource("./charts/"+fileName+"_"+p+".png").toURI());
-                Image img = Image.getInstance(path.toAbsolutePath().toString());
-                report.add(img);
+                URI uri;
+                for (int i = 0; i < 1000; i++) {
+                    if (ClassLoader.getSystemResource(fileName + "_" + p + ".png") != null) {
+                        uri = ClassLoader.getSystemResource(fileName+"_"+p+".png").toURI();
+                        Path path = Paths.get(uri);
+                        Image img = Image.getInstance(path.toAbsolutePath().toString());
+                        img.scaleToFit(rect.getWidth()-margin, rect.getHeight());
+                        report.add(img);
+                        break;
+                    }
+                }
 
                 //new SwingWrapper<CategoryChart>(chart).displayChart();
             } catch (HeadlessException e){
@@ -102,13 +115,9 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
                 continue;
             }catch (Exception e){
                 e.printStackTrace();
+                return;
             }
-                /*try {
-                    System.out.println("Press space to continue");
-                    waitForSpace();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }*/
+
         }
         }
 
