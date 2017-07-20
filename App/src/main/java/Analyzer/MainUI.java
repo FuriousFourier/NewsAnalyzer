@@ -1,11 +1,10 @@
-package pl.edu.agh.Analyzer;
+package Analyzer;
 
-import database.util.HibernateUtil;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import pl.edu.agh.Analyzer.ui.AnalysisHandler;
-import rss.Main;
-import tagger.Tagger;
+import Analyzer.ui.AnalysisHandler;
+import Analyzer.secondProject.rss.Main;
+import Analyzer.secondProject.tagger.Tagger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -54,7 +53,6 @@ public class MainUI {
                 }
                 else if (line.startsWith("u")) {
                     myPrint("Database will be updated with new data");
-                    //HibernateUtil.main(null);
                     URL url = new URL("http://localhost:8080/addThingsToDB?secNum=" + securityNumber);
                     HttpURLConnection connection = (HttpURLConnection)url.openConnection();
                     connection.setRequestProperty("User-Agent", USER_AGENT);
@@ -66,7 +64,6 @@ public class MainUI {
                 }
                 else if (line.startsWith("p")) {
                     myPrint("Tags will be fetched soon...");
-                    //HibernateUtil.main(null);
                     URL url = new URL("http://localhost:8080/getTags");
                     HttpURLConnection connection = (HttpURLConnection)url.openConnection();
                     connection.setRequestProperty("User-Agent", USER_AGENT);

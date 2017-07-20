@@ -1,4 +1,4 @@
-package pl.edu.agh.Analyzer.controller;
+package Analyzer.controller;
 
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.PdfWriter;
@@ -6,12 +6,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import pl.edu.agh.Analyzer.model.*;
-import pl.edu.agh.Analyzer.repository.*;
-import pl.edu.agh.Analyzer.ui.AnalysisHandler;
-import pl.edu.agh.Analyzer.ui.GraphHandler;
-import pl.edu.agh.Analyzer.ui.ReportCreator;
-import pl.edu.agh.Analyzer.ui.ReportInput;
+import Analyzer.model.*;
+import Analyzer.repository.*;
+import Analyzer.ui.AnalysisHandler;
+import Analyzer.ui.GraphHandler;
+import Analyzer.ui.ReportCreator;
+import Analyzer.ui.ReportInput;
 
 import java.io.*;
 import java.util.*;
@@ -59,10 +59,21 @@ public class AnalysisController {
     }
     public static void setIsIteratingOverDates(boolean val) { isIteratingOverDates = val; }
 
-
     @RequestMapping("/ana")
     public String analysisIndex() {
+        return "foo";
+    }
 
+    @GetMapping("/results")
+    public String printResults(){
+        System.out.println("Result: ");
+        for (PressRelease pr : fetchedNotes) {
+            System.out.print("ID: " + pr.getId() + "; Tags:");
+            for (Tag t: pr.getTags()){
+                System.out.print(t.getName()+", ");
+            }
+            System.out.print("Country:" + pr.getFeed().getNewspaper().getCountry().getName() + "; Newspaper:" + pr.getFeed().getNewspaper().getName() + "\n");
+        }
         return "foo";
     }
 
@@ -156,17 +167,9 @@ public class AnalysisController {
           System.out.println("Couldn't find current date");
           return "foo";
       }
-      if (isAskingForValue) {
-          System.out.println("Result: ");
-          for (PressRelease pr : result) {
-              System.out.print("ID: " + pr.getId() + "; Tags:");
-              for (Tag t: pr.getTags()){
-                  System.out.print(t.getName()+", ");
-              }
-              System.out.print("Country:" + pr.getFeed().getNewspaper().getCountry().getName() + "; Newspaper:" + pr.getFeed().getNewspaper().getName() + "\n");
-          }
-      }
-        fetchedNotes = result;
+      fetchedNotes = result;
+      if (isAskingForValue)
+          printResults();
         return "foo";
     }
     @GetMapping("/notesNews")
@@ -201,17 +204,9 @@ public class AnalysisController {
             System.out.println("Couldn't find feeds");
             return "foo";
         }
-        if (isAskingForValue) {
-          System.out.println("Result: ");
-          for (PressRelease pr : notesFromAllFeeds) {
-              System.out.print("ID: " + pr.getId() + "; Tags:");
-              for (Tag t: pr.getTags()){
-                  System.out.print(t.getName()+", ");
-              }
-              System.out.print("Country:" + pr.getFeed().getNewspaper().getCountry().getName() + "; Newspaper:" + pr.getFeed().getNewspaper().getName() + "\n");
-          }
-      }
         fetchedNotes = notesFromAllFeeds;
+        if (isAskingForValue)
+            printResults();
         return "foo";
     }
     @GetMapping("/notesLangs")
@@ -249,17 +244,9 @@ public class AnalysisController {
             System.out.println("Couldn't find current feed");
             return "foo";
         }
-        if (isAskingForValue) {
-          System.out.println("Result: ");
-          for (PressRelease pr : notesFromAllFeeds) {
-              System.out.print("ID: " + pr.getId() + "; Tags:");
-              /*for (Tag t: pr.getTags()){
-                  System.out.print(t.getName()+", ");
-              }*/
-              System.out.print("Country:" + pr.getFeed().getNewspaper().getCountry().getName() + "; Newspaper:" + pr.getFeed().getNewspaper().getName() + "\n");
-          }
-      }
         fetchedNotes = notesFromAllFeeds;
+        if (isAskingForValue)
+            printResults();
         return "foo";
     }
     @GetMapping("/notesCountr")
@@ -297,274 +284,218 @@ public class AnalysisController {
             System.out.println("Couldn't find current feed");
             return "foo";
         }
-        if (isAskingForValue) {
-          System.out.println("Result: ");
-          for (PressRelease pr : notesFromAllFeeds) {
-              System.out.print("ID: " + pr.getId() + "; Tags:");
-              /*for (Tag t: pr.getTags()){
-                  System.out.print(t.getName()+", ");
-              }*/
-              System.out.print("Country:" + pr.getFeed().getNewspaper().getCountry().getName() + "; Newspaper:" + pr.getFeed().getNewspaper().getName() + "\n");
-          }
-      }
-      fetchedNotes = notesFromAllFeeds;
+        fetchedNotes = notesFromAllFeeds;
+        if (isAskingForValue)
+            printResults();
         return "foo";
     }
 
     @GetMapping("/analyseDate")
-    public String analyseByDate(){
+    public String analyseByDate() throws FileNotFoundException, DocumentException {
       if (pressReleaseRepository == null){
         System.out.println("repository not initialised");
         return "foo";
       }
 
-    int firstMonth=0, firstYear=0, lastMonth=0, lastYear=0;
-      if (getPressReleasesSortedByDate().equals("foo")){ //we're sure it's finished
-          firstMonth = firstDate.getMonth()+1;
-          firstYear = firstDate.getYear()+1900;
-          lastMonth  = lastDate.getMonth()+1;
-          lastYear = lastDate.getYear()+1900;
-        System.out.println("First month: " + firstMonth + "; first year: "+ firstYear);
-        System.out.println("Last month: "+ lastMonth + "; last year: "+ lastYear);
-      }
-      List<ReportInput> inputs = new ArrayList<>();
-        Document report = new Document();
-        try {
-            PdfWriter.getInstance(report, new FileOutputStream("./reports/Months.pdf"));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        report.open();
-        Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD,14,BaseColor.BLACK);
-        Paragraph p = new Paragraph("Months", titleFont);
-        try {
-            report.add(p);
-        } catch (DocumentException e) {
-            e.printStackTrace();
-        }
-      for (int i = firstYear; i <= lastYear; i++) {
-        int j;
-        int lastJ;
-        if (i == firstYear) 
-          j = firstMonth;
-        else
-          j = 1;
-        if (i == lastYear)
-          lastJ = lastMonth;
-        else 
-          lastJ = 12;
+		int firstMonth=0, firstYear=0, lastMonth=0, lastYear=0;
+		if (getPressReleasesSortedByDate().equals("foo")){ //we're sure it's finished
+			firstMonth = firstDate.getMonth()+1;
+			firstYear = firstDate.getYear()+1900;
+			lastMonth  = lastDate.getMonth()+1;
+			lastYear = lastDate.getYear()+1900;
+			System.out.println("First month: " + firstMonth + "; first year: "+ firstYear);
+			System.out.println("Last month: "+ lastMonth + "; last year: "+ lastYear);
+		}
+		List<ReportInput> inputs = new ArrayList<>();
+		Document report = new Document();
+		PdfWriter.getInstance(report, new FileOutputStream("./reports/Months.pdf"));
 
-        for (; j <= lastJ; j++) {
-            value = i + "-" + (j<10 ? "0" : "") + j;
-            setIsAskingForValue(false);
-          if (getPressReleasesByDate().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
-              System.out.println("******************* *Date: "+value + " ************************");
-              //GraphHandler.graphCreator("Date", value, fetchedNotes);
-                  GraphHandler.resetInput();
-              try {
-                  GraphHandler.graphCreator("Date" , value, fetchedNotes, report);
-              } catch (DocumentException e) {
-                  e.printStackTrace();
-              }
-              ReportInput input = GraphHandler.getInput();
-                  if (input != null)
-                      inputs.add(GraphHandler.getInput());
-          }
-        }
+		report.open();
+		Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD,14,BaseColor.BLACK);
+		Paragraph p = new Paragraph("Months", titleFont);
 
-      }
-      reportCreator.showChart(inputs, report);
-        try {
-            report.close();
-        }catch (Exception e){
-            System.out.println("Exception raised - probably report is empty");
-        }
+		report.add(p);
 
-      return "foo";
-    }
-    @GetMapping("/analyseNewspaper")
-    public String analyseByNewspaper(){
-      if (pressReleaseRepository == null){
-        System.out.println("repository not initialised");
-        return "foo";
-      }
-      if (getAllNewspapers().equals("foo")){ //we're sure it's finished
-        System.out.println("Newspapers have been fetched");
-      }
-        List<ReportInput> newsInputs = new ArrayList<>();
-      Document newsReport = new Document();
-      if (!isIteratingOverDates) {
-          try {
-              PdfWriter.getInstance(newsReport, new FileOutputStream("./reports/Newspaper.pdf"));
-          } catch (Exception e) {
-              e.printStackTrace();
-          }
-          newsReport.open();
-          Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD,14,BaseColor.BLACK);
-          Paragraph p = new Paragraph("Newspaper", titleFont);
-          try {
-              newsReport.add(p);
-          } catch (DocumentException e) {
-              e.printStackTrace();
-          }
-      }
-      for (Newspaper n : fetchedNewspapers) {
-            //value =  "South China Morning Post";
-            value = n.getName();
-            setIsAskingForValue(false);
-          if ((getPressReleasesByNews().equals("foo")) && (fetchedNotes != null) && (!fetchedNotes.isEmpty())){
-              System.out.println("******************* *Newspaper: "+value + " ************************");
-              if (isIteratingOverDates){
-                  Map<String, Set<PressRelease>> newspaperNotes = new HashMap<String, Set<PressRelease>>();
-                  //wrzucam notki do list w hashmapie
-                  for (PressRelease p : fetchedNotes){
-                      int pMonth = p.getDate().getMonth()+1;
-                      int pYear = p.getDate().getYear()+1900;
-                      String date = pYear + "-" + (pMonth<10 ? "0" : "") + pMonth;
-                      newspaperNotes.putIfAbsent(date, new HashSet<PressRelease>());
-                      newspaperNotes.get(date).add(p);
-                      Set<Tag> tags = p.getTags();
-                      if (tags!=null && !tags.isEmpty()){
-                          System.out.print("ID: " + p.getId() + "; Date: "+ date+"; Tags:");
-                          for (Tag t: p.getTags()){
-                              System.out.print(t.getName()+", ");
-                          }
-                          System.out.println();
-                      }
-                  }
-                  fetchedNotes =null;
-                  SortedSet<String> notesKeySet = new TreeSet<>(newspaperNotes.keySet());
-                  List<ReportInput> inputs = new ArrayList<>();
-                  Document report = new Document();
-                  try {
-                      PdfWriter.getInstance(report, new FileOutputStream("./reports/"+value+".pdf"));
-                  } catch (Exception e) {
-                      e.printStackTrace();
-                  }
-                  report.open();
-                  Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD,14,BaseColor.BLACK);
-                  Paragraph p = new Paragraph("Newspaper&date: " + value, titleFont);
-                  try {
-                      report.add(p);
-                  } catch (DocumentException e) {
-                      e.printStackTrace();
-                  }
+		for (int i = firstYear; i <= lastYear; i++) {
+			int j; int lastJ;
+			if (i == firstYear)
+				j = firstMonth;
+			else
+				j = 1;
+			if (i == lastYear)
+				lastJ = lastMonth;
+			else
+				lastJ = 12;
 
-                  for (String d : notesKeySet){
-                      System.out.println("------> " + d);
+			for (; j <= lastJ; j++) {
+				value = i + "-" + (j<10 ? "0" : "") + j;
+				setIsAskingForValue(false);
+				if (getPressReleasesByDate().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
+					System.out.println("******************* *Date: "+value + " ************************");
+					GraphHandler.resetInput();
+					GraphHandler.graphCreator("Date" , value, fetchedNotes, report);
+					ReportInput input = GraphHandler.getInput();
+					if (input != null)
+						inputs.add(GraphHandler.getInput());
+				}
+			}
 
-                      GraphHandler.resetInput();
-                      try {
-                          GraphHandler.graphCreator("Newspaper&date" , value+"("+d+")", newspaperNotes.get(d), report);
-                      } catch (DocumentException e) {
-                          e.printStackTrace();
-                      }
-                      ReportInput input = GraphHandler.getInput();
-                      if (input != null) {
-                          inputs.add(GraphHandler.getInput());
-                      }
-                  }
-                  reportCreator.showChart(inputs, report);
-                  try {
-                      report.close();
-                  }catch (Exception e){
-                      System.out.println("Exception raised - probably report is empty");
-                  }
+		}
+		reportCreator.showChart(inputs, report);
+		report.close();
 
-                  //remove values
-                  newspaperNotes = null;
-                  notesKeySet = null;
-                  inputs = null;
-              }
-              else {
-                  GraphHandler.resetInput();
-                  try {
-                      GraphHandler.graphCreator("Newspaper" , value, fetchedNotes, newsReport);
-                  } catch (DocumentException e) {
-                      e.printStackTrace();
-                  }
-                  ReportInput input = GraphHandler.getInput();
-                  if (input != null)
-                      newsInputs.add(GraphHandler.getInput());
-              }
-          }
-      }
-      if (!isIteratingOverDates){
-          reportCreator.showChart(newsInputs, newsReport);
-          try {
-              newsReport.close();
-          }catch (Exception e){
-              System.out.println("Exception raised - probably report is empty");
-          }
-      }
-      return "foo";
-    }
+		return "foo";
+	}
+	@GetMapping("/analyseNewspaper")
+	public String analyseByNewspaper() throws FileNotFoundException, DocumentException {
+		if (pressReleaseRepository == null){
+			System.out.println("repository not initialised");
+			return "foo";
+		}
+		if (getAllNewspapers().equals("foo")){ //we're sure it's finished
+			System.out.println("Newspapers have been fetched");
+		}
+		List<ReportInput> newsInputs = new ArrayList<>();
+		Document newsReport = new Document();
+		if (!isIteratingOverDates) {
+			PdfWriter.getInstance(newsReport, new FileOutputStream("./reports/Newspaper.pdf"));
+			newsReport.open();
+			Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD,14,BaseColor.BLACK);
+			Paragraph p = new Paragraph("Newspaper", titleFont);
+			newsReport.add(p);
+		}
+		//for (Newspaper n : fetchedNewspapers) {
+		value =  "Interia";
+		//value = n.getName();
+		setIsAskingForValue(false);
+		if ((getPressReleasesByNews().equals("foo")) && (fetchedNotes != null) && (!fetchedNotes.isEmpty())){
+			System.out.println("******************* *Newspaper: "+value + " ************************");
+			if (isIteratingOverDates){
+				Map<String, Set<PressRelease>> newspaperNotes = new HashMap<String, Set<PressRelease>>();
+				//wrzucam notki do list w hashmapie
+				for (PressRelease p : fetchedNotes){
+					int pMonth = p.getDate().getMonth()+1;
+					int pYear = p.getDate().getYear()+1900;
+					String date = pYear + "-" + (pMonth<10 ? "0" : "") + pMonth;
+					newspaperNotes.putIfAbsent(date, new HashSet<PressRelease>());
+					newspaperNotes.get(date).add(p);
+					Set<Tag> tags = p.getTags();
+					if (tags!=null && !tags.isEmpty()){
+						System.out.print("ID: " + p.getId() + "; Date: "+ date+"; Tags:");
+						for (Tag t: p.getTags()){
+							System.out.print(t.getName()+", ");
+						}
+						System.out.println();
+					}
+				}
+				fetchedNotes =null;
+				SortedSet<String> notesKeySet = new TreeSet<>(newspaperNotes.keySet());
+				List<ReportInput> inputs = new ArrayList<>();
+				Document report = new Document();
+				PdfWriter.getInstance(report, new FileOutputStream("./reports/"+value+".pdf"));
+				report.open();
+				Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD,14,BaseColor.BLACK);
+				Paragraph p = new Paragraph("Newspaper&date: " + value, titleFont);
+				report.add(p);
+
+				for (String d : notesKeySet){
+					System.out.println("------> " + d);
+
+					GraphHandler.resetInput();
+					GraphHandler.graphCreator("Newspaper&date" , value+"("+d+")", newspaperNotes.get(d), report);
+					ReportInput input = GraphHandler.getInput();
+					if (input != null) {
+						inputs.add(GraphHandler.getInput());
+					}
+				}
+				reportCreator.showChart(inputs, report);
+				report.close();
+
+				//remove values
+				newspaperNotes = null;
+				notesKeySet = null;
+				inputs = null;
+			}
+			else {
+				GraphHandler.resetInput();
+				GraphHandler.graphCreator("Newspaper" , value, fetchedNotes, newsReport);
+				ReportInput input = GraphHandler.getInput();
+				if (input != null)
+					newsInputs.add(GraphHandler.getInput());
+			}
+		}
+		//}
+		if (!isIteratingOverDates){
+			reportCreator.showChart(newsInputs, newsReport);
+			newsReport.close();
+		}
+		return "foo";
+	}
 
 
 
-    @GetMapping("/analyseCountry")
-    public String analyseByCountry(){
-      if (pressReleaseRepository == null){
-        System.out.println("repository not initialised");
-        return "foo";
-      }
-      if (getAllCountries().equals("foo")){ //we're sure it's finished
-        System.out.println("Countries have been fetched");
-      }
-      for (Country c : fetchedCountries) {
-            value = c.getName();
-            setIsAskingForValue(false);
-          if (getPressReleasesByCountries().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
-              System.out.println("******************* *Country: "+value + " ************************");
-              try {
-                  GraphHandler.graphCreator("Countries", value, fetchedNotes, null);
-              } catch (DocumentException e) {
-                  e.printStackTrace();
-              }
-          }
-      }
-      return "foo";
-    }
-    @GetMapping("/analyseLanguage")
-    public String analyseByLanguage(){
-      if (pressReleaseRepository == null){
-        System.out.println("repository not initialised");
-        return "foo";
-      }
-      if (getAllLanguages().equals("foo")){ //we're sure it's finished
-        System.out.println("Languages has been fetched");
-      }
-      for (Language l : fetchedLanguages) {
-            value = l.getName();
-            setIsAskingForValue(false);
-          if (getPressReleasesByLangs().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
-              System.out.println("******************* *Language: "+value + " ************************");
-              try {
-                  GraphHandler.graphCreator("Language", value, fetchedNotes, null);
-              } catch (DocumentException e) {
-                  e.printStackTrace();
-              }
-          }
-      }
-      return "foo";
-    }
+	@GetMapping("/analyseCountry")
+	public String analyseByCountry(){
+		if (pressReleaseRepository == null){
+			System.out.println("repository not initialised");
+			return "foo";
+		}
+		if (getAllCountries().equals("foo")){ //we're sure it's finished
+			System.out.println("Countries have been fetched");
+		}
+		for (Country c : fetchedCountries) {
+			value = c.getName();
+			setIsAskingForValue(false);
+			if (getPressReleasesByCountries().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
+				System.out.println("******************* *Country: "+value + " ************************");
+				try {
+					GraphHandler.graphCreator("Countries", value, fetchedNotes, null);
+				} catch (DocumentException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return "foo";
+	}
+	@GetMapping("/analyseLanguage")
+	public String analyseByLanguage(){
+		if (pressReleaseRepository == null){
+			System.out.println("repository not initialised");
+			return "foo";
+		}
+		if (getAllLanguages().equals("foo")){ //we're sure it's finished
+			System.out.println("Languages has been fetched");
+		}
+		for (Language l : fetchedLanguages) {
+			value = l.getName();
+			setIsAskingForValue(false);
+			if (getPressReleasesByLangs().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
+				System.out.println("******************* *Language: "+value + " ************************");
+				try {
+					GraphHandler.graphCreator("Language", value, fetchedNotes, null);
+				} catch (DocumentException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return "foo";
+	}
 
-    @GetMapping("/getTags")
-    public String getAllTags(){
-        if (tagRepository == null){
-            System.out.println("Kiepsko");
-            return  "foo";
-        }
-        Set<Tag> tags = (Set<Tag>)tagRepository.findAll();
-        System.out.println("Tags:");
-        for (Tag t: tags){
-            System.out.println(t.getName()+"; notes:");
-            for (PressRelease p: t.getPressReleases()){
-                System.out.println("\t"+p.getFeed().getNewspaper().getName());
-            }
-            System.out.println();
-        }
-        return "foo";
-    }
-
+	@GetMapping("/getTags")
+	public String getAllTags(){
+		if (tagRepository == null){
+			System.out.println("Kiepsko");
+			return  "foo";
+		}
+		Set<Tag> tags = (Set<Tag>)tagRepository.findAll();
+		System.out.println("Tags:");
+		for (Tag t: tags){
+			System.out.println(t.getName()+"; notes:");
+			for (PressRelease p: t.getPressReleases()){
+				System.out.println("\t"+p.getFeed().getNewspaper().getName());
+			}
+			System.out.println();
+		}
+		return "foo";
+	}
 }

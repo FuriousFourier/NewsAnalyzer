@@ -1,12 +1,12 @@
-package pl.edu.agh.Analyzer.ui;
+package Analyzer.ui;
 
 import org.gephi.graph.api.*;
 import org.gephi.project.api.ProjectController;
 import org.gephi.project.api.Workspace;
 import org.gephi.statistics.plugin.*;
 import org.openide.util.Lookup;
-import pl.edu.agh.Analyzer.model.*;
-import pl.edu.agh.Analyzer.controller.AnalysisController;
+import Analyzer.model.*;
+import Analyzer.controller.AnalysisController;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -16,7 +16,7 @@ import java.net.URL;
 import java.util.*;
 
 import static org.springframework.http.HttpHeaders.USER_AGENT;
-import static pl.edu.agh.Analyzer.ui.GraphHandler.graphCreator;
+import static Analyzer.ui.GraphHandler.graphCreator;
 
 
 /**
@@ -24,16 +24,12 @@ import static pl.edu.agh.Analyzer.ui.GraphHandler.graphCreator;
  */
 public class AnalysisHandler {
     private BufferedReader br;
-//    private AnalysisController controller;
 
     public AnalysisHandler(BufferedReader br) {
         this.br = br;
-        //      controller = new AnalysisController();
     }
 
     public void startHandling() throws IOException {
-        //graphCreator("Date", "02-2017", null); // zmienic, aby bazowal na wynikach z zapytania dla dat
-        //return;
         String field = "", value = "", fieldName = "";
 
         System.out.println("Enter the field you'd like to focus on: \n" +
@@ -72,7 +68,6 @@ public class AnalysisHandler {
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestProperty("User-Agent", USER_AGENT);
             int responseCode = connection.getResponseCode();
-
             value = br.readLine();
         } else if (value.startsWith("#")) {
             System.out.println("Redirection to controller...");
@@ -90,10 +85,6 @@ public class AnalysisHandler {
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestProperty("User-Agent", USER_AGENT);
             int responseCode = connection.getResponseCode();
-            System.out.println("*************");
-            System.out.println("Response Code: " + responseCode);
-            System.out.println("*************");
-
         } else if (value.startsWith("%")) {
             System.out.println("Redirection to controller...");
             URL url = null;
@@ -106,9 +97,6 @@ public class AnalysisHandler {
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestProperty("User-Agent", USER_AGENT);
             int responseCode = connection.getResponseCode();
-            System.out.println("*************");
-            System.out.println("Response Code: " + responseCode);
-            System.out.println("*************");
         }
         if (value.startsWith("$")) {
             System.out.println("Redirection to controller...");
@@ -134,10 +122,6 @@ public class AnalysisHandler {
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestProperty("User-Agent", USER_AGENT);
             int responseCode = connection.getResponseCode();
-            System.out.println("*************");
-            System.out.println("Response Code: " + responseCode);
-            System.out.println("*************");
-
         }
 
     }
