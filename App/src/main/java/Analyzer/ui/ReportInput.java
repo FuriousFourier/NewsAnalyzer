@@ -43,8 +43,6 @@ public class ReportInput {
 
 	private Map<String, Node> nodeMaxValues = new HashMap<>();
 	private Map<String, Object> graphValues = new HashMap<>();
-	//public String paramValue;
-	//public String paramName;
 	public String date;
 	public String newspaper;
 	private NumberComparator numberComparator = new NumberComparator();
@@ -52,10 +50,8 @@ public class ReportInput {
 		for (String s : nodesParams)
 			nodeMaxValues.put(s, null);
 
-		//Table attributes = graphModel.getNodeTable();
 		//dla kazdego labela iteruje po wszystkich node'ach
 		for (String col : nodesParams) {
-			//Column currentCol = attributes.getColumn(col);
 			for (Node currentNode : graphModel.getGraph().getNodes()) {
 				Node n = nodeMaxValues.get(col);
 				if (n != null){

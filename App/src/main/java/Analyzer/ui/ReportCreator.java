@@ -33,7 +33,6 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 	private List<String> paramValues;
 	private List<Number> values;
 	private boolean isNodeAnalysis;
-	private static final int TIMEOUT = 10000;
 	private String xAxis;
 
 	public void showChart(List<ReportInput> input, Document report){

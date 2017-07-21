@@ -42,10 +42,8 @@ public class AnalysisController {
 
     private final BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
     private List<Newspaper> fetchedNewspapers = new ArrayList<>();
-    private List<Feed> fetchedFeeds = new ArrayList<>();
-    private List<Country> fetchedCountries = new ArrayList<>();
-    private List<Language> fetchedLanguages = new ArrayList<>();
     private Set<PressRelease> fetchedNotes = new HashSet<>();
+    private SortedSet<Tag> fetchedTags = new TreeSet<>();
     private Date firstDate = new Date();
     private Date lastDate = new Date();
 	private String value;
@@ -182,12 +180,12 @@ public class AnalysisController {
 	}
 
     @GetMapping("/analyseDate")
-    public String analyseByDate() throws IOException, DocumentException {
-      if (pressReleaseRepository == null){
-        System.out.println("repository not initialised");
-        return "foo";
-      }
-
+	public String analyseByDate() throws IOException, DocumentException {
+		if (pressReleaseRepository == null){
+			System.out.println("repository not initialised");
+			return "foo";
+		}
+		fetchedTags = new TreeSet<>((List<Tag>)tagRepository.findAll());
 		int firstMonth=0, firstYear=0, lastMonth=0, lastYear=0;
 		if (getPressReleasesSortedByDate().equals("foo")){ //we're sure it's finished
 			cal.setTime(firstDate);
@@ -202,17 +200,24 @@ public class AnalysisController {
 		List<ReportInput> inputs = new ArrayList<>();
 		Document report = new Document();
 		PdfWriter.getInstance(report, new FileOutputStream("src/main/resources/reports/Month.pdf"));
-
 		report.open();
 		Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD,14,BaseColor.BLACK);
 		Paragraph p = new Paragraph("Months", titleFont);
 		report.add(p);
 
-		String graphGlobalFileName = "src/main/resources/csv/Month.csv";
-		File globalGraphFile = new File(graphGlobalFileName);
-		globalGraphFile.createNewFile();
-		CSVWriter graphGlobalWriter = new CSVWriter(new FileWriter(graphGlobalFileName, true), '\t', CSVWriter.DEFAULT_QUOTE_CHARACTER);
-
+		String graphFileName = "src/main/resources/csv/Month.csv";
+		String nodesFileName = "src/main/resources/csv/Month_nodes.csv";
+		File graphFile = new File(graphFileName);
+		File nodesFile = new File(nodesFileName);
+		//if (!graphFile.isFile())
+		graphFile.delete();
+		//if(!nodesFile.isFile())
+		nodesFile.delete();
+		graphFile.createNewFile();
+		nodesFile.createNewFile();
+		CSVWriter graphWriter = new CSVWriter(new FileWriter(graphFileName, true), '\t', CSVWriter.DEFAULT_QUOTE_CHARACTER);
+		CSVWriter nodesWriter = new CSVWriter(new FileWriter(nodesFileName, true), '\t', CSVWriter.DEFAULT_QUOTE_CHARACTER);
+		boolean initColumns = true;
 
 		for (int i = firstYear; i <= lastYear; i++) {
 			int j; int lastJ;
@@ -225,17 +230,19 @@ public class AnalysisController {
 				if (getPressReleasesByDate().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
 					System.out.println("******************* *Date: "+value + " ************************");
 					GraphHandler.resetInput();
-					GraphHandler.graphCreator(value, "", fetchedNotes, report, graphGlobalWriter);
-					ReportInput input = GraphHandler.getInput();
+					GraphHandler.graphCreator(value, "", fetchedNotes, report, graphWriter, nodesWriter, fetchedTags, initColumns);
+					initColumns = false;
+					/*ReportInput input = GraphHandler.getInput();
 					if (input != null)
-						inputs.add(GraphHandler.getInput());
+						inputs.add(GraphHandler.getInput());*/
 				}
 			}
 
 		}
 		//reportCreator.showChart(inputs, report);
 		report.close();
-		graphGlobalWriter.close();
+		graphWriter.close();
+		nodesWriter.close();
 		return "foo";
 	}
 	@GetMapping("/analyseNewspaper")
@@ -247,11 +254,18 @@ public class AnalysisController {
 		if (getAllNewspapers().equals("foo")){ //we're sure it's finished
 			System.out.println("Newspapers have been fetched");
 		}
+
+		fetchedTags = new TreeSet<>((List<Tag>)tagRepository.findAll());
+
 		List<ReportInput> newsInputs = new ArrayList<>();
 		Document newsReport = new Document();
 		String graphGlobalFileName;
+		String nodesGlobalFileName;
 		File globalGraphFile;
+		File globalNodesFile;
 		CSVWriter graphGlobalWriter = null;
+		CSVWriter nodesGlobalWriter = null;
+		boolean initColumns = true;
 		if (!isIteratingOverDates) {
 			PdfWriter.getInstance(newsReport, new FileOutputStream("src/main/resources/reports/Newspaper.pdf"));
 			newsReport.open();
@@ -260,19 +274,26 @@ public class AnalysisController {
 			newsReport.add(p);
 
 			graphGlobalFileName = "src/main/resources/csv/Newspaper.csv";
+			nodesGlobalFileName = "src/main/resources/csv/Newspaper_nodes.csv";
 			globalGraphFile = new File(graphGlobalFileName);
+			globalNodesFile = new File(nodesGlobalFileName);
+			System.out.println("Is graphFIle deleted: " + globalGraphFile.delete());
+			System.out.println("Is nodeFIle deleted: " + globalNodesFile.delete());
 			globalGraphFile.createNewFile();
+			globalNodesFile.createNewFile();
 			graphGlobalWriter = new CSVWriter(new FileWriter(graphGlobalFileName, true), '\t', CSVWriter.DEFAULT_QUOTE_CHARACTER);
+			nodesGlobalWriter = new CSVWriter(new FileWriter(nodesGlobalFileName, true), '\t', CSVWriter.DEFAULT_QUOTE_CHARACTER);
 		}
-		String[] newspaperList = { "Interia", "Fakt", "Newsweek", "RMF24", "Today", "China Daily"};
-		//for (Newspaper n : fetchedNewspapers) {
-			//value = n.getName();
-		for (String s: newspaperList) {
-			value = s;
+		//String[] newspaperList = { "Interia", "Fakt", "Newsweek", "RMF24", "Today", "China Daily"};
+		for (Newspaper n : fetchedNewspapers) {
+			value = n.getName();
+		//for (String s: newspaperList) {
+			//value = s;
 			setIsAskingForValue(false);
 			if ((getPressReleasesByNews().equals("foo")) && (fetchedNotes != null) && (!fetchedNotes.isEmpty())){
 				System.out.println("******************* *Newspaper: "+value + " ************************");
 				if (isIteratingOverDates){
+					initColumns = true;
 					Map<String, Set<PressRelease>> newspaperNotes = new HashMap<String, Set<PressRelease>>();
 					//wrzucam notki do list w hashmapie
 					for (PressRelease p : fetchedNotes){
@@ -302,25 +323,32 @@ public class AnalysisController {
 					report.add(p);
 
 					String graphFileName = "src/main/resources/csv/"+value+".csv";
+					String nodesFileName = "src/main/resources/csv/"+value+"_nodes.csv";
 					File graphFile = new File(graphFileName);
+					File nodesFile = new File(nodesFileName);
+					//if (!graphFile.isFile())
+					System.out.println("Is graphFIle deleted: " + graphFile.delete());
+					//if(!nodesFile.isFile())
+					System.out.println("Is nodeFIle deleted: " + nodesFile.delete());
 					graphFile.createNewFile();
-
-					//analogicznie zrobic nodeFileName
+					nodesFile.createNewFile();
 					CSVWriter graphWriter = new CSVWriter(new FileWriter(graphFileName, true), '\t', CSVWriter.DEFAULT_QUOTE_CHARACTER);
+					CSVWriter nodesWriter = new CSVWriter(new FileWriter(nodesFileName, true), '\t', CSVWriter.DEFAULT_QUOTE_CHARACTER);
 
 					for (String d : notesKeySet){
 						System.out.println("------> " + d);
 
 						GraphHandler.resetInput();
-						GraphHandler.graphCreator(d, value, newspaperNotes.get(d), report, graphWriter);
-						ReportInput input = GraphHandler.getInput();
-						if (input != null) {
-							inputs.add(GraphHandler.getInput());
-						}
+						GraphHandler.graphCreator(d, value, newspaperNotes.get(d), report, graphWriter, nodesWriter, fetchedTags, initColumns);
+						/*ReportInput input = GraphHandler.getInput();
+						if (input != null)
+							inputs.add(GraphHandler.getInput());*/
+						initColumns = false;
 					}
 					//reportCreator.showChart(inputs, report);
 					report.close();
 					graphWriter.close();
+					nodesWriter.close();
 
 					//remove values
 					newspaperNotes = null;
@@ -329,10 +357,11 @@ public class AnalysisController {
 				}
 				else {
 					GraphHandler.resetInput();
-					GraphHandler.graphCreator("", value, fetchedNotes, newsReport, graphGlobalWriter);
-					ReportInput input = GraphHandler.getInput();
+					GraphHandler.graphCreator("", value, fetchedNotes, newsReport, graphGlobalWriter, nodesGlobalWriter, fetchedTags, initColumns);
+					/*ReportInput input = GraphHandler.getInput();
 					if (input != null)
-						newsInputs.add(GraphHandler.getInput());
+						newsInputs.add(GraphHandler.getInput());*/
+					initColumns = false;
 				}
 			}
 		}
@@ -340,6 +369,7 @@ public class AnalysisController {
 			//reportCreator.showChart(newsInputs, newsReport);
 			newsReport.close();
 			graphGlobalWriter.close();
+			nodesGlobalWriter.close();
 		}
 		return "foo";
 	}
@@ -350,9 +380,9 @@ public class AnalysisController {
 			System.out.println("Kiepsko");
 			return  "foo";
 		}
-		Set<Tag> tags = (Set<Tag>)tagRepository.findAll();
+		fetchedTags = new TreeSet<>((List<Tag>)tagRepository.findAll());
 		System.out.println("Tags:");
-		for (Tag t: tags){
+		for (Tag t: fetchedTags){
 			System.out.println(t.getName()+"; notes:");
 			for (PressRelease p: t.getPressReleases()){
 				System.out.println("\t"+p.getFeed().getNewspaper().getName());

@@ -9,7 +9,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "TAGs")
-public class Tag {
+public class Tag implements Comparable{
 
     private static final String DUMMY_NAME = "UNNAMED_TAG";
 
@@ -87,4 +87,9 @@ public class Tag {
 	public void setCategory(String category) {
 		this.category = category;
 	}
+
+    @Override
+    public int compareTo(Object o) {
+        return this.getName().compareTo(( (Tag) o).getName());
+    }
 }

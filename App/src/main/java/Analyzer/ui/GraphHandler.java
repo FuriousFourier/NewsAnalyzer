@@ -84,7 +84,7 @@ public class GraphHandler {
 			String content = "content" + i;
 			Date date = new Date();
 			Feed feed = new Feed("name", "section");
-			Set<Tag> tags = new HashSet<Tag>();
+			Set<Tag> tags = new HashSet<>();
 			for (int j = 0; j < 3; j++) {
 				String tagName = "tag" + (new Integer((i + j)%10)).toString();
 				tags.add(new Tag(tagName, new Country(), new HashSet<>()));
@@ -98,7 +98,7 @@ public class GraphHandler {
 			String content = "content" + i;
 			Date date = new Date();
 			Feed feed = new Feed("name", "section");
-			Set<Tag> tags = new HashSet<Tag>();
+			Set<Tag> tags = new HashSet<>();
 			for (int j = 0; j < 3; j++) {
 				String tagName = "tag" + (new Integer((i + j))).toString();
 				tags.add(new Tag(tagName, new Country(), new HashSet<>()));
@@ -122,7 +122,8 @@ public class GraphHandler {
 	}
 
 
-	public static void graphCreator(String date, String newspaper, Set<PressRelease> newNotes, Document report, CSVWriter graphWriter) throws DocumentException {
+	public static void graphCreator(String date, String newspaper, Set<PressRelease> newNotes, Document report,
+									CSVWriter graphWriter, CSVWriter nodesWriter, SortedSet<Tag> tags, boolean initColumns) throws DocumentException {
 		notes = newNotes;
 		if (notes == null || notes.isEmpty()){
 			System.out.println("Empty result");
@@ -131,8 +132,6 @@ public class GraphHandler {
 		ProjectController pc = Lookup.getDefault().lookup(ProjectController.class);
 		pc.newProject();
 		Workspace workspace = pc.getCurrentWorkspace();
-
-//Get a graph model - it exists because we have a workspace
 		GraphModel graphModel = Lookup.getDefault().lookup(GraphController.class).getGraphModel(workspace);
 
 		DirectedGraph directedGraph= graphModel.getDirectedGraph();
@@ -227,18 +226,42 @@ public class GraphHandler {
 		prestigeStatistics.execute(graphModel);
 
 
+		String[] textForNodes = new String[tags.size()+3];
+		int j=3;
+		if (initColumns) {
+			textForNodes[0] = "Date";
+			textForNodes[1] = "Newspaper";
+			textForNodes[2] = "Param name";
+			for (Tag t : tags) {
+				textForNodes[j] = t.getName();
+				j++;
+			}
+			nodesWriter.writeNext(textForNodes);
+		}
+
+		textForNodes[0] = date;
+		textForNodes[1] = newspaper;
 		Table attributes = graphModel.getNodeTable();
-		//Iterate over values
-		for (String col : columnsToSee) {
+		for (String col: columnsToSee){
+			textForNodes[2] = col;
 			Column current = attributes.getColumn(col);
 			System.out.println(col+ ":");
 			/*chunk = new Paragraph(col+ ":\n", font);
 			report.add(chunk);*/
-			for (Node n : graphModel.getGraph().getNodes()) {
-				System.out.println(n.getLabel() + ": " + n.getAttribute(current));
-				/*chunk = new Paragraph(n.getLabel() + ": " + n.getAttribute(current) + "\n", fontSmall);
-				report.add(chunk);*/
+			j = 3;
+			for (Tag t : tags) {
+				Node n = graphModel.getGraph().getNode(t.getName());
+				if (n != null){
+					System.out.println(n.getLabel() + ": " + n.getAttribute(current));
+					textForNodes[j] = n.getAttribute(current).toString();
+					/*chunk = new Paragraph(n.getLabel() + ": " + n.getAttribute(current) + "\n", fontSmall);
+					report.add(chunk);*/
+				}
+				else
+					textForNodes[j] = String.valueOf(0);
+				j++;
 			}
+			nodesWriter.writeNext(textForNodes);
 		}
 
 		//get nodes for each connected component and for each modularity class
@@ -267,24 +290,27 @@ public class GraphHandler {
 		input.newspaper = newspaper;
 
 		SortedSet<String> graphParams = new TreeSet<>(input.getGraphParams());
-		String[] textForGraph = new String[graphParams.size()+2]; //potem przerobic na to, by data byla calkiem ososbna i  mogla byc roznej dlugosic
+		String[] textForGraph = new String[graphParams.size()+2];
+
+		j = 2;
+		if (initColumns) {
+			textForGraph[0] = "Date";
+			textForGraph[1] = "Newspaper";
+			for (String param : graphParams) {
+				textForGraph[j] = param;
+				j++;
+			}
+			graphWriter.writeNext(textForGraph);
+		}
+
 		textForGraph[0] = date;
 		textForGraph[1] = newspaper;
 
-		//zorbic pole odpowiedzialne za inicjalizacje nazw kolumn
-		/*
-		int i = 2;
-		for (String param : graphParams){
-			textForGraph[i] = param;
-			i++;
-		}
-		graphWriter.writeNext(textForGraph);*/
-
-		int i=2;
+		j =2;
 		for (String s: graphParams){
 			System.out.println(s + ": "+  input.getGraphValue(s));
-			textForGraph[i] = input.getGraphValue(s).toString();
-			i++;
+			textForGraph[j] = input.getGraphValue(s).toString();
+			j++;
 			//chunk = new Paragraph(s + input.getGraphValue(s), fontSmall);
 			//report.add(chunk);
 		}
