@@ -126,7 +126,7 @@ BLZ	Belize
 PHL	Philippines
 COG	Congo
 ESH	Western Sahara
-CXR Christmas Island
+CXR	Christmas Island
 URY	Uruguay
 COK	Cook Islands
 COM	Comoros
@@ -145,7 +145,7 @@ NER	Niger
 VEN	Venezuela
 GHA	Ghana
 CPV	Cape Verde
-CCK 	Cocos (Keeling) Islands
+CCK	Cocos (Keeling) Islands
 MDA	Moldova
 MDG	Madagascar
 LBN	Lebanon
@@ -192,3 +192,4 @@ LVA	Latvia
 JAM	Jamaica
 ZAF	South Africa
 HND	Honduras
+XXX	UNKNOWN COUNTRY

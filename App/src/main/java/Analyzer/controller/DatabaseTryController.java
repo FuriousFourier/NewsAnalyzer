@@ -1,7 +1,7 @@
 package Analyzer.controller;
 
 import Analyzer.secondProject.csv.reader.ReaderCsvFiles;
-import static Analyzer.secondProject.info.FeedInfoContainer.*;
+import static Analyzer.info.InfoContainer.*;
 import org.hibernate.exception.DataException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -18,7 +18,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-import static Analyzer.secondProject.info.FeedInfoContainer.languages;
+import static Analyzer.info.InfoContainer.languages;
 
 /**
  * Created by pawel on 12.07.17.
@@ -27,7 +27,8 @@ import static Analyzer.secondProject.info.FeedInfoContainer.languages;
 @Controller
 public class DatabaseTryController {
 
-    @Autowired
+	public static final String UNKNOWN_COUNTRY_NAME = "UNKNOWN COUNTRY";
+	@Autowired
     private LanguageRepository languageRepository;
 
     @Autowired
@@ -51,37 +52,31 @@ public class DatabaseTryController {
     private Map<String, Feed> feedMap = new HashMap<>();
     private boolean flushed = true;
 
-    private static Map<PressReleaseId, PressRelease> pressReleaseMap = new HashMap<>();
+	private static Country unknownCountry = null;
+
+	private static Map<PressReleaseId, PressRelease> pressReleaseMap = new HashMap<>();
     private static Map<String, Tag> tagMap = new HashMap<>();
 
     private static final String GEOMEDIA_FEEDS_FILE_PATH = "../SecondProject/geomedia/Geomedia_extract_AGENDA/Geomedia_extract_AGENDA/";
-    private static final String ORG_PATH = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/TaggedFeeds/taggedForOrg/";
-    private static final String NEW_FEEDS_PATH_TAGGED = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/TaggedFeeds/taggedForCountry";
-    private static final String NEW_FEEDS_PATH = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/Feeds";
-    private static final String COUNTRY_TAG_FILE_NAME = "Dico_Country_Free.csv";
-    private static final String EBOLA_TAG_FILE_NAME = "Dico_Ebola_Free.csv";
-    private static final String GEOMEDIA_EBOLA_TAGGED_FILE_NAME = "rss_unique_TAG_country_Ebola.csv";
-    private static final String GEOMEDIA_RSS_FILE_NAME = "rss.csv";
-    private static final String GEOMEDIA_UNIQUE_FILE_NAME = "rss_unique.csv";
-    private static final String ORG_TAGGED_FILE_NAME = "rss_org_tagged.csv";
 
-    public static Date convertStringToDate(String date) {
-        DateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.ENGLISH);
-        Date resultDate = null;
-        try {
-            resultDate = format.parse(date);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        return resultDate;
-    }
+	public static Date convertStringToDate(String date) {
+		DateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss", Locale.ENGLISH);
+		Date resultDate = null;
+		try {
+			resultDate = format.parse(date);
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		return resultDate;
+	}
 
-    @GetMapping("/addThingsToDB")
+	@GetMapping("/addThingsToDB")
     public String addSomething(@RequestParam(name = "secNum") Long secNum) throws IOException {
         final long denominator = 1000000000;
         if (!secNum.equals(NewsAnalyzerMain.securityNumber))
             return "forbidden";
-        long startTime = System.nanoTime();
+
+		long startTime = System.nanoTime();
         if (languageMap == null) {
             System.out.println("Im creating maps etc.");
             languageMap = new HashMap<>(languages.length);
@@ -143,17 +138,23 @@ public class DatabaseTryController {
 
             System.out.println("Countries");
             //countries
-            String tagsAndCountriesFilePath = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/tagsAndCountries.csv";
-            List<String> countries = ReaderCsvFiles.readAtPosition(tagsAndCountriesFilePath, 1);
+            List<String> countries = ReaderCsvFiles.readAtPosition(TAGS_AND_COUNTRIES_FILE_PATH, 1);
             for (String country1 : countries) {
                 Country addingCountry = countryMap.get(country1);
                 if (addingCountry == null) {
                     addingCountry = new Country();
                     addingCountry.setName(country1);
                     addingCountry.setNewspapers(new HashSet<>());
-                    countryMap.put(country1, addingCountry);
+					addingCountry.setTags(new HashSet<>());
+					countryMap.put(country1, addingCountry);
                 }
             }
+
+			unknownCountry = countryMap.get(UNKNOWN_COUNTRY_NAME);
+			if (unknownCountry == null) {
+				unknownCountry = new Country(UNKNOWN_COUNTRY_NAME, new HashSet<>(), new HashSet<>());
+				countryMap.put(UNKNOWN_COUNTRY_NAME, unknownCountry);
+			}
 
             System.out.println("Newspapers");
             //newspapers
@@ -162,22 +163,10 @@ public class DatabaseTryController {
 
             System.out.println("Tags");
             //tags
-            List<String> tags = ReaderCsvFiles.readAtPosition(tagsAndCountriesFilePath, 0);
-            for (int i = 0; i < tags.size(); i++) {
-                Country country = countryMap.get(countries.get(i));
-                if (country == null) {
-                    continue;
-                }
-                Tag tag = tagMap.get(tags.get(i));
-                if (tag == null) {
-                    tag = new Tag();
-                    tag.setName(tags.get(i));
-                    tag.setPressReleases(new HashSet<>());
-                }
-                tag.setCountry(country);
-                country.setTag(tag);
-                tagMap.put(tags.get(i), tag);
-            }
+			addTagsFromFile(TAGS_AND_COUNTRIES_FILE_PATH, 0, 1);
+			addTagsFromFile(ORGANIZATION_TAG_FILE_PATH, 0, 2);
+			addTagsFromFile(currencyTagFiles[1], 0, 2);
+
 
             System.out.println("Feeds");
             //feeds
@@ -191,23 +180,9 @@ public class DatabaseTryController {
             addPressReleasesToDBNewWay(GEOMEDIA_FEEDS_FILE_PATH, false);
             addPressReleasesToDBNewWay(NEW_FEEDS_PATH, true);
 
-			List<String> myTitles = new ArrayList<>(pressReleaseMap.values().size());
-			for (PressRelease pressRelease : pressReleaseMap.values()) {
-				myTitles.add(pressRelease.getTitle());
-			}
-			Collections.sort(myTitles);
-			File file = new File("titles.txt");
-			file.delete();
-			PrintWriter printWriter = new PrintWriter(file, "UTF-8");
-			for (String s : myTitles) {
-				printWriter.println(s);
-			}
-			printWriter.close();
-			System.out.println(pressReleaseMap.size() + " " + pressReleaseMap.values().size() + " " + myTitles.size());
-
 			System.out.println("Linking table");
             //linking table
-            addPressReleasesTagsDataNewWay(NEW_FEEDS_PATH_TAGGED, 2, 1);
+            addPressReleasesTagsDataNewWay(DESTINATION_TAGS_FOLDER_PATHS, 2, 1);
 
             System.out.println("PressReleases ebola tags");
             //pressReleaseMap ebola tags
@@ -242,13 +217,13 @@ public class DatabaseTryController {
                 }
             }
 
-            System.gc();
+            /*System.gc();
             System.out.println("OrganizationFeed tags");
             //organization feed tags
 			String[] organizationFilePaths = new String[2 * feedsNames.length];
 			for (int i = 0; i < feedsNames.length; i++) {
-                organizationFilePaths[2*i] = ORG_PATH + "SHORT/" + feedsNames[i] + ".csv";
-				organizationFilePaths[2 * i + 1] = ORG_PATH + feedsNames[i] + ".csv";
+                organizationFilePaths[2*i] = TAGGED_ORG_PATH + "SHORT/" + feedsNames[i] + ".csv";
+				organizationFilePaths[2 * i + 1] = TAGGED_ORG_PATH + feedsNames[i] + ".csv";
 			}
             for (int i1 = 0; i1 < organizationFilePaths.length; i1++) {
                 String filePath = organizationFilePaths[i1];
@@ -285,7 +260,7 @@ public class DatabaseTryController {
                 } catch (NullPointerException e) {
                     e.printStackTrace();
                 }
-            }
+            }*/
         }
 
 		System.out.println("I will be saving this to DB now");
@@ -490,10 +465,13 @@ public class DatabaseTryController {
         for (int i = 0; i < myNewspapersNames.length; i++) {
             Country country = countryMap.get(myNewspapersCountry[i]);
             Language language = languageMap.get(myNewspapersLanguage[i]);
-            if (language == null || country == null) {
+            if (language == null) {
                 continue;
             }
-            Newspaper newspaper = newspaperMap.get(myNewspapersNames[i]);
+			if (country == null) {
+            	country = unknownCountry;
+			}
+			Newspaper newspaper = newspaperMap.get(myNewspapersNames[i]);
             if (newspaper == null) {
                 newspaper = new Newspaper();
                 newspaper.setName(myNewspapersNames[i]);
@@ -506,4 +484,24 @@ public class DatabaseTryController {
             newspaperMap.put(myNewspapersNames[i], newspaper);
         }
     }
+
+	private void addTagsFromFile(String filepath, int tagPosition, int countryPosition) throws IOException {
+		List<String> tags = ReaderCsvFiles.readAtPosition(filepath, tagPosition);
+		List<String> countries = ReaderCsvFiles.readAtPosition(filepath, countryPosition);
+		for (int i = 0; i < tags.size(); i++) {
+			Country country = countryMap.get(countries.get(i));
+			if (country == null) {
+				country = unknownCountry;
+			}
+			Tag tag = tagMap.get(tags.get(i));
+			if (tag == null) {
+				tag = new Tag();
+				tag.setName(tags.get(i));
+				tag.setPressReleases(new HashSet<>());
+			}
+			tag.setCountry(country);
+			country.getTags().add(tag);
+			tagMap.put(tags.get(i), tag);
+		}
+	}
 }

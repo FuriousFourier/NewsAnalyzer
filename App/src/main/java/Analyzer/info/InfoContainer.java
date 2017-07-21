@@ -1,9 +1,15 @@
-package Analyzer.secondProject.info;
+package Analyzer.info;
+
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 /**
  * Created by pawel on 19.07.17.
  */
-public class FeedInfoContainer {
+public class InfoContainer {
 
 	public static final String[] newspapersNames = {
 			"South China Morning Post",
@@ -211,4 +217,21 @@ public class FeedInfoContainer {
 			"French",
 			"Polish"
 	};
+
+	public static final String DESTINATION_TAGS_FOLDER_PATHS = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/TaggedFeeds";
+	public static final String NEW_FEEDS_PATH = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/Feeds";
+	public static final String ORGANIZATION_TAG_FILE_PATH = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/orgs.csv";
+	public static final String ORGANIZATION_SHORT_TAG_FILE_PATH = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/orgs_short.csv";
+	public static final String TAGS_AND_COUNTRIES_FILE_PATH = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/tagsAndCountries.csv";
+	public static final String COUNTRY_TAG_FILE_NAME = "Dico_Country_Free.csv";
+	public static final String EBOLA_TAG_FILE_NAME = "Dico_Ebola_Free.csv";
+	public static final String GEOMEDIA_EBOLA_TAGGED_FILE_NAME = "rss_unique_TAG_country_Ebola.csv";
+	public static final String GEOMEDIA_RSS_FILE_NAME = "rss.csv";
+	public static final String GEOMEDIA_UNIQUE_FILE_NAME = "rss_unique.csv";
+	public static final String ORG_TAGGED_FILE_NAME = "rss_org_tagged.csv";
+
+	public static final String oldFeedsFolderPaths = "../SecondProject/geomedia/Geomedia_extract_AGENDA/Geomedia_extract_AGENDA";
+	public static final String countryTagFile = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/Dico_Country_Free.csv";
+	public static final String[] currencyTagFiles = {"../SecondProject/Projekt-IO01/FeedsAnalyzer-master/currencies_Polish.csv",
+			"../SecondProject/Projekt-IO01/FeedsAnalyzer-master/currencies_English.csv"};
 }

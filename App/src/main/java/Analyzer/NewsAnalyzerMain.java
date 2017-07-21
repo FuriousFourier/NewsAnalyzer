@@ -1,5 +1,6 @@
 package Analyzer;
 
+import Analyzer.secondProject.rss.Main;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -22,6 +23,7 @@ import static org.springframework.http.HttpHeaders.USER_AGENT;
 public class NewsAnalyzerMain {
 
     public static Long securityNumber;
+    public static final long DENOMINATOR = 1000000000;
     private static ConfigurableApplicationContext configurableApplicationContext;
 
     public static void main(String[] args) throws IOException {
@@ -32,7 +34,7 @@ public class NewsAnalyzerMain {
         MainTagger.initializeMainTagger();
 
         while (true) {
-            System.out.println("Napisz \"p\" to to zrobię (możesz też napisać \"d\" albo \"t\")");
+            System.out.println("Napisz \"p\" to to zrobię (możesz też napisać \"d\", \"ts\" albo \"tl\")");
             String line = scanner.nextLine();
             if (line.equals("p")) {
                 getNewFeeds();
@@ -47,9 +49,14 @@ public class NewsAnalyzerMain {
                 System.out.println("*************");
                 System.out.println("Response Code: " + responseCode);
                 System.out.println("*************");
-            } else if (line.equals("t")) {
+            } else if (line.equals("ts")) {
             	MainTagger.tagNewFeedsCurrency(0);
-			} else {
+			} else if (line.equals("tl")){
+				MainTagger.tagNewFeeds(0);
+				MainTagger.tagNewFeedsCurrency(1);
+				/*MainTagger.tagGeomedia(2);
+				MainTagger.tagGeomedia(3);*/
+			}else{
                 System.out.println("Błędna opcja");
             }
             System.gc();

@@ -16,6 +16,7 @@ public class EnglishCurrencyTagger extends CurrencyTagger{
 	@Override
 	public void tagFile(TagDataContainer tagDataContainer) throws IOException {
 
+		long tagCount = 0;
 		Set<String> words = new HashSet<>();
 
 		for (int i = 0; i < tagDataContainer.getTitles().size(); i++) {
@@ -37,6 +38,7 @@ public class EnglishCurrencyTagger extends CurrencyTagger{
 				for (String keyword: complexTag.getKeyWords()) {
 					try {
 						if (words.contains(keyword)) {
+							++tagCount;
 							WriterCsvFiles.write(tagDataContainer.getDestinationFilePath(), tagDataContainer.getFeeds().get(i), tagDataContainer.getTimes().get(i), tagDataContainer.getTitles().get(i), tagDataContainer.getDescriptions().get(i), complexTag.getName());
 							break;
 						}
@@ -46,6 +48,8 @@ public class EnglishCurrencyTagger extends CurrencyTagger{
 				}
 			}
 		}
+		if (tagCount > 0)
+			System.err.println(tagDataContainer.getDestinationFilePath() + "; " + tagCount);
 	}
 
 	@Override

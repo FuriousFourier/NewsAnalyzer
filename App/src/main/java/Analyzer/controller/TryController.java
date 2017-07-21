@@ -1,14 +1,11 @@
 package Analyzer.controller;
 
+import Analyzer.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import Analyzer.model.*;
-import Analyzer.repository.FeedRepository;
-import Analyzer.repository.LanguageRepository;
-import Analyzer.repository.NewspaperRepository;
-import Analyzer.repository.PressReleaseRepository;
 
 import java.io.*;
 import java.util.Date;
@@ -35,6 +32,9 @@ public class TryController {
     @Autowired
     private PressReleaseRepository pressReleaseRepository;
 
+    @Autowired
+	private TagRepository tagRepository;
+
     @RequestMapping("/")
     public String index() {
         return "index";
@@ -42,17 +42,40 @@ public class TryController {
 
     @RequestMapping("/foo")
     public String foo() {
-		String viewName = "foo";
-		final long denominator = 1000000000;
+		final String okViewName = "foo";
+		final String errorViewName = "myError";
+		final File file = new File("foo.txt");
 
-		Iterable<Feed> feeds = feedRepository.findAll();
-		for (Feed feed : feeds) {
-			if (feed.getName().equals("fr_FRA_lmonde_int")) {
-				System.out.println("Here it is: " + feed.getNewspaper().getLanguage().getName());
-			}
+		file.delete();
+		PrintWriter printWriter = null;
+		try {
+			printWriter = new PrintWriter(file, "UTF-8");
+		} catch (FileNotFoundException e) {
+			System.out.println("Coś się popsuło");
+		} catch (UnsupportedEncodingException e) {
+			System.out.println("Kodowanie nie działa");
 		}
-		return viewName;
-    }
+		if (printWriter == null) {
+			System.out.println("Kapa");
+			return errorViewName;
+		}
+		List<Tag> allTags = (List<Tag>) tagRepository.findAll();
+		System.out.println("Tags count: " + allTags.size());
+
+		Tag tag = tagRepository.findByName("EUR");
+		if (tag == null) {
+			System.out.println("Tag not found");
+			return errorViewName;
+		}
+		Set<PressRelease> pressReleases = tag.getPressReleases();
+		for (PressRelease pressRelease : pressReleases) {
+			printWriter.println(pressRelease);
+		}
+
+		printWriter.close();
+		System.out.println("Data is written");
+		return okViewName;
+	}
 
     @RequestMapping("/bar")
     public String bar() {
@@ -225,3 +248,5 @@ public class TryController {
 
 	}
 }
+
+//T426s19

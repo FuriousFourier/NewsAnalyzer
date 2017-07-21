@@ -1,9 +1,8 @@
 package Analyzer.secondProject.tagger;
 
-import Analyzer.NewsAnalyzerMain;
 import Analyzer.model.Feed;
-import Analyzer.repository.FeedRepository;
 import Analyzer.secondProject.csv.reader.ReaderCsvFiles;
+import Analyzer.secondProject.csv.writer.WriterCsvFiles;
 import au.com.bytecode.opencsv.CSVReader;
 import com.sun.media.sound.InvalidDataException;
 
@@ -17,7 +16,52 @@ public class PolishCurrencyTagger extends CurrencyTagger {
 
 	@Override
 	public void tagFile(TagDataContainer tagDataContainer) throws IOException {
+		List<String> words = new ArrayList<>();
+		Map<String, CurrencyTag> usedShortTags = new HashMap<>();
+		Map<String, CurrencyTag> usedLongTags = new HashMap<>();
+		long tagCount = 0;
 
+		for (int i = 0; i < tagDataContainer.getTitles().size(); i++) {
+			String title = tagDataContainer.getTitles().get(i).toLowerCase();
+			String description = tagDataContainer.getDescriptions().get(i).toLowerCase();
+			words.clear();
+			usedShortTags.clear();
+			usedLongTags.clear();
+			words.addAll(Arrays.asList(title.split(REGEX)));
+			words.addAll(Arrays.asList(description.split(REGEX)));
+
+			tagLoop:
+			for (ComplexTag complexTag: tagDataContainer.getComplexTags()){
+				CurrencyTag currencyTag = ((CurrencyTag) complexTag);
+				int indexOfWord = words.indexOf(currencyTag.getMainKeyword());
+				if (indexOfWord >= 0){
+					int left = Math.max(indexOfWord - 1, 0);
+					int right = Math.min(indexOfWord + 1, words.size() - 1);
+					int j;
+					if (currencyTag.keyWords.isEmpty()) {
+						usedShortTags.put(currencyTag.getMainKeyword(), currencyTag);
+						continue tagLoop;
+					}
+					for (j=left; j<=right; ++j) {
+						if (currencyTag.getKeyWords().contains(words.get(j))) {
+							usedLongTags.put(currencyTag.getMainKeyword(), currencyTag);
+							continue tagLoop;
+						}
+					}
+				}
+			}
+			tagCount += usedLongTags.values().size();
+			for (CurrencyTag currencyTag : usedLongTags.values()) {
+				WriterCsvFiles.write(tagDataContainer.getDestinationFilePath(), tagDataContainer.getFeeds().get(i), tagDataContainer.getTimes().get(i), tagDataContainer.getTitles().get(i), tagDataContainer.getDescriptions().get(i), currencyTag.getName());
+				usedShortTags.remove(currencyTag.getMainKeyword());
+			}
+			tagCount += usedLongTags.values().size();
+			for (CurrencyTag currencyTag : usedShortTags.values()) {
+				WriterCsvFiles.write(tagDataContainer.getDestinationFilePath(), tagDataContainer.getFeeds().get(i), tagDataContainer.getTimes().get(i), tagDataContainer.getTitles().get(i), tagDataContainer.getDescriptions().get(i), currencyTag.getName());
+			}
+		}
+		if (tagCount > 0)
+			System.err.println(tagDataContainer.getDestinationFilePath() + "; " + tagCount);
 	}
 
 	@Override
@@ -80,9 +124,9 @@ public class PolishCurrencyTagger extends CurrencyTagger {
 
 			while (nextLine != null) {
 				String[] keyWords = nextLine[1].split(CurrencyTagger.REGEX);
-				ComplexTag complexTag = new CurrencyTag(nextLine[0], keyWords[0]);
+				ComplexTag complexTag = new CurrencyTag(nextLine[0], keyWords[0].toLowerCase());
 				for (int i=1; i<keyWords.length; ++i) {
-					complexTag.keyWords.add(keyWords[i]);
+					complexTag.keyWords.add(keyWords[i].toLowerCase());
 				}
 				result.add(complexTag);
 				nextLine = reader.readNext();

@@ -22,4 +22,13 @@ public class CurrencyTag extends ComplexTag {
 		this.mainKeyword = mainKeyword;
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		return o instanceof CurrencyTag && name.equals(((CurrencyTag) o).name);
+	}
+
+	@Override
+	public int hashCode(){
+		return name.hashCode();
+	}
 }

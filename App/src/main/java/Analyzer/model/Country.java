@@ -22,14 +22,13 @@ public class Country {
     @OneToMany(targetEntity = Newspaper.class, mappedBy = "country")
     private Set<Newspaper> newspapers;
 
-    @OneToOne(targetEntity = Tag.class, cascade = {CascadeType.ALL})
-    @JoinColumn(name = "countryid", referencedColumnName = "ID")
-    private Tag tag;
+    @OneToMany(targetEntity = Tag.class, mappedBy = "country")
+    private Set<Tag> tags;
 
-    public Country(String name, Set<Newspaper> newspapers, Tag tag) {
+    public Country(String name, Set<Newspaper> newspapers, Set<Tag> tags) {
         this.name = name;
         this.newspapers = newspapers;
-        this.tag = tag;
+        this.tags = tags;
     }
 
     public Country() {
@@ -44,12 +43,12 @@ public class Country {
         this.newspapers = newspapers;
     }
 
-    public Tag getTag() {
-        return tag;
+    public Set<Tag> getTags() {
+        return tags;
     }
 
-    public void setTag(Tag tag) {
-        this.tag = tag;
+    public void setTags(Set<Tag> tags) {
+        this.tags = tags;
     }
 
     public Integer getId() {

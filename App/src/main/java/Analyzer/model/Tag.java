@@ -19,8 +19,9 @@ public class Tag {
 
     private String name;
 
-    @OneToOne (targetEntity = Country.class, mappedBy = "tag")
-    private Country country;
+	@ManyToOne(targetEntity = Country.class, cascade = {CascadeType.ALL})
+	@JoinColumn(name = "countryID", referencedColumnName = "ID")
+	private Country country;
 
     @ManyToMany(mappedBy = "tags")
     private Set<PressRelease> pressReleases;

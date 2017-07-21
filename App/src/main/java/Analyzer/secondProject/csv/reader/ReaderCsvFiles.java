@@ -1,6 +1,5 @@
 package Analyzer.secondProject.csv.reader;
 
-import Analyzer.secondProject.tagger.CurrencyTag;
 import au.com.bytecode.opencsv.CSVReader;
 import Analyzer.secondProject.tagger.ComplexTag;
 import Analyzer.secondProject.tagger.MainTagger;
@@ -140,7 +139,7 @@ public class ReaderCsvFiles {
 				try {
 					if (!nextLine[tagPosition].equals(complexTag.getName())) {
 						result.add(complexTag);
-						complexTag = new ComplexTag(nextLine[tagPosition]);
+						complexTag = new ComplexTag(nextLine[tagPosition].toLowerCase());
 					}
 					complexTag.getKeyWords().add(nextLine[keyWordPosition].toLowerCase());
 				} catch (ArrayIndexOutOfBoundsException e) {

@@ -113,4 +113,9 @@ public class PressRelease {
     public int hashCode() {
 		return this.date.hashCode() / 2 + this.title.hashCode() / 2 + this.feed.hashCode() / 2;
 	}
+
+	@Override
+	public String toString(){
+    	return date.toString() + "; " + title + "; " + content;
+	}
 }
