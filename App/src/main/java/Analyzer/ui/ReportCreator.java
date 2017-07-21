@@ -34,9 +34,16 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 	private List<Number> values;
 	private boolean isNodeAnalysis;
 	private static final int TIMEOUT = 10000;
-	String xAxis;
+	private String xAxis;
 
 	public void showChart(List<ReportInput> input, Document report){
+		String chartName;
+		if (input.get(0).date.equals(""))
+			chartName = "Newspapers";
+		else if (input.get(0).newspaper.equals(""))
+			chartName = "Dates";
+		else
+			chartName = (input.get(0).newspaper); //TODO: informacja, jaka to jest data (dzienna, miesieczna, itd.)
 		com.itextpdf.text.Rectangle rect = report.getPageSize();
 		float margin = report.rightMargin() + report.leftMargin();
 		reportInput = input;
@@ -45,12 +52,8 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 			return;
 		}
 
-		xAxis = reportInput.get(0).paramName;
-		String fileName;
-		if (input.get(0).paramName.equals("Date") || input.get(0).paramName.equals("Newspaper"))
-			fileName = input.get(0).paramName;
-		else
-			fileName = input.get(0).paramValue;
+		xAxis = chartName;
+
 		//node params - currently not drawing
         /*isNodeAnalysis = true;
             for (String p: ReportInput.nodesParams) {
@@ -89,24 +92,21 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 			currentParam = p;
 			CategoryChart chart = this.getChart();
 			if (chart == null) {
-				System.out.println("No chart to display for " + input.get(0).paramValue + ", param: " + p);
+				System.out.println("No chart to display for " + input.get(0).newspaper + " " + input.get(0).date + ", param: " + p);
 				continue;
 			}
 			try {
-				BitmapEncoder.saveBitmap(chart, "src/main/resources/charts/"+fileName+"_"+p, BitmapEncoder.BitmapFormat.PNG);
+				BitmapEncoder.saveBitmap(chart, "src/main/resources/charts/"+chartName+"_"+p, BitmapEncoder.BitmapFormat.PNG);
 				URI uri;
-				System.out.println(ClassLoader.getSystemResource("charts/"+fileName + "_" + p + ".png"));
-				//for (int i = 0; i < TIMEOUT; i++) {
+				System.out.println(ClassLoader.getSystemResource("charts/"+chartName + "_" + p + ".png"));
 				//przerobic na pozyskiwanie charts bezposrednio z resources, a nie dopiero z target!
-					if (ClassLoader.getSystemResource("charts/"+fileName + "_" + p + ".png") != null) {
-						uri = ClassLoader.getSystemResource("charts/"+fileName+"_"+p+".png").toURI();
+					if (ClassLoader.getSystemResource("charts/"+chartName + "_" + p + ".png") != null) {
+						uri = ClassLoader.getSystemResource("charts/"+chartName+"_"+p+".png").toURI();
 						Path path = Paths.get(uri);
 						Image img = Image.getInstance(path.toAbsolutePath().toString());
 						img.scaleToFit(rect.getWidth()-margin, rect.getHeight());
 						report.add(img);
 					}
-					//Thread.sleep(500);
-				//}
 			}catch (Exception e){
 				e.printStackTrace();
 				return;
@@ -122,7 +122,12 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 		for (ReportInput r: reportInput){
 			if (r == null)
 				continue;
-			paramValues.add(r.paramValue);
+			if (r.date.equals(""))
+				paramValues.add(r.newspaper);
+			else if (r.newspaper.equals(""))
+				paramValues.add(r.date);
+			else
+				paramValues.add(r.newspaper+"("+r.date+")");
 			Node n;
 			Number number;
 			if (isNodeAnalysis) {

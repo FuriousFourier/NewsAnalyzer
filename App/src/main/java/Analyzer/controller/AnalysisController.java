@@ -1,14 +1,13 @@
 package Analyzer.controller;
 
+import au.com.bytecode.opencsv.CSVWriter;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.PdfWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import Analyzer.model.*;
 import Analyzer.repository.*;
-import Analyzer.ui.AnalysisHandler;
 import Analyzer.ui.GraphHandler;
 import Analyzer.ui.ReportCreator;
 import Analyzer.ui.ReportInput;
@@ -53,17 +52,13 @@ public class AnalysisController {
 	private Newspaper currentNewspaper;
     private static boolean isAskingForValue = false;
     private static boolean isIteratingOverDates = false;
+    private Calendar cal = Calendar.getInstance();
     ReportCreator reportCreator = new ReportCreator();
 
     public static void setIsAskingForValue(boolean val){
         isAskingForValue = val;
     }
     public static void setIsIteratingOverDates(boolean val) { isIteratingOverDates = val; }
-
-    @RequestMapping("/ana")
-    public String analysisIndex() {
-        return "foo";
-    }
 
     @GetMapping("/results")
     public String printResults(){
@@ -75,21 +70,6 @@ public class AnalysisController {
             }
             System.out.print("Country:" + pr.getFeed().getNewspaper().getCountry().getName() + "; Newspaper:" + pr.getFeed().getNewspaper().getName() + "\n");
         }
-        return "foo";
-    }
-
-    @GetMapping("/langs")
-    public String getAllLanguages(){
-        System.out.println("Languages:");
-        if (languageRepository== null){
-            System.out.println("Repository not initialised");
-            return("foo");
-        }
-        List<Language> result = (List<Language>)languageRepository.findAll();
-        for (Language l : result) {
-            System.out.println(l.getName());
-        }
-        fetchedLanguages = result;
         return "foo";
     }
 
@@ -108,21 +88,6 @@ public class AnalysisController {
         return "foo";
     }
 
-    @GetMapping("/countr")
-    public String getAllCountries(){
-        System.out.println("Countries (use tag in parenthesis to choose one):");
-        if (countryRepository== null){
-            System.out.println("Repository not initialised");
-            return("foo");
-        }
-        List<Country> result = (List<Country>)countryRepository.findAll();
-        for (Country c : result) {
-            System.out.println(c.getName() + "("+c.getTag().getName()+")");
-        }
-        fetchedCountries = result;
-        return "foo";
-    }
-
     @GetMapping("/dates")
     public String getPressReleasesSortedByDate(){
         if (pressReleaseRepository == null){
@@ -138,7 +103,6 @@ public class AnalysisController {
 
       return "foo";
     }
-
 
     @GetMapping("/notesDate")
     public String getPressReleasesByDate(){
@@ -191,7 +155,6 @@ public class AnalysisController {
             title = value;
         System.out.println("Title: " + title);
         Newspaper newspaper = newspaperRepository.findByName(title); //find newspaper
-        //Set<PressRelease> notesFromAllFeeds = new HashSet<>();
 		fetchedNotes = new HashSet<>();
         if (newspaper != null) {
         	currentNewspaper = newspaper;
@@ -201,43 +164,6 @@ public class AnalysisController {
             System.out.println("Couldn't find feeds");
             return "foo";
         }
-       // fetchedNotes = notesFromAllFeeds;
-        if (isAskingForValue)
-            printResults();
-        return "foo";
-    }
-    @GetMapping("/notesLangs")
-    public String getPressReleasesByLangs(){
-        if (pressReleaseRepository == null){
-            System.out.println("repository not initialised");
-            return "foo";
-        }
-        String name = null;
-        if (isAskingForValue) {
-            try {
-                name = br.readLine();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        else
-            name = value;
-        //Set<PressRelease> notesFromAllFeeds = new HashSet<>();
-        Language language = languageRepository.findByName(name);
-		fetchedNotes = new HashSet<>();
-        if(language != null) {
-            for (Newspaper n : language.getNewspapers()) {
-                if (n != null) {
-					currentNewspaper = n;
-                    getNotesForOneNewspaper();
-                }
-            }
-        }
-        if (fetchedNotes.size() < 1) {
-            System.out.println("Couldn't find current feed");
-            return "foo";
-        }
-
         if (isAskingForValue)
             printResults();
         return "foo";
@@ -254,44 +180,9 @@ public class AnalysisController {
 		}
 		return "foo";
 	}
-    @GetMapping("/notesCountr")
-    public String getPressReleasesByCountries(){
-        if (pressReleaseRepository == null){
-            System.out.println("repository not initialised");
-            return "foo";
-        }
-        String name = null;
-        if (isAskingForValue) {
-            try {
-                name = br.readLine();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        else
-            name = value;
-        //Set<PressRelease> notesFromAllFeeds = new HashSet<>();
-        Country country = countryRepository.findByName(name);
-        fetchedNotes = new HashSet<>();
-        if(country != null) {
-            for (Newspaper n : country.getNewspapers()) {
-                if (n != null) {
-                	currentNewspaper = n;
-                	getNotesForOneNewspaper();
-                }
-            }
-        }
-        if (fetchedNotes.size() < 1) {
-            System.out.println("Couldn't find current feed");
-            return "foo";
-        }
-        if (isAskingForValue)
-            printResults();
-        return "foo";
-    }
 
     @GetMapping("/analyseDate")
-    public String analyseByDate() throws FileNotFoundException, DocumentException {
+    public String analyseByDate() throws IOException, DocumentException {
       if (pressReleaseRepository == null){
         System.out.println("repository not initialised");
         return "foo";
@@ -299,10 +190,12 @@ public class AnalysisController {
 
 		int firstMonth=0, firstYear=0, lastMonth=0, lastYear=0;
 		if (getPressReleasesSortedByDate().equals("foo")){ //we're sure it's finished
-			firstMonth = firstDate.getMonth()+1;
-			firstYear = firstDate.getYear()+1900;
-			lastMonth  = lastDate.getMonth()+1;
-			lastYear = lastDate.getYear()+1900;
+			cal.setTime(firstDate);
+			firstMonth = cal.get(Calendar.MONTH)+1;
+			firstYear = cal.get(Calendar.YEAR);
+			cal.setTime(lastDate);
+			lastMonth  = cal.get(Calendar.MONTH)+1;
+			lastYear = cal.get(Calendar.YEAR);
 			System.out.println("First month: " + firstMonth + "; first year: "+ firstYear);
 			System.out.println("Last month: "+ lastMonth + "; last year: "+ lastYear);
 		}
@@ -313,8 +206,13 @@ public class AnalysisController {
 		report.open();
 		Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD,14,BaseColor.BLACK);
 		Paragraph p = new Paragraph("Months", titleFont);
-
 		report.add(p);
+
+		String graphGlobalFileName = "src/main/resources/csv/Month.csv";
+		File globalGraphFile = new File(graphGlobalFileName);
+		globalGraphFile.createNewFile();
+		CSVWriter graphGlobalWriter = new CSVWriter(new FileWriter(graphGlobalFileName, true), '\t', CSVWriter.DEFAULT_QUOTE_CHARACTER);
+
 
 		for (int i = firstYear; i <= lastYear; i++) {
 			int j; int lastJ;
@@ -327,7 +225,7 @@ public class AnalysisController {
 				if (getPressReleasesByDate().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
 					System.out.println("******************* *Date: "+value + " ************************");
 					GraphHandler.resetInput();
-					GraphHandler.graphCreator("Date" , value, fetchedNotes, report);
+					GraphHandler.graphCreator(value, "", fetchedNotes, report, graphGlobalWriter);
 					ReportInput input = GraphHandler.getInput();
 					if (input != null)
 						inputs.add(GraphHandler.getInput());
@@ -335,13 +233,13 @@ public class AnalysisController {
 			}
 
 		}
-		reportCreator.showChart(inputs, report);
+		//reportCreator.showChart(inputs, report);
 		report.close();
-
+		graphGlobalWriter.close();
 		return "foo";
 	}
 	@GetMapping("/analyseNewspaper")
-	public String analyseByNewspaper() throws FileNotFoundException, DocumentException {
+	public String analyseByNewspaper() throws IOException, DocumentException {
 		if (pressReleaseRepository == null){
 			System.out.println("repository not initialised");
 			return "foo";
@@ -351,16 +249,26 @@ public class AnalysisController {
 		}
 		List<ReportInput> newsInputs = new ArrayList<>();
 		Document newsReport = new Document();
+		String graphGlobalFileName;
+		File globalGraphFile;
+		CSVWriter graphGlobalWriter = null;
 		if (!isIteratingOverDates) {
 			PdfWriter.getInstance(newsReport, new FileOutputStream("src/main/resources/reports/Newspaper.pdf"));
 			newsReport.open();
 			Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD,14,BaseColor.BLACK);
 			Paragraph p = new Paragraph("Newspaper", titleFont);
 			newsReport.add(p);
+
+			graphGlobalFileName = "src/main/resources/csv/Newspaper.csv";
+			globalGraphFile = new File(graphGlobalFileName);
+			globalGraphFile.createNewFile();
+			graphGlobalWriter = new CSVWriter(new FileWriter(graphGlobalFileName, true), '\t', CSVWriter.DEFAULT_QUOTE_CHARACTER);
 		}
-		for (Newspaper n : fetchedNewspapers) {
-			//value =  "Interia";
-			value = n.getName();
+		String[] newspaperList = { "Interia", "Fakt", "Newsweek", "RMF24", "Today", "China Daily"};
+		//for (Newspaper n : fetchedNewspapers) {
+			//value = n.getName();
+		for (String s: newspaperList) {
+			value = s;
 			setIsAskingForValue(false);
 			if ((getPressReleasesByNews().equals("foo")) && (fetchedNotes != null) && (!fetchedNotes.isEmpty())){
 				System.out.println("******************* *Newspaper: "+value + " ************************");
@@ -368,8 +276,9 @@ public class AnalysisController {
 					Map<String, Set<PressRelease>> newspaperNotes = new HashMap<String, Set<PressRelease>>();
 					//wrzucam notki do list w hashmapie
 					for (PressRelease p : fetchedNotes){
-						int pMonth = p.getDate().getMonth()+1;
-						int pYear = p.getDate().getYear()+1900;
+						cal.setTime(p.getDate());
+						int pMonth = cal.get(Calendar.MONTH)+1;
+						int pYear = cal.get(Calendar.YEAR);
 						String date = pYear + "-" + (pMonth<10 ? "0" : "") + pMonth;
 						newspaperNotes.putIfAbsent(date, new HashSet<PressRelease>());
 						newspaperNotes.get(date).add(p);
@@ -392,18 +301,26 @@ public class AnalysisController {
 					Paragraph p = new Paragraph("Newspaper&date: " + value, titleFont);
 					report.add(p);
 
+					String graphFileName = "src/main/resources/csv/"+value+".csv";
+					File graphFile = new File(graphFileName);
+					graphFile.createNewFile();
+
+					//analogicznie zrobic nodeFileName
+					CSVWriter graphWriter = new CSVWriter(new FileWriter(graphFileName, true), '\t', CSVWriter.DEFAULT_QUOTE_CHARACTER);
+
 					for (String d : notesKeySet){
 						System.out.println("------> " + d);
 
 						GraphHandler.resetInput();
-						GraphHandler.graphCreator("Newspaper&date" , value+"("+d+")", newspaperNotes.get(d), report);
+						GraphHandler.graphCreator(d, value, newspaperNotes.get(d), report, graphWriter);
 						ReportInput input = GraphHandler.getInput();
 						if (input != null) {
 							inputs.add(GraphHandler.getInput());
 						}
 					}
-					reportCreator.showChart(inputs, report);
+					//reportCreator.showChart(inputs, report);
 					report.close();
+					graphWriter.close();
 
 					//remove values
 					newspaperNotes = null;
@@ -412,7 +329,7 @@ public class AnalysisController {
 				}
 				else {
 					GraphHandler.resetInput();
-					GraphHandler.graphCreator("Newspaper" , value, fetchedNotes, newsReport);
+					GraphHandler.graphCreator("", value, fetchedNotes, newsReport, graphGlobalWriter);
 					ReportInput input = GraphHandler.getInput();
 					if (input != null)
 						newsInputs.add(GraphHandler.getInput());
@@ -420,57 +337,9 @@ public class AnalysisController {
 			}
 		}
 		if (!isIteratingOverDates){
-			reportCreator.showChart(newsInputs, newsReport);
+			//reportCreator.showChart(newsInputs, newsReport);
 			newsReport.close();
-		}
-		return "foo";
-	}
-
-
-
-	@GetMapping("/analyseCountry")
-	public String analyseByCountry(){
-		if (pressReleaseRepository == null){
-			System.out.println("repository not initialised");
-			return "foo";
-		}
-		if (getAllCountries().equals("foo")){ //we're sure it's finished
-			System.out.println("Countries have been fetched");
-		}
-		for (Country c : fetchedCountries) {
-			value = c.getName();
-			setIsAskingForValue(false);
-			if (getPressReleasesByCountries().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
-				System.out.println("******************* *Country: "+value + " ************************");
-				try {
-					GraphHandler.graphCreator("Countries", value, fetchedNotes, null);
-				} catch (DocumentException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-		return "foo";
-	}
-	@GetMapping("/analyseLanguage")
-	public String analyseByLanguage(){
-		if (pressReleaseRepository == null){
-			System.out.println("repository not initialised");
-			return "foo";
-		}
-		if (getAllLanguages().equals("foo")){ //we're sure it's finished
-			System.out.println("Languages has been fetched");
-		}
-		for (Language l : fetchedLanguages) {
-			value = l.getName();
-			setIsAskingForValue(false);
-			if (getPressReleasesByLangs().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
-				System.out.println("******************* *Language: "+value + " ************************");
-				try {
-					GraphHandler.graphCreator("Language", value, fetchedNotes, null);
-				} catch (DocumentException e) {
-					e.printStackTrace();
-				}
-			}
+			graphGlobalWriter.close();
 		}
 		return "foo";
 	}

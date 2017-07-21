@@ -43,24 +43,25 @@ public class ReportInput {
 
 	private Map<String, Node> nodeMaxValues = new HashMap<>();
 	private Map<String, Object> graphValues = new HashMap<>();
-	public String paramValue;
-	public String paramName;
+	//public String paramValue;
+	//public String paramName;
+	public String date;
+	public String newspaper;
 	private NumberComparator numberComparator = new NumberComparator();
-	private Document report;
 	public void initNodeMaxValues(GraphModel graphModel){
 		for (String s : nodesParams)
 			nodeMaxValues.put(s, null);
 
-		Table attributes = graphModel.getNodeTable();
+		//Table attributes = graphModel.getNodeTable();
 		//dla kazdego labela iteruje po wszystkich node'ach
 		for (String col : nodesParams) {
-			Column currentCol = attributes.getColumn(col);
+			//Column currentCol = attributes.getColumn(col);
 			for (Node currentNode : graphModel.getGraph().getNodes()) {
 				Node n = nodeMaxValues.get(col);
 				if (n != null){
 					Number n1 = (Number)n.getAttribute(col);
 					Number n2 = (Number)currentNode.getAttribute(col);
-					if (numberComparator.compare(n1, n2) < 0 && !((Number)currentNode.getAttribute(col)).toString().equals("NaN"))
+					if (numberComparator.compare(n1, n2) < 0 && !currentNode.getAttribute(col).toString().equals("NaN"))
 						nodeMaxValues.put(col, currentNode);
 				}
 				else if (!currentNode.getAttribute(col).toString().equals("NaN"))

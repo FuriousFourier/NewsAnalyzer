@@ -1,5 +1,6 @@
 package Analyzer.ui;
 
+import au.com.bytecode.opencsv.CSVWriter;
 import com.itextpdf.text.*;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.pdf.PdfContentByte;
@@ -121,13 +122,12 @@ public class GraphHandler {
 	}
 
 
-	public static void graphCreator(String paramName, String paramValue, Set<PressRelease> newNotes, Document report) throws DocumentException {
+	public static void graphCreator(String date, String newspaper, Set<PressRelease> newNotes, Document report, CSVWriter graphWriter) throws DocumentException {
 		notes = newNotes;
 		if (notes == null || notes.isEmpty()){
 			System.out.println("Empty result");
 			return;
 		}
-		// initFakePressReleases();
 		ProjectController pc = Lookup.getDefault().lookup(ProjectController.class);
 		pc.newProject();
 		Workspace workspace = pc.getCurrentWorkspace();
@@ -180,11 +180,12 @@ public class GraphHandler {
         }*/
 
 		System.out.println("Nodes analysis:");
-		Font subtitleFont = FontFactory.getFont(FontFactory.HELVETICA, 12, BaseColor.BLACK);
+		//do not create pdf
+		/*Font subtitleFont = FontFactory.getFont(FontFactory.HELVETICA, 12, BaseColor.BLACK);
 		Font font = FontFactory.getFont(FontFactory.COURIER, 12, BaseColor.BLACK);
 		Font fontSmall = FontFactory.getFont(FontFactory.COURIER, 8, BaseColor.BLUE);
-		Paragraph chunk = new Paragraph(paramValue, subtitleFont);
-		report.add(chunk);
+		Paragraph chunk = new Paragraph(newspaper + " " + date, subtitleFont);
+		report.add(chunk);*/
 
 		GraphDistance distance = new GraphDistance();
 		distance.setDirected(true);
@@ -213,6 +214,8 @@ public class GraphHandler {
 		Modularity modularity = new Modularity();
 		modularity.setUseWeight(true);
 		modularity.execute(graphModel);
+		GraphDensity density = new GraphDensity();
+		density.execute(graphModel);
 
 		//PrestigeStatistics
 		PrestigeStatistics prestigeStatistics = new PrestigeStatistics();
@@ -229,12 +232,12 @@ public class GraphHandler {
 		for (String col : columnsToSee) {
 			Column current = attributes.getColumn(col);
 			System.out.println(col+ ":");
-			chunk = new Paragraph(col+ ":\n", font);
-			report.add(chunk);
+			/*chunk = new Paragraph(col+ ":\n", font);
+			report.add(chunk);*/
 			for (Node n : graphModel.getGraph().getNodes()) {
 				System.out.println(n.getLabel() + ": " + n.getAttribute(current));
-				chunk = new Paragraph(n.getLabel() + ": " + n.getAttribute(current) + "\n", fontSmall);
-				report.add(chunk);
+				/*chunk = new Paragraph(n.getLabel() + ": " + n.getAttribute(current) + "\n", fontSmall);
+				report.add(chunk);*/
 			}
 		}
 
@@ -247,43 +250,6 @@ public class GraphHandler {
 		for (Node n: graphModel.getGraph().getNodes()){
 			componentsMap.get(n.getAttribute(ConnectedComponents.STRONG)).add(n);
 		}
-		System.out.println("Nr of nodes: " + directedGraph.getNodeCount());
-		System.out.println("Nr of edges: " + directedGraph.getEdgeCount());
-		System.out.println("Nr of connected components: " + connectedComponents.getConnectedComponentsCount());
-
-		System.out.println("The average shortest path length in the network: " + distance.getPathLength());
-		System.out.println("The diameter of the network: "+ distance.getDiameter());
-		System.out.println("The radius of the network: "+ distance.getRadius());
-		System.out.println("The average clustering coefficient: " + clusteringCoefficient.getAverageClusteringCoefficient());
-		System.out.println("The average degree: " + degree.getAverageDegree());
-		System.out.println("Modularity: "+ modularity.getModularity());
-		//System.out.println("Lineage origin: " + lineage.getOrigin());
-
-       /* chunk = new Paragraph("Nr of nodes: " + directedGraph.getNodeCount() + "\n", fontSmall);
-        report.add(chunk);
-        chunk = new Paragraph("Nr of edges: " + directedGraph.getEdgeCount() + "\n", fontSmall);
-        report.add(chunk);
-        chunk = new Paragraph("Nr of connected components: " + connectedComponents.getConnectedComponentsCount() + "\n", fontSmall);
-        report.add(chunk);
-
-        chunk = new Paragraph("The average shortest path length in the network: " + distance.getPathLength() + "\n", fontSmall);
-        report.add(chunk);
-        chunk = new Paragraph("The diameter of the network: "+ distance.getDiameter() + "\n", fontSmall);
-        report.add(chunk);
-        chunk = new Paragraph("The radius of the network: "+ distance.getRadius() + "\n", fontSmall);
-        report.add(chunk);
-        chunk = new Paragraph("The average clustering coefficient: " + clusteringCoefficient.getAverageClusteringCoefficient() + "\n", fontSmall);
-        report.add(chunk);
-        chunk = new Paragraph("The average degree: " + degree.getAverageDegree() + "\n", fontSmall);
-        report.add(chunk);
-        chunk = new Paragraph("Modularity: "+ modularity.getModularity() + "\n", fontSmall);
-        report.add(chunk);*/
-
-		GraphDensity density = new GraphDensity();
-		density.execute(graphModel);
-		System.out.println("The density of the graph: "+ density.getDensity());
-       /* chunk = new Paragraph("The density of the graph: "+ density.getDensity() + "\n", fontSmall);
-        report.add(chunk);*/
 
 		input = new ReportInput();
 		input.initNodeMaxValues(graphModel);
@@ -296,10 +262,33 @@ public class GraphHandler {
 		input.setGraphValue("Average clustering coefficient", clusteringCoefficient.getAverageClusteringCoefficient());
 		input.setGraphValue("Average degree", degree.getAverageDegree());
 		input.setGraphValue("Modularity", modularity.getModularity());
-		input.setGraphValue("The density of the graph: ", density.getDensity());
-		//z pluginów
-		input.paramValue = paramValue;
-		input.paramName = paramName;
+		input.setGraphValue("The density of the graph", density.getDensity());
+		input.date = date;
+		input.newspaper = newspaper;
+
+		SortedSet<String> graphParams = new TreeSet<>(input.getGraphParams());
+		String[] textForGraph = new String[graphParams.size()+2]; //potem przerobic na to, by data byla calkiem ososbna i  mogla byc roznej dlugosic
+		textForGraph[0] = date;
+		textForGraph[1] = newspaper;
+
+		//zorbic pole odpowiedzialne za inicjalizacje nazw kolumn
+		/*
+		int i = 2;
+		for (String param : graphParams){
+			textForGraph[i] = param;
+			i++;
+		}
+		graphWriter.writeNext(textForGraph);*/
+
+		int i=2;
+		for (String s: graphParams){
+			System.out.println(s + ": "+  input.getGraphValue(s));
+			textForGraph[i] = input.getGraphValue(s).toString();
+			i++;
+			//chunk = new Paragraph(s + input.getGraphValue(s), fontSmall);
+			//report.add(chunk);
+		}
+		graphWriter.writeNext(textForGraph);
 
         /*PreviewController previewController = Lookup.getDefault().lookup(PreviewController.class);
         PreviewModel previewModel = previewController.getModel();

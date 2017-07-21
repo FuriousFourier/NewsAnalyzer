@@ -35,18 +35,12 @@ public class AnalysisHandler {
         System.out.println("Enter the field you'd like to focus on: \n" +
                 "\t d -> month and year\n" +
                 "\t n -> newspaper title\n");
-                //"\t c -> country\n" + //needs amending (due to graphHandler)
-                //"\t l -> language"); //j.w.
         field = br.readLine();
 
         if (field.startsWith("d")) {
             fieldName = "month and year (mm-yyyy)";
         } else if (field.startsWith("n")) {
             fieldName = "newspaper title";
-        } else if (field.startsWith("c")) {
-            fieldName = "country name";
-        } else if (field.startsWith("l")) {
-            fieldName = "language";
         }
         System.out.println("Type:\n" +
                 "\t?? -> to show all possible values \n" +
@@ -60,10 +54,6 @@ public class AnalysisHandler {
                 url = new URL("http://localhost:8080/dates");
             } else if (field.startsWith("n")) {
                 url = new URL("http://localhost:8080/news");
-            } else if (field.startsWith("c")) {
-                url = new URL("http://localhost:8080/countr");
-            } else if (field.startsWith("l")) {
-                url = new URL("http://localhost:8080/langs");
             }
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestProperty("User-Agent", USER_AGENT);
@@ -77,10 +67,6 @@ public class AnalysisHandler {
             } else if (field.startsWith("n")) {
                 AnalysisController.setIsIteratingOverDates(false);
                 url = new URL("http://localhost:8080/analyseNewspaper");
-            } else if (field.startsWith("c")) {
-                url = new URL("http://localhost:8080/analyseCountry");
-            } else if (field.startsWith("l")) {
-                url = new URL("http://localhost:8080/analyseLanguage");
             }
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestProperty("User-Agent", USER_AGENT);
@@ -108,13 +94,7 @@ public class AnalysisHandler {
             } else if (field.startsWith("n")) {
                 System.out.println("-----for newspapers-----");
                 url = new URL("http://localhost:8080/notesNews");
-            } else if (field.startsWith("c")) {
-                System.out.println("-----for countries-----");
-                url = new URL("http://localhost:8080/notesCountr");
-            } else if (field.startsWith("l")) {
-                System.out.println("-----for languages-----");
-                url = new URL("http://localhost:8080/notesLangs");
-            } else {
+            }else {
                 System.out.println("field: " + field + " - returning...");
                 return;
             }
