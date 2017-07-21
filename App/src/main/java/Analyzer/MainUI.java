@@ -4,7 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import Analyzer.ui.AnalysisHandler;
 import Analyzer.secondProject.rss.Main;
-import Analyzer.secondProject.tagger.Tagger;
+//import Analyzer.secondProject.tagger.Tagger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -47,8 +47,8 @@ public class MainUI {
                     myPrint("Notes has been successfully downloaded");
                 }
                 else if (line.startsWith("t")) {
-                    myPrint("Notes will get missing tags");
-                    Tagger.main(null);
+                    //myPrint("Notes will get missing tags");
+                    //Tagger.main(null);
                     myPrint("Tagging finished successfully");
                 }
                 else if (line.startsWith("u")) {

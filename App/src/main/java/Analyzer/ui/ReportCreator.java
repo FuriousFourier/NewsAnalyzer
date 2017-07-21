@@ -33,6 +33,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 	private List<String> paramValues;
 	private List<Number> values;
 	private boolean isNodeAnalysis;
+	private static final int TIMEOUT = 10000;
 	String xAxis;
 
 	public void showChart(List<ReportInput> input, Document report){
@@ -46,10 +47,10 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 
 		xAxis = reportInput.get(0).paramName;
 		String fileName;
-		if (input.size() > 1 && !input.get(0).paramValue.equals(input.get(1).paramValue))
-			fileName = input.get(0).paramValue;
-		else
+		if (input.get(0).paramName.equals("Date") || input.get(0).paramName.equals("Newspaper"))
 			fileName = input.get(0).paramName;
+		else
+			fileName = input.get(0).paramValue;
 		//node params - currently not drawing
         /*isNodeAnalysis = true;
             for (String p: ReportInput.nodesParams) {
@@ -62,7 +63,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
                     continue;
                 }
                 try {
-                    BitmapEncoder.saveBitmap(chart, "./charts/"+fileName+"_"+p, BitmapEncoder.BitmapFormat.PNG);
+                    BitmapEncoder.saveBitmap(chart, "src/main/resources/charts/"+fileName+"_"+p, BitmapEncoder.BitmapFormat.PNG);
                     URI uri;
                     for (int i = 0; i < 100; i++) {
                         if (ClassLoader.getSystemResource(fileName + "_" + p + ".png") != null) {
@@ -92,18 +93,20 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 				continue;
 			}
 			try {
-				BitmapEncoder.saveBitmap(chart, "./charts/"+fileName+"_"+p, BitmapEncoder.BitmapFormat.PNG);
+				BitmapEncoder.saveBitmap(chart, "src/main/resources/charts/"+fileName+"_"+p, BitmapEncoder.BitmapFormat.PNG);
 				URI uri;
-				for (int i = 0; i < 1000; i++) {
-					if (ClassLoader.getSystemResource(fileName + "_" + p + ".png") != null) {
-						uri = ClassLoader.getSystemResource(fileName+"_"+p+".png").toURI();
+				System.out.println(ClassLoader.getSystemResource("charts/"+fileName + "_" + p + ".png"));
+				//for (int i = 0; i < TIMEOUT; i++) {
+				//przerobic na pozyskiwanie charts bezposrednio z resources, a nie dopiero z target!
+					if (ClassLoader.getSystemResource("charts/"+fileName + "_" + p + ".png") != null) {
+						uri = ClassLoader.getSystemResource("charts/"+fileName+"_"+p+".png").toURI();
 						Path path = Paths.get(uri);
 						Image img = Image.getInstance(path.toAbsolutePath().toString());
 						img.scaleToFit(rect.getWidth()-margin, rect.getHeight());
 						report.add(img);
-						break;
 					}
-				}
+					//Thread.sleep(500);
+				//}
 			}catch (Exception e){
 				e.printStackTrace();
 				return;
