@@ -34,13 +34,17 @@ public class EnglishCurrencyTagger extends CurrencyTagger{
 				}
 			}
 
+			tagLoop:
 			for (ComplexTag complexTag: tagDataContainer.getComplexTags()){
 				for (String keyword: complexTag.getKeyWords()) {
 					try {
-						if (words.contains(keyword)) {
-							++tagCount;
-							WriterCsvFiles.write(tagDataContainer.getDestinationFilePath(), tagDataContainer.getFeeds().get(i), tagDataContainer.getTimes().get(i), tagDataContainer.getTitles().get(i), tagDataContainer.getDescriptions().get(i), complexTag.getName());
-							break;
+						for (String word: words){
+							if (word.startsWith(keyword)) {
+								//if (words.contains(keyword)) {
+								++tagCount;
+								WriterCsvFiles.write(tagDataContainer.getDestinationFilePath(), tagDataContainer.getFeeds().get(i), tagDataContainer.getTimes().get(i), tagDataContainer.getTitles().get(i), tagDataContainer.getDescriptions().get(i), complexTag.getName());
+								continue tagLoop;
+							}
 						}
 					} catch (IndexOutOfBoundsException e) {
 						System.err.println("Index out of bound: " + e.getMessage() + ", i: " + i);

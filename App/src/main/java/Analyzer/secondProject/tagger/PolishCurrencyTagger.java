@@ -18,7 +18,7 @@ public class PolishCurrencyTagger extends CurrencyTagger {
 	public void tagFile(TagDataContainer tagDataContainer) throws IOException {
 		List<String> words = new ArrayList<>();
 		Map<String, CurrencyTag> usedShortTags = new HashMap<>();
-		Map<String, CurrencyTag> usedLongTags = new HashMap<>();
+		Set<CurrencyTag> usedLongTags = new HashSet<>();
 		long tagCount = 0;
 
 		for (int i = 0; i < tagDataContainer.getTitles().size(); i++) {
@@ -35,7 +35,7 @@ public class PolishCurrencyTagger extends CurrencyTagger {
 				CurrencyTag currencyTag = ((CurrencyTag) complexTag);
 				int indexOfWord;
 				for (indexOfWord=0; indexOfWord<words.size(); ++indexOfWord){
-					if (words.get(indexOfWord).contains(currencyTag.getMainKeyword())) {
+					if (words.get(indexOfWord).startsWith(currencyTag.getMainKeyword())) {
 						break;
 					}
 				}
@@ -50,20 +50,20 @@ public class PolishCurrencyTagger extends CurrencyTagger {
 
 					for (j=left; j<=right; ++j) {
 						for (String keyWord: currencyTag.getKeyWords()){
-							if (words.get(j).contains(keyWord)){
-								usedLongTags.put(currencyTag.getMainKeyword(), currencyTag);
+							if (words.get(j).startsWith(keyWord)){
+								usedLongTags.add(currencyTag);
 								continue tagLoop;
 							}
 						}
 					}
 				}
 			}
-			tagCount += usedLongTags.values().size();
-			for (CurrencyTag currencyTag : usedLongTags.values()) {
+			tagCount += usedLongTags.size();
+			for (CurrencyTag currencyTag : usedLongTags) {
 				WriterCsvFiles.write(tagDataContainer.getDestinationFilePath(), tagDataContainer.getFeeds().get(i), tagDataContainer.getTimes().get(i), tagDataContainer.getTitles().get(i), tagDataContainer.getDescriptions().get(i), currencyTag.getName());
 				usedShortTags.remove(currencyTag.getMainKeyword());
 			}
-			tagCount += usedLongTags.values().size();
+			tagCount += usedLongTags.size();
 			for (CurrencyTag currencyTag : usedShortTags.values()) {
 				WriterCsvFiles.write(tagDataContainer.getDestinationFilePath(), tagDataContainer.getFeeds().get(i), tagDataContainer.getTimes().get(i), tagDataContainer.getTitles().get(i), tagDataContainer.getDescriptions().get(i), currencyTag.getName());
 			}
