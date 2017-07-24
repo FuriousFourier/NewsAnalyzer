@@ -1,5 +1,6 @@
 package Analyzer.secondProject.download;
 
+import Analyzer.secondProject.tagger.MainTagger;
 import au.com.bytecode.opencsv.CSVWriter;
 import com.sun.syndication.feed.synd.SyndEntry;
 import com.sun.syndication.feed.synd.SyndFeed;
@@ -43,8 +44,14 @@ public class FeedWriter {
             List entries = syndFeed.getEntries();
             for (Object entry1 : entries) {
                 final SyndEntry entry = (SyndEntry) entry1;
-                writer.writeNext((feedTitle + "#" + dateFormat.format(entry.getPublishedDate()) + "#" + entry.getTitle() +
-                        "#" + entry.getDescription().getValue()).split("#"));
+				if (entry.getDescription() != null) {
+					writer.writeNext((feedTitle + "#" + dateFormat.format(entry.getPublishedDate()) + "#" + entry.getTitle() +
+							"#" + entry.getDescription().getValue()).split("#"));
+				}
+				else {
+					writer.writeNext((feedTitle + "#" + dateFormat.format(entry.getPublishedDate()) + "#" + entry.getTitle() +
+							"#" + MainTagger.DEFAULT_CONTENT).split("#"));
+				}
             }
         } catch (IOException e) {
             e.printStackTrace();

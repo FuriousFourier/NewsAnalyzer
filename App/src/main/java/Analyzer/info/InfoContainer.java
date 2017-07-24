@@ -58,7 +58,14 @@ public class InfoContainer {
 			"Newsweek",
 			"RMF24",
 			"TVN24",
-			"Wirtualna Polska"
+			"Wirtualna Polska",
+
+			"Rzeczpospolita",
+			"Gazeta wyborcza",
+			"Wprost",
+			"Newsweek",
+			"TVN24",
+			"TVP"
 	};
 
 	public static final String[] feedsNames = {
@@ -108,7 +115,15 @@ public class InfoContainer {
 			"pl_POL_newsweek_int",
 			"pl_POL_rmf24_int",
 			"pl_POL_tvn24_int",
-			"pl_POL_wp_int"
+			"pl_POL_wp_int",
+
+			"pl_POL_rp_int",
+			"pl_POL_wyborcza_int",
+			"pl_POL_wprost_int",
+			"pl_POL_newsweek_2_int",
+			"pl_POL_tvn24_2_int",
+			"pl_POL_tvp_int",
+
 	};
 
 	public static final String[] newspapersCountry = {
@@ -153,6 +168,13 @@ public class InfoContainer {
 
 	public static final String[] nonGeomediaNewspapersCountry = {
 			"Poland",
+			"Poland",
+			"Poland",
+			"Poland",
+			"Poland",
+			"Poland",
+			"Poland",
+
 			"Poland",
 			"Poland",
 			"Poland",
@@ -203,6 +225,13 @@ public class InfoContainer {
 
 	public static final String[] nonGeomediaNewspapersLanguage = {
 			"Polish",
+			"Polish",
+			"Polish",
+			"Polish",
+			"Polish",
+			"Polish",
+			"Polish",
+
 			"Polish",
 			"Polish",
 			"Polish",

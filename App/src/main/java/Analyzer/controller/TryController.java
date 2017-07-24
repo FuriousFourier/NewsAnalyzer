@@ -97,12 +97,19 @@ public class TryController {
             return viewName;
         }
         System.out.println("No to robim");
-        List<PressRelease> pressReleases = (List<PressRelease>)pressReleaseRepository.findAll();
-		for (PressRelease pressRelease : pressReleases) {
-			if (pressRelease.getDate().before(patternDate)) {
-				printWriter.println(pressRelease.getDate() + "; " + pressRelease.getTitle());
+		Newspaper newspaper = newspaperRepository.findByName("TVN24");
+		if (newspaper == null) {
+			System.out.println("Newspaper not found");
+			return "myError";
+		}
+		Set<Feed> feeds = newspaper.getFeeds();
+		for (Feed feed : feeds) {
+			printWriter.println(feed.getName());
+			Set<PressRelease> pressReleases = feed.getPressReleases();
+			for (PressRelease pressRelease : pressReleases) {
+				printWriter.println("\t" + pressRelease.getDate() + "; " + pressRelease.getTitle());
 				for (Tag tag : pressRelease.getTags()) {
-					printWriter.println("\t" + tag.getName() + "\t");
+					printWriter.println("\t\t" + tag.getName() + "; " + tag.getCategory());
 				}
 			}
 		}

@@ -27,6 +27,7 @@ public class RssReader extends FeedWriter {
                 downloadedFeed.setSyndFeed(syndFeed);
             } catch (FeedException e) {
                 System.err.println("Error while handling " + downloadedFeed.getName() + "; " + downloadedFeed.getRssUrl());
+                e.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();
             }

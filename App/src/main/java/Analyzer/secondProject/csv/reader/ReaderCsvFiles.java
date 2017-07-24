@@ -139,7 +139,7 @@ public class ReaderCsvFiles {
 				try {
 					if (!nextLine[tagPosition].equals(complexTag.getName())) {
 						result.add(complexTag);
-						complexTag = new ComplexTag(nextLine[tagPosition].toLowerCase());
+						complexTag = new ComplexTag(nextLine[tagPosition]);
 					}
 					complexTag.getKeyWords().add(nextLine[keyWordPosition].toLowerCase());
 				} catch (ArrayIndexOutOfBoundsException e) {

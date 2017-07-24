@@ -21,7 +21,7 @@ http://www.rmf24.pl/fakty/swiat/feed (też jakiś feed mamy)
 Feedy do zaktualizowania:
 The Times of India - http://timesofindia.indiatimes.com/rssfeeds/296589292.cms
 New Zealand Herald - http://rss.nzherald.co.nz/rss/xml/nzhrsscid_000000002.xml
-El Universal - http://www.eluniversal.com.mx/rss.xml (sam feed może nie daje dat, ale daty chyba są w linkach artykułów_
+El Universal - http://www.eluniversal.com.mx/rss.xml (sam feed może nie daje dat, ale daty chyba są w linkach artykułów) ← zwraca 403
 
 TODO
 dodać kategorie tagów
