@@ -19,6 +19,8 @@ public class Tag {
 
     private String name;
 
+    private String category;
+
 	@ManyToOne(targetEntity = Country.class, cascade = {CascadeType.ALL})
 	@JoinColumn(name = "countryID", referencedColumnName = "ID")
 	private Country country;
@@ -77,4 +79,12 @@ public class Tag {
     public int hashCode() {
         return this.name.hashCode();
     }
+
+	public String getCategory() {
+		return category;
+	}
+
+	public void setCategory(String category) {
+		this.category = category;
+	}
 }

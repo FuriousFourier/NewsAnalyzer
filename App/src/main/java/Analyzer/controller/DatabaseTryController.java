@@ -163,9 +163,9 @@ public class DatabaseTryController {
 
             System.out.println("Tags");
             //tags
-			addTagsFromFile(TAGS_AND_COUNTRIES_FILE_PATH, 0, 1);
-			addTagsFromFile(ORGANIZATION_TAG_FILE_PATH, 0, 2);
-			addTagsFromFile(currencyTagFiles[1], 0, 2);
+			addTagsFromFile(TAGS_AND_COUNTRIES_FILE_PATH, 0, 1, "Country name");
+			addTagsFromFile(ORGANIZATION_TAG_FILE_PATH, 0, 2, "Organization");
+			addTagsFromFile(currencyTagFiles[1], 0, 2, "Currency");
 
 
             System.out.println("Feeds");
@@ -485,7 +485,7 @@ public class DatabaseTryController {
         }
     }
 
-	private void addTagsFromFile(String filepath, int tagPosition, int countryPosition) throws IOException {
+	private void addTagsFromFile(String filepath, int tagPosition, int countryPosition, String category) throws IOException {
 		List<String> tags = ReaderCsvFiles.readAtPosition(filepath, tagPosition);
 		List<String> countries = ReaderCsvFiles.readAtPosition(filepath, countryPosition);
 		for (int i = 0; i < tags.size(); i++) {
@@ -498,6 +498,7 @@ public class DatabaseTryController {
 				tag = new Tag();
 				tag.setName(tags.get(i));
 				tag.setPressReleases(new HashSet<>());
+				tag.setCategory(category);
 			}
 			tag.setCountry(country);
 			country.getTags().add(tag);
