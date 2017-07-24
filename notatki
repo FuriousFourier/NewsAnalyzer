@@ -24,9 +24,9 @@ New Zealand Herald - http://rss.nzherald.co.nz/rss/xml/nzhrsscid_000000002.xml
 El Universal - http://www.eluniversal.com.mx/rss.xml (sam feed może nie daje dat, ale daty chyba są w linkach artykułów) ← zwraca 403
 
 TODO
-dodać kategorie tagów
-sprawdzić czy feedy aktualne
-Przetestować WP
+dodać kategorie tagów → gut
+sprawdzić czy feedy aktualne → prawie gut
+Przetestować WP → guuuuut
 
 Stemming algorithms: 
 http://snowball.tartarus.org/texts/stemmersoverview.html
