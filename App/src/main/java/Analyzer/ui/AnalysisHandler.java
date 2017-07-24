@@ -1,5 +1,8 @@
 package Analyzer.ui;
 
+import Analyzer.secondProject.tagger.ComplexTag;
+import au.com.bytecode.opencsv.CSVReader;
+import au.com.bytecode.opencsv.CSVWriter;
 import org.gephi.graph.api.*;
 import org.gephi.project.api.ProjectController;
 import org.gephi.project.api.Workspace;
@@ -8,8 +11,7 @@ import org.openide.util.Lookup;
 import Analyzer.model.*;
 import Analyzer.controller.AnalysisController;
 
-import java.io.BufferedReader;
-import java.io.IOException;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -34,20 +36,31 @@ public class AnalysisHandler {
 
         System.out.println("Enter the field you'd like to focus on: \n" +
                 "\t d -> month and year\n" +
-                "\t n -> newspaper title\n");
+                "\t n -> newspaper title\n" +
+                "\t nd -> newspaper and day\n" +
+        "\t nm -> newspaper and month\n" +
+        "\t r -> create new reports based on these existing\n");
         field = br.readLine();
 
         if (field.startsWith("d")) {
             fieldName = "month and year (mm-yyyy)";
+        } else if (field.startsWith("nd") || field.startsWith("nm")){
+            //nothing happens
         } else if (field.startsWith("n")) {
             fieldName = "newspaper title";
+        } else if (field.startsWith("r")){
+            URL url = new URL("http://localhost:8080/broadAnalysis");
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestProperty("User-Agent", USER_AGENT);
+            int responseCode = connection.getResponseCode();
+            return;
         }
         System.out.println("Type:\n" +
                 "\t?? -> to show all possible values \n" +
-                "\t % -> to show all possible values, divided into dates (only for newspapers)\n" +
                 "\t# -> to analyse all values \n" +
                 "\t$ -> to enter a value\n");
         value = br.readLine();
+
         if (value.startsWith("??")) {
             URL url = null;
             if (field.startsWith("d")) {
@@ -64,21 +77,16 @@ public class AnalysisHandler {
             URL url = null;
             if (field.startsWith("d")) {
                 url = new URL("http://localhost:8080/analyseDate");
+            } else if (field.startsWith("nm")) {
+                AnalysisController.setIsIteratingOverDates(true);
+                url = new URL("http://localhost:8080/analyseNewspaper");
+            } else if (field.startsWith("nd")) {
+                AnalysisController.setIsIteratingOverDays(true);
+                AnalysisController.setIsIteratingOverDates(true);
+                url = new URL("http://localhost:8080/analyseNewspaper");
             } else if (field.startsWith("n")) {
                 AnalysisController.setIsIteratingOverDates(false);
                 url = new URL("http://localhost:8080/analyseNewspaper");
-            }
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestProperty("User-Agent", USER_AGENT);
-            int responseCode = connection.getResponseCode();
-        } else if (value.startsWith("%")) {
-            System.out.println("Redirection to controller...");
-            URL url = null;
-            AnalysisController.setIsIteratingOverDates(true);
-            if (field.startsWith("n")) {
-                url = new URL("http://localhost:8080/analyseNewspaper");
-            } else {
-                System.out.println("Sorry, option supported only for newspapers");
             }
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestProperty("User-Agent", USER_AGENT);
@@ -98,7 +106,6 @@ public class AnalysisHandler {
                 System.out.println("field: " + field + " - returning...");
                 return;
             }
-
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestProperty("User-Agent", USER_AGENT);
             int responseCode = connection.getResponseCode();

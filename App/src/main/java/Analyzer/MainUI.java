@@ -90,13 +90,13 @@ public class MainUI {
 
     private static void listCommands(){
         myPrint("List of commands:\n" +
-            "\t d -> download new press notes\n" +
-            "\t t -> tag new notes\n" +
-            "\t u -> update database with new data (notes and tags)\n" +
-            "\t p -> print out all tags\n" +
-            "\t a -> analyse social network\n" +
-            "\t q -> quit application\n" +
-            "\t ? -> show this message\n");
+                "\t d -> download new press notes\n" +
+                "\t t -> tag new notes\n" +
+                "\t u -> update database with new data (notes and tags)\n" +
+                "\t p -> print out all tags\n" +
+                "\t a -> analyse social network\n" +
+                "\t q -> quit application\n" +
+                "\t ? -> show this message\n");
     }
     private static void iterativeMsg(){
         myPrint("Type ? and press ENTER to show all commands");

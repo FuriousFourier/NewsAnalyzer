@@ -1,5 +1,6 @@
 package Analyzer.ui;
 
+import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.CSVWriter;
 import com.itextpdf.text.*;
 import com.itextpdf.text.Font;
@@ -41,6 +42,7 @@ import java.util.List;
 public class GraphHandler {
 	private static Set<PressRelease> notes;
 	private static ReportInput input;
+	private static GraphModel graphModel;
 
 	private static String[] columnsToSee = {
 			GraphDistance.BETWEENNESS,
@@ -121,9 +123,7 @@ public class GraphHandler {
 		}
 	}
 
-
-	public static void graphCreator(String date, String newspaper, Set<PressRelease> newNotes, Document report,
-									CSVWriter graphWriter, CSVWriter nodesWriter, SortedSet<Tag> tags, boolean initColumns) throws DocumentException {
+	public static void initGraphFromPressReleases(Set<PressRelease> newNotes) throws DocumentException {
 		notes = newNotes;
 		if (notes == null || notes.isEmpty()){
 			System.out.println("Empty result");
@@ -132,7 +132,7 @@ public class GraphHandler {
 		ProjectController pc = Lookup.getDefault().lookup(ProjectController.class);
 		pc.newProject();
 		Workspace workspace = pc.getCurrentWorkspace();
-		GraphModel graphModel = Lookup.getDefault().lookup(GraphController.class).getGraphModel(workspace);
+		graphModel = Lookup.getDefault().lookup(GraphController.class).getGraphModel(workspace);
 
 		DirectedGraph directedGraph= graphModel.getDirectedGraph();
 		for (PressRelease pr : notes) {
@@ -168,6 +168,58 @@ public class GraphHandler {
 		}
 		System.out.println();
 
+	}
+
+	private static void addCsv(String date1, String date2, CSVReader reader, DirectedGraph directedGraph) throws IOException {
+		String[] nextLine;
+		while ((nextLine = reader.readNext()) != null){
+			if(nextLine[0].compareTo(date1)< 0 || nextLine[0].compareTo(date2)>0)
+				continue;
+			System.out.print("Line: ");
+			for (String s : nextLine){
+				System.out.print(s + "\t");
+			}
+			Node n1 = directedGraph.getNode(nextLine[2]);
+			if (n1 == null){
+				n1 = graphModel.factory().newNode(nextLine[2]);
+				n1.setLabel(nextLine[2]);
+				directedGraph.addNode(n1);
+			}
+			for (int k = 3; ; k++){
+				if (nextLine[k].equals(""))
+					break;
+				Node n2 = directedGraph.getNode(nextLine[k]);
+				if (n2 == null) {
+					n2 = graphModel.factory().newNode(nextLine[k]);
+					n2.setLabel(nextLine[k]);
+					directedGraph.addNode(n2);
+				}
+				addEdge(graphModel, n1, n2);
+				addEdge(graphModel, n2, n1);
+			}
+
+		}
+	}
+	public static void initGraphFromCsv(String date1, String date2, CSVReader reader1) throws IOException {
+		ProjectController pc = Lookup.getDefault().lookup(ProjectController.class);
+		pc.newProject();
+		Workspace workspace = pc.getCurrentWorkspace();
+		graphModel = Lookup.getDefault().lookup(GraphController.class).getGraphModel(workspace);
+
+		DirectedGraph directedGraph= graphModel.getDirectedGraph();
+		addCsv(date1, date2, reader1, directedGraph);
+
+		if (directedGraph.getNodeCount() == 0){
+			System.out.println("Node's count: 0  - the end of analysis");
+			return;
+		}
+		System.out.println();
+	}
+
+
+	public static void graphCreator(String date, String newspaper, Document report, SortedSet<Tag> tags,
+									CSVWriter graphWriter, CSVWriter nodesWriter, CSVWriter edgesWriter,
+									boolean initColumns) throws DocumentException {
         /*//Iterate over nodes
         for (Node n : directedGraph.getNodes()) {
             Node[] neighbors = directedGraph.getNeighbors(n).toArray();
@@ -178,7 +230,8 @@ public class GraphHandler {
             System.out.println(e.getSource().getId() + " -> " + e.getTarget().getId());
         }*/
 
-		System.out.println("Nodes analysis:");
+		DirectedGraph directedGraph= graphModel.getDirectedGraph();
+        System.out.println("Nodes analysis:");
 		//do not create pdf
 		/*Font subtitleFont = FontFactory.getFont(FontFactory.HELVETICA, 12, BaseColor.BLACK);
 		Font font = FontFactory.getFont(FontFactory.COURIER, 12, BaseColor.BLACK);
@@ -226,8 +279,39 @@ public class GraphHandler {
 		prestigeStatistics.execute(graphModel);
 
 
-		String[] textForNodes = new String[tags.size()+3];
+		String[] textForEdges = new String[tags.size()+3];
 		int j=3;
+		if (initColumns) {
+			textForEdges[0] = "Date";
+			textForEdges[1] = "Newspaper";
+			textForEdges[2] = "Source";
+			for (;j<tags.size()+3; j++){
+				textForEdges[j] = "N" + j;
+			}
+			edgesWriter.writeNext(textForEdges);
+		}
+
+		textForEdges[0] = date;
+		textForEdges[1] = newspaper;
+		for (Tag t : tags) {
+			j = 3;
+			Node n1 = directedGraph.getNode(t.getName());
+			if (n1 != null){
+				textForEdges[2] = n1.getLabel();
+				List<Node> neighbors = (ArrayList<Node>)directedGraph.getNeighbors(n1).toCollection();
+				for (Node n2 : neighbors){
+					textForEdges[j] = n2.getLabel();
+					j++;
+				}
+				for (;j < tags.size()+3; j++)
+					textForEdges[j] = "";
+				edgesWriter.writeNext(textForEdges);
+			}
+		}
+
+
+		String[] textForNodes = new String[tags.size()+3];
+		j=3;
 		if (initColumns) {
 			textForNodes[0] = "Date";
 			textForNodes[1] = "Newspaper";
@@ -238,7 +322,6 @@ public class GraphHandler {
 			}
 			nodesWriter.writeNext(textForNodes);
 		}
-
 		textForNodes[0] = date;
 		textForNodes[1] = newspaper;
 		Table attributes = graphModel.getNodeTable();

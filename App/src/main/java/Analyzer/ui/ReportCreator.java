@@ -35,6 +35,9 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 	private boolean isNodeAnalysis;
 	private String xAxis;
 
+	public List<ReportInput> createReportInputList(List<String> paths){
+		return new ArrayList<ReportInput>();
+	}
 	public void showChart(List<ReportInput> input, Document report){
 		String chartName;
 		if (input.get(0).date.equals(""))
