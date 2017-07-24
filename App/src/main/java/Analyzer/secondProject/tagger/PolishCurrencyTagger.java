@@ -33,8 +33,13 @@ public class PolishCurrencyTagger extends CurrencyTagger {
 			tagLoop:
 			for (ComplexTag complexTag: tagDataContainer.getComplexTags()){
 				CurrencyTag currencyTag = ((CurrencyTag) complexTag);
-				int indexOfWord = words.indexOf(currencyTag.getMainKeyword());
-				if (indexOfWord >= 0){
+				int indexOfWord;
+				for (indexOfWord=0; indexOfWord<words.size(); ++indexOfWord){
+					if (words.get(indexOfWord).contains(currencyTag.getMainKeyword())) {
+						break;
+					}
+				}
+				if (indexOfWord < words.size()){
 					int left = Math.max(indexOfWord - 1, 0);
 					int right = Math.min(indexOfWord + 1, words.size() - 1);
 					int j;
@@ -42,10 +47,13 @@ public class PolishCurrencyTagger extends CurrencyTagger {
 						usedShortTags.put(currencyTag.getMainKeyword(), currencyTag);
 						continue tagLoop;
 					}
+
 					for (j=left; j<=right; ++j) {
-						if (currencyTag.getKeyWords().contains(words.get(j))) {
-							usedLongTags.put(currencyTag.getMainKeyword(), currencyTag);
-							continue tagLoop;
+						for (String keyWord: currencyTag.getKeyWords()){
+							if (words.get(j).contains(keyWord)){
+								usedLongTags.put(currencyTag.getMainKeyword(), currencyTag);
+								continue tagLoop;
+							}
 						}
 					}
 				}
