@@ -110,7 +110,7 @@ public class GraphHandler {
 		}
 	}
 
-	public static void addEdge(GraphModel graphModel, Node n1, Node n2){
+	private static void addEdge(GraphModel graphModel, Node n1, Node n2){
 		DirectedGraph directedGraph = graphModel.getDirectedGraph();
 		Edge e1 = directedGraph.getEdge(n1, n2);
 		if(e1 == null){
@@ -149,25 +149,17 @@ public class GraphHandler {
 						n1.setLabel(tag1.getName());
 						directedGraph.addNode(n1);
 					}
-
 					Node n2 = directedGraph.getNode(tag2.getName());
 					if (n2 == null) {
 						n2 = graphModel.factory().newNode(tag2.getName());
 						n2.setLabel(tag2.getName());
 						directedGraph.addNode(n2);
 					}
-
 					addEdge(graphModel, n1, n2);
 					addEdge(graphModel, n2, n1);
 				}
 			}
 		}
-		if (directedGraph.getNodeCount() == 0){
-			System.out.println("Node's count: 0  - the end of analysis");
-			return;
-		}
-		System.out.println();
-
 	}
 
 	private static void addCsv(String date1, String date2, CSVReader reader, DirectedGraph directedGraph) throws IOException {
@@ -179,6 +171,9 @@ public class GraphHandler {
 			for (String s : nextLine){
 				System.out.print(s + "\t");
 			}
+			System.out.println();
+			if (nextLine[0].startsWith("Date"))
+				continue;
 			Node n1 = directedGraph.getNode(nextLine[2]);
 			if (n1 == null){
 				n1 = graphModel.factory().newNode(nextLine[2]);
@@ -197,7 +192,6 @@ public class GraphHandler {
 				addEdge(graphModel, n1, n2);
 				addEdge(graphModel, n2, n1);
 			}
-
 		}
 	}
 	public static void initGraphFromCsv(String date1, String date2, CSVReader reader1) throws IOException {
@@ -209,11 +203,6 @@ public class GraphHandler {
 		DirectedGraph directedGraph= graphModel.getDirectedGraph();
 		addCsv(date1, date2, reader1, directedGraph);
 
-		if (directedGraph.getNodeCount() == 0){
-			System.out.println("Node's count: 0  - the end of analysis");
-			return;
-		}
-		System.out.println();
 	}
 
 
@@ -231,6 +220,10 @@ public class GraphHandler {
         }*/
 
 		DirectedGraph directedGraph= graphModel.getDirectedGraph();
+		if (directedGraph.getNodeCount() == 0){
+			System.out.println("Node's count: 0  - the end of analysis");
+			return;
+		}
         System.out.println("Nodes analysis:");
 		//do not create pdf
 		/*Font subtitleFont = FontFactory.getFont(FontFactory.HELVETICA, 12, BaseColor.BLACK);

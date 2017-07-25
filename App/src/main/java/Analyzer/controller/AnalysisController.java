@@ -14,6 +14,7 @@ import Analyzer.ui.ReportCreator;
 import Analyzer.ui.ReportInput;
 
 import java.io.*;
+import java.text.ParseException;
 import java.util.*;
 import java.util.List;
 
@@ -220,9 +221,9 @@ public class AnalysisController {
 		graphFile.createNewFile();
 		nodesFile.createNewFile();
 		edgesFile.createNewFile();
-		CSVWriter graphWriter = new CSVWriter(new FileWriter(graphFileName, true), '\t', CSVWriter.DEFAULT_QUOTE_CHARACTER);
-		CSVWriter nodesWriter = new CSVWriter(new FileWriter(nodesFileName, true), '\t', CSVWriter.DEFAULT_QUOTE_CHARACTER);
-		CSVWriter edgesWriter = new CSVWriter(new FileWriter(edgesFileName, true), '\t', CSVWriter.DEFAULT_QUOTE_CHARACTER);
+		CSVWriter graphWriter = new CSVWriter(new FileWriter(graphFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
+		CSVWriter nodesWriter = new CSVWriter(new FileWriter(nodesFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
+		CSVWriter edgesWriter = new CSVWriter(new FileWriter(edgesFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
 
 		boolean initColumns = true;
 
@@ -302,9 +303,9 @@ public class AnalysisController {
 			globalGraphFile.createNewFile();
 			globalNodesFile.createNewFile();
 			globalEdgesFile.createNewFile();
-			graphGlobalWriter = new CSVWriter(new FileWriter(graphGlobalFileName, true), '\t', CSVWriter.DEFAULT_QUOTE_CHARACTER);
-			nodesGlobalWriter = new CSVWriter(new FileWriter(nodesGlobalFileName, true), '\t', CSVWriter.DEFAULT_QUOTE_CHARACTER);
-			edgesGlobalWriter = new CSVWriter(new FileWriter(edgesGlobalFileName, true), '\t', CSVWriter.DEFAULT_QUOTE_CHARACTER);
+			graphGlobalWriter = new CSVWriter(new FileWriter(graphGlobalFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
+			nodesGlobalWriter = new CSVWriter(new FileWriter(nodesGlobalFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
+			edgesGlobalWriter = new CSVWriter(new FileWriter(edgesGlobalFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
 
 		}
 		String[] newspaperList = { "Interia", "Fakt", "Newsweek", "RMF24", "Today", "China Daily"};
@@ -362,9 +363,9 @@ public class AnalysisController {
 					graphFile.createNewFile();
 					nodesFile.createNewFile();
 					edgesFile.createNewFile();
-					CSVWriter graphWriter = new CSVWriter(new FileWriter(graphFileName, true), '\t', CSVWriter.DEFAULT_QUOTE_CHARACTER);
-					CSVWriter nodesWriter = new CSVWriter(new FileWriter(nodesFileName, true), '\t', CSVWriter.DEFAULT_QUOTE_CHARACTER);
-					CSVWriter edgesWriter = new CSVWriter(new FileWriter(edgesFileName, true), '\t', CSVWriter.DEFAULT_QUOTE_CHARACTER);
+					CSVWriter graphWriter = new CSVWriter(new FileWriter(graphFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
+					CSVWriter nodesWriter = new CSVWriter(new FileWriter(nodesFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
+					CSVWriter edgesWriter = new CSVWriter(new FileWriter(edgesFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
 
 					for (String d : notesKeySet){
 						System.out.println("------> " + d);
@@ -410,7 +411,7 @@ public class AnalysisController {
 	}
 
 	@GetMapping("/broadAnalysis")
-	public String analyse() throws IOException, DocumentException {
+	public String analyse() throws IOException, DocumentException, ParseException {
 		fetchedTags = new TreeSet<>((List<Tag>)tagRepository.findAll());
 		String title1, title2, date1, date2;
 
@@ -424,9 +425,9 @@ public class AnalysisController {
 		System.out.print("Date 2: ");
 		date2 = br.readLine();
 
-		//read appropriate files
-		String filePath1 = "src/main/resources/csv/"+title1+"(days)_edges.csv";
-		String filePath2 = "src/main/resources/csv/"+title2+"(days)_edges.csv";
+		//utworzenie plikow dzien po dniu
+		String filePath1 = "src/main/resources/csv/"+title1+"(days).csv";
+		String filePath2 = "src/main/resources/csv/"+title2+"(days).csv";
 		FileReader fileReader1, fileReader2;
 		try {
 			fileReader1 = new FileReader(filePath1);
@@ -437,10 +438,34 @@ public class AnalysisController {
 			return "foo";
 		}
 
-		String graphFileName = "src/main/resources/csv/"+title1+"("+date1+":"+date2+").csv";
-		String nodesFileName = "src/main/resources/csv/"+title1+"("+date1+":"+date2+")_nodes.csv";
-		String edgesFileName = "src/main/resources/csv/"+title1+"("+date1+":"+date2+")_edges.csv";
-		File graphFile = new File(graphFileName);
+		String daysFileName = "src/main/resources/csv/"+title1+"_"+title2+"("+date1+":"+date2+")_days.csv";
+		File graphFile = new File(daysFileName);
+		graphFile.delete();
+		graphFile.createNewFile();
+		CSVWriter graphWriter = new CSVWriter(new FileWriter(daysFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
+
+		CSVReader reader1 = new CSVReader(fileReader1, '\t');
+		CSVReader reader2 = new CSVReader(fileReader2, '\t');
+		reportCreator.extractRelevantInputs(reader1, graphWriter, date1, date2);
+		reportCreator.extractRelevantInputs(reader2, graphWriter, date1, date2);
+		//utworzenie plikow zbiorczych
+
+		//read appropriate files
+		filePath1 = "src/main/resources/csv/"+title1+"(days)_edges.csv";
+		filePath2 = "src/main/resources/csv/"+title2+"(days)_edges.csv";
+		try {
+			fileReader1 = new FileReader(filePath1);
+			fileReader2 = new FileReader(filePath2);
+		} catch(FileNotFoundException e){
+			System.out.println("Necessary data hasn't been created yet. To do it, choose analysis by newspaper " +
+					"and date. After it is finished, please try again.");
+			return "foo";
+		}
+
+		String graphFileName = "src/main/resources/csv/"+title1+"_"+title2+"("+date1+":"+date2+").csv";
+		String nodesFileName = "src/main/resources/csv/"+title1+"_"+title2+"("+date1+":"+date2+")_nodes.csv";
+		String edgesFileName = "src/main/resources/csv/"+title1+"_"+title2+"("+date1+":"+date2+")_edges.csv";
+		graphFile = new File(graphFileName);
 		File nodesFile = new File(nodesFileName);
 		File edgesFile = new File(edgesFileName);
 		graphFile.delete();
@@ -449,27 +474,27 @@ public class AnalysisController {
 		graphFile.createNewFile();
 		nodesFile.createNewFile();
 		edgesFile.createNewFile();
-		CSVWriter graphWriter = new CSVWriter(new FileWriter(graphFileName, true), '\t', CSVWriter.DEFAULT_QUOTE_CHARACTER);
-		CSVWriter nodesWriter = new CSVWriter(new FileWriter(nodesFileName, true), '\t', CSVWriter.DEFAULT_QUOTE_CHARACTER);
-		CSVWriter edgesWriter = new CSVWriter(new FileWriter(edgesFileName, true), '\t', CSVWriter.DEFAULT_QUOTE_CHARACTER);
+		graphWriter = new CSVWriter(new FileWriter(graphFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
+		CSVWriter nodesWriter = new CSVWriter(new FileWriter(nodesFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
+		CSVWriter edgesWriter = new CSVWriter(new FileWriter(edgesFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
 
-		CSVReader reader1 = new CSVReader(fileReader1);
-		CSVReader reader2 = new CSVReader(fileReader2);
-
-		List<ReportInput> inputs = new ArrayList<>();
-		GraphHandler.resetInput();
-		GraphHandler.initGraphFromCsv(date1, date2, reader1);
-		GraphHandler.graphCreator(date1+":"+date2, title1, null, fetchedTags, graphWriter, nodesWriter, edgesWriter, true);
-		inputs.add(GraphHandler.getInput());
+		reader1 = new CSVReader(fileReader1, '\t');
+		reader2 = new CSVReader(fileReader2, '\t');
 
 		GraphHandler.resetInput();
 		GraphHandler.initGraphFromCsv(date1, date2, reader1);
 		GraphHandler.graphCreator(date1+":"+date2, title1, null, fetchedTags, graphWriter, nodesWriter, edgesWriter, true);
-		inputs.add(GraphHandler.getInput());
+
+		GraphHandler.resetInput();
+		GraphHandler.initGraphFromCsv(date1, date2, reader2);
+		GraphHandler.graphCreator(date1+":"+date2, title2, null, fetchedTags, graphWriter, nodesWriter, edgesWriter, true);
 
 		System.out.println("Shall I create pdf with charts? (t/n)");
 		if (br.readLine().startsWith("t")){
-
+			Document report= reportCreator.createReportBase(title1+"("+date1+":"+date2+")");
+			reportCreator.showChart(daysFileName, report, title1+"_"+title2+"("+date1+":"+date2+") - day by day");
+			reportCreator.showChart(graphFileName, report, title1+"_"+title2+"("+date1+":"+date2+")");
+			report.close();
 		}
 		return "foo";
 	}

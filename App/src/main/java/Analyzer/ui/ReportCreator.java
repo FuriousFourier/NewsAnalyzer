@@ -1,7 +1,11 @@
 package Analyzer.ui;
 
+import au.com.bytecode.opencsv.CSVReader;
+import au.com.bytecode.opencsv.CSVWriter;
 import com.itextpdf.text.*;
+import com.itextpdf.text.Font;
 import com.itextpdf.text.Image;
+import com.itextpdf.text.pdf.PdfWriter;
 import org.gephi.graph.api.Node;
 import org.knowm.xchart.BitmapEncoder;
 import org.knowm.xchart.CategoryChart;
@@ -13,43 +17,123 @@ import org.wouterspekkink.plugins.metric.lineage.Lineage;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.io.IOException;
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.text.NumberFormat;
+import java.text.ParseException;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+
+import static java.util.Collections.sort;
 
 /**
  * Created by karolina on 18.07.17.
  */
 public class ReportCreator implements ExampleChart<CategoryChart> {
 
-	private List<ReportInput> reportInput;
+	//private List<ReportInput> reportInput;
 	private String currentParam;
 	private List<String> paramValues;
-	private List<Number> values;
+	private List<String> series;
+	private Map<String, List<Number>> values;
 	private boolean isNodeAnalysis;
 	private String xAxis;
 
+	public void extractRelevantInputs(CSVReader reader,  CSVWriter writer, String date1, String date2) throws IOException {
+		String[] nextLine;
+		while ((nextLine = reader.readNext()) != null) {
+			if (nextLine[0].startsWith("Date")) {
+				writer.writeNext(nextLine);
+				continue;
+			}
+
+			if (nextLine[0].compareTo(date1) < 0 || nextLine[0].compareTo(date2) > 0)
+				continue;
+			/*System.out.print("Line: ");
+			for (String s : nextLine){
+				System.out.print(s + "\t");
+			}
+			System.out.println();*/
+			writer.writeNext(nextLine);
+		}
+	}
 	public List<ReportInput> createReportInputList(List<String> paths){
+		//wywalic ReportInput?? moze jest niepotrzebne. tylko parsowac od razu?
 		return new ArrayList<ReportInput>();
 	}
-	public void showChart(List<ReportInput> input, Document report){
+	private String getChartName(List<ReportInput> input){
 		String chartName;
 		if (input.get(0).date.equals(""))
 			chartName = "Newspapers";
 		else if (input.get(0).newspaper.equals(""))
 			chartName = "Dates";
-		else
+		else {
 			chartName = (input.get(0).newspaper); //TODO: informacja, jaka to jest data (dzienna, miesieczna, itd.)
+			if(input.get(0).date.length() == 7)
+				chartName += "(Months)";
+			else
+				chartName += "(Days)";
+		}
+		return chartName;
+	}
+	public Document createReportBase(String chartName) throws FileNotFoundException, DocumentException {
+		Document report = new Document();
+		PdfWriter.getInstance(report, new FileOutputStream("src/main/resources/reports/"+chartName+".pdf"));
+		report.open();
+		Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD,14,BaseColor.BLACK);
+		Paragraph p = new Paragraph(chartName, titleFont);
+		report.add(p);
+		return report;
+	}
+
+	public class DataContainer implements Comparable{
+		private String date;
+		private Number value;
+		private DataContainer(){
+		}
+		private DataContainer(String date, Number value){
+			this.date = date;
+			this.value = value;
+		}
+
+		@Override
+		public int compareTo(Object o) {
+			return date.compareTo( ((DataContainer)o).date );
+		}
+	}
+
+	//ponizsze dziala tylko dla parametrow grafu z dwiema (ew. jedna) seriami danych
+	public void showChart(String dataPath, Document report, String chartName) throws IOException, ParseException {
+		//String chartName = getChartName(input);
+		File inputFile = new File(dataPath);
+		inputFile.delete();
+		inputFile.createNewFile();
+		CSVReader reader = new CSVReader(new FileReader(inputFile), '\t');
+		String[] nextLine;
+		HashMap<String, HashMap<String, List<DataContainer>>> data = new HashMap<>();
+		String[] columnNames = null;
+		while ((nextLine = reader.readNext()) != null) {
+			if (columnNames == null){
+				columnNames = nextLine;
+				for (int j = 2; j < columnNames.length; j++)
+					data.put(columnNames[j], new HashMap<>());
+				continue;
+			}
+			for (int j = 2; j < columnNames.length; j++){
+				data.get(columnNames[j]).putIfAbsent(nextLine[1], new ArrayList<>());
+				DataContainer container = new DataContainer(nextLine[0], NumberFormat.getInstance().parse(nextLine[j]));
+				data.get(columnNames[j]).get(nextLine[1]).add(container);
+			}
+
+		}
+
 		com.itextpdf.text.Rectangle rect = report.getPageSize();
 		float margin = report.rightMargin() + report.leftMargin();
-		reportInput = input;
-		if (input == null || input.isEmpty()){
+		if (data.isEmpty()){
 			System.out.println("Input is empty - returning...");
 			return;
 		}
@@ -67,8 +151,8 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
                     System.out.println("No chart to display for " + input.get(0).paramValue + ", param: " + p);
                     continue;
                 }
-                try {
-                    BitmapEncoder.saveBitmap(chart, "src/main/resources/charts/"+fileName+"_"+p, BitmapEncoder.BitmapFormat.PNG);
+                try { //zmieniona sciezka ponizej!!!
+                    BitmapEncoder.saveBitmap(chart, "target/classes/charts/"+fileName+"_"+p, BitmapEncoder.BitmapFormat.PNG);
                     URI uri;
                     for (int i = 0; i < 100; i++) {
                         if (ClassLoader.getSystemResource(fileName + "_" + p + ".png") != null) {
@@ -88,19 +172,33 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 */
 		//graph params
 		isNodeAnalysis = false;
-		for (String p: input.get(0).getGraphParams()) {
-			paramValues = new ArrayList<>();
-			values = new ArrayList<>();
+		for (String p: data.keySet()) {
 			currentParam = p;
+			paramValues = new ArrayList<>();
+			values = new HashMap<>();
+			series = new ArrayList<>();
+			Map<String, List<DataContainer>> newspaperData = data.get(p);
+
+			for(String n: newspaperData.keySet()){
+				int i = 0; //liczba gazet
+				List<DataContainer> dateData = newspaperData.get(n);
+				sort(dateData);
+				for (DataContainer d : dateData){
+					values.putIfAbsent(d.date, new ArrayList<>(2)); //TODO: umozliwic wyswietlanie dla roznej liczby serii danych
+					values.get(d.date).add(i, d.value);
+				}
+				i++;
+			}
+
 			CategoryChart chart = this.getChart();
 			if (chart == null) {
-				System.out.println("No chart to display for " + input.get(0).newspaper + " " + input.get(0).date + ", param: " + p);
+				System.out.println("No chart to display for " + series.get(0) + " etc. " + paramValues.get(0) + " etc., param: " + p);
 				continue;
 			}
 			try {
-				BitmapEncoder.saveBitmap(chart, "src/main/resources/charts/"+chartName+"_"+p, BitmapEncoder.BitmapFormat.PNG);
+				BitmapEncoder.saveBitmap(chart, "target/classes/charts/"+chartName+"_"+p, BitmapEncoder.BitmapFormat.PNG);
 				URI uri;
-				System.out.println(ClassLoader.getSystemResource("charts/"+chartName + "_" + p + ".png"));
+				System.out.println(ClassLoader.getSystemResource(""));
 				//przerobic na pozyskiwanie charts bezposrednio z resources, a nie dopiero z target!
 					if (ClassLoader.getSystemResource("charts/"+chartName + "_" + p + ".png") != null) {
 						uri = ClassLoader.getSystemResource("charts/"+chartName+"_"+p+".png").toURI();
@@ -121,7 +219,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 		//iteracja po parametrach grafu/wezlow/itp.
 		//iteracja po podgrafach
 		System.out.println("================================getChart===============");
-		for (ReportInput r: reportInput){
+		/*for (ReportInput r: reportInput){
 			if (r == null)
 				continue;
 			if (r.date.equals(""))
@@ -142,27 +240,31 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 			else
 				number = (Number) r.getGraphValue(currentParam);
 			values.add(number);
-		}
+		}*/
 
 		System.out.println("X Labels:");
 		for (String s: paramValues)
 			System.out.print(s + ", ");
 		System.out.println();
-		System.out.println("Values:");
+		/*System.out.println("Values:");
 		for (Number d : values)
-			System.out.println(d + " ");
-		System.out.println();
+			System.out.print(d + " ");
+		System.out.println();*/
 
 		// Create Chart
 		CategoryChart chart = new CategoryChartBuilder().width(800).height(600).title(currentParam).xAxisTitle(xAxis).yAxisTitle("Value").build();
 
 		// Customize Chart
-		chart.getStyler().setLegendVisible(false);
+		chart.getStyler().setLegendPosition(Styler.LegendPosition.InsideSE);
 		chart.getStyler().setHasAnnotations(true);
 		chart.getStyler().setXAxisLabelRotation(90);
 
 		// Series
-		chart.addSeries("test 1", paramValues, values);
+
+		for (int i = 0; i < series.size(); i++){
+			chart.addSeries(series.get(i), paramValues, new ArrayList<Number>(values.get(i)));
+		}
+
 		return chart;
 	}
 
