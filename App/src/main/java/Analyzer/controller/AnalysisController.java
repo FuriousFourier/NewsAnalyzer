@@ -438,7 +438,7 @@ public class AnalysisController {
 			return "foo";
 		}
 
-		String daysFileName = "src/main/resources/csv/"+title1+"_"+title2+"("+date1+":"+date2+")_days.csv";
+		String daysFileName = "src/main/resources/csv/"+title1+"_"+title2+"("+date1+"_"+date2+")_days.csv";
 		File graphFile = new File(daysFileName);
 		graphFile.delete();
 		graphFile.createNewFile();
@@ -446,8 +446,9 @@ public class AnalysisController {
 
 		CSVReader reader1 = new CSVReader(fileReader1, '\t');
 		CSVReader reader2 = new CSVReader(fileReader2, '\t');
-		reportCreator.extractRelevantInputs(reader1, graphWriter, date1, date2);
-		reportCreator.extractRelevantInputs(reader2, graphWriter, date1, date2);
+		reportCreator.extractRelevantInputs(reader1, graphWriter, date1, date2, true);
+		reportCreator.extractRelevantInputs(reader2, graphWriter, date1, date2, false);
+		graphWriter.close();
 		//utworzenie plikow zbiorczych
 
 		//read appropriate files
@@ -462,9 +463,9 @@ public class AnalysisController {
 			return "foo";
 		}
 
-		String graphFileName = "src/main/resources/csv/"+title1+"_"+title2+"("+date1+":"+date2+").csv";
-		String nodesFileName = "src/main/resources/csv/"+title1+"_"+title2+"("+date1+":"+date2+")_nodes.csv";
-		String edgesFileName = "src/main/resources/csv/"+title1+"_"+title2+"("+date1+":"+date2+")_edges.csv";
+		String graphFileName = "src/main/resources/csv/"+title1+"_"+title2+"("+date1+"_"+date2+").csv";
+		String nodesFileName = "src/main/resources/csv/"+title1+"_"+title2+"("+date1+"_"+date2+")_nodes.csv";
+		String edgesFileName = "src/main/resources/csv/"+title1+"_"+title2+"("+date1+"_"+date2+")_edges.csv";
 		graphFile = new File(graphFileName);
 		File nodesFile = new File(nodesFileName);
 		File edgesFile = new File(edgesFileName);
@@ -483,17 +484,21 @@ public class AnalysisController {
 
 		GraphHandler.resetInput();
 		GraphHandler.initGraphFromCsv(date1, date2, reader1);
-		GraphHandler.graphCreator(date1+":"+date2, title1, null, fetchedTags, graphWriter, nodesWriter, edgesWriter, true);
+		GraphHandler.graphCreator(date1+"_"+date2, title1, null, fetchedTags, graphWriter, nodesWriter, edgesWriter, true);
 
 		GraphHandler.resetInput();
 		GraphHandler.initGraphFromCsv(date1, date2, reader2);
-		GraphHandler.graphCreator(date1+":"+date2, title2, null, fetchedTags, graphWriter, nodesWriter, edgesWriter, true);
+		GraphHandler.graphCreator(date1+"_"+date2, title2, null, fetchedTags, graphWriter, nodesWriter, edgesWriter, false);
+
+		graphWriter.close();
+		nodesWriter.close();
+		edgesWriter.close();
 
 		System.out.println("Shall I create pdf with charts? (t/n)");
 		if (br.readLine().startsWith("t")){
-			Document report= reportCreator.createReportBase(title1+"("+date1+":"+date2+")");
-			reportCreator.showChart(daysFileName, report, title1+"_"+title2+"("+date1+":"+date2+") - day by day");
-			reportCreator.showChart(graphFileName, report, title1+"_"+title2+"("+date1+":"+date2+")");
+			Document report= reportCreator.createReportBase(title1+"_"+title2+"("+date1+"_"+date2+")");
+			reportCreator.showChart(daysFileName, report, title1+"_"+title2+"("+date1+"_"+date2+") - day by day");
+			//reportCreator.showChart(graphFileName, report, title1+"_"+title2+"("+date1+"_"+date2+")");
 			report.close();
 		}
 		return "foo";

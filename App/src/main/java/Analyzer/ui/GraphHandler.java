@@ -171,7 +171,6 @@ public class GraphHandler {
 			for (String s : nextLine){
 				System.out.print(s + "\t");
 			}
-			System.out.println();
 			if (nextLine[0].startsWith("Date"))
 				continue;
 			Node n1 = directedGraph.getNode(nextLine[2]);

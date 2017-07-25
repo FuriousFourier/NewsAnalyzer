@@ -34,8 +34,6 @@ import static java.util.Collections.sort;
  * Created by karolina on 18.07.17.
  */
 public class ReportCreator implements ExampleChart<CategoryChart> {
-
-	//private List<ReportInput> reportInput;
 	private String currentParam;
 	private List<String> paramValues;
 	private List<String> series;
@@ -43,43 +41,26 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 	private boolean isNodeAnalysis;
 	private String xAxis;
 
-	public void extractRelevantInputs(CSVReader reader,  CSVWriter writer, String date1, String date2) throws IOException {
+	public void extractRelevantInputs(CSVReader reader,  CSVWriter writer, String date1, String date2, boolean initColumns) throws IOException {
+		System.out.println("ExtractRelevantInputs");
 		String[] nextLine;
 		while ((nextLine = reader.readNext()) != null) {
-			if (nextLine[0].startsWith("Date")) {
+			if (nextLine[0].startsWith("Date") && initColumns) {
 				writer.writeNext(nextLine);
+				System.out.println(nextLine[0] + " - write...");
 				continue;
 			}
 
-			if (nextLine[0].compareTo(date1) < 0 || nextLine[0].compareTo(date2) > 0)
+			if (nextLine[0].compareTo(date1) < 0 || nextLine[0].compareTo(date2) > 0){
+				System.out.println(nextLine[0] + " - skipping...");
 				continue;
-			/*System.out.print("Line: ");
-			for (String s : nextLine){
-				System.out.print(s + "\t");
 			}
-			System.out.println();*/
+
+			System.out.println(nextLine[0] + nextLine[1]);
 			writer.writeNext(nextLine);
 		}
 	}
-	public List<ReportInput> createReportInputList(List<String> paths){
-		//wywalic ReportInput?? moze jest niepotrzebne. tylko parsowac od razu?
-		return new ArrayList<ReportInput>();
-	}
-	private String getChartName(List<ReportInput> input){
-		String chartName;
-		if (input.get(0).date.equals(""))
-			chartName = "Newspapers";
-		else if (input.get(0).newspaper.equals(""))
-			chartName = "Dates";
-		else {
-			chartName = (input.get(0).newspaper); //TODO: informacja, jaka to jest data (dzienna, miesieczna, itd.)
-			if(input.get(0).date.length() == 7)
-				chartName += "(Months)";
-			else
-				chartName += "(Days)";
-		}
-		return chartName;
-	}
+
 	public Document createReportBase(String chartName) throws FileNotFoundException, DocumentException {
 		Document report = new Document();
 		PdfWriter.getInstance(report, new FileOutputStream("src/main/resources/reports/"+chartName+".pdf"));
@@ -108,10 +89,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 
 	//ponizsze dziala tylko dla parametrow grafu z dwiema (ew. jedna) seriami danych
 	public void showChart(String dataPath, Document report, String chartName) throws IOException, ParseException {
-		//String chartName = getChartName(input);
 		File inputFile = new File(dataPath);
-		inputFile.delete();
-		inputFile.createNewFile();
 		CSVReader reader = new CSVReader(new FileReader(inputFile), '\t');
 		String[] nextLine;
 		HashMap<String, HashMap<String, List<DataContainer>>> data = new HashMap<>();
@@ -172,24 +150,32 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 */
 		//graph params
 		isNodeAnalysis = false;
-		for (String p: data.keySet()) {
+		for (String p: columnNames) {
+			if (p.equals("Date") || p.equals("Newspaper"))
+				continue;
 			currentParam = p;
-			paramValues = new ArrayList<>();
+			Set <String> paramValuesSet = new HashSet<>();
 			values = new HashMap<>();
 			series = new ArrayList<>();
 			Map<String, List<DataContainer>> newspaperData = data.get(p);
-
+			System.out.println("Param: " + p);
+			int i = 0; //liczba gazet
 			for(String n: newspaperData.keySet()){
-				int i = 0; //liczba gazet
+				series.add(n);
+				System.out.println("Newspaper: " + n);
 				List<DataContainer> dateData = newspaperData.get(n);
 				sort(dateData);
 				for (DataContainer d : dateData){
+					paramValuesSet.add(d.date);
 					values.putIfAbsent(d.date, new ArrayList<>(2)); //TODO: umozliwic wyswietlanie dla roznej liczby serii danych
 					values.get(d.date).add(i, d.value);
+					System.out.println(d.value + " added to series  " + i + " for " + d.date);
 				}
 				i++;
 			}
 
+			paramValues = new ArrayList<>(paramValuesSet);
+			sort(paramValues);
 			CategoryChart chart = this.getChart();
 			if (chart == null) {
 				System.out.println("No chart to display for " + series.get(0) + " etc. " + paramValues.get(0) + " etc., param: " + p);
@@ -219,37 +205,6 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 		//iteracja po parametrach grafu/wezlow/itp.
 		//iteracja po podgrafach
 		System.out.println("================================getChart===============");
-		/*for (ReportInput r: reportInput){
-			if (r == null)
-				continue;
-			if (r.date.equals(""))
-				paramValues.add(r.newspaper);
-			else if (r.newspaper.equals(""))
-				paramValues.add(r.date);
-			else
-				paramValues.add(r.newspaper+"("+r.date+")");
-			Node n;
-			Number number;
-			if (isNodeAnalysis) {
-				n = (Node) r.getNodeMaxValue(currentParam);
-				if (n == null)
-					number = 0;
-				else
-					number = (Number) n.getAttribute(currentParam);
-			}
-			else
-				number = (Number) r.getGraphValue(currentParam);
-			values.add(number);
-		}*/
-
-		System.out.println("X Labels:");
-		for (String s: paramValues)
-			System.out.print(s + ", ");
-		System.out.println();
-		/*System.out.println("Values:");
-		for (Number d : values)
-			System.out.print(d + " ");
-		System.out.println();*/
 
 		// Create Chart
 		CategoryChart chart = new CategoryChartBuilder().width(800).height(600).title(currentParam).xAxisTitle(xAxis).yAxisTitle("Value").build();
@@ -257,12 +212,19 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 		// Customize Chart
 		chart.getStyler().setLegendPosition(Styler.LegendPosition.InsideSE);
 		chart.getStyler().setHasAnnotations(true);
-		chart.getStyler().setXAxisLabelRotation(90);
+		chart.getStyler().setXAxisLabelRotation(80);
 
 		// Series
 
 		for (int i = 0; i < series.size(); i++){
-			chart.addSeries(series.get(i), paramValues, new ArrayList<Number>(values.get(i)));
+			List<Number> currentValues = new ArrayList<>();
+			for (String date: paramValues){
+				if (i >= values.get(date).size() || values.get(date).get(i) == null)
+					currentValues.add(0);
+				else
+					currentValues.add(values.get(date).get(i));
+			}
+			chart.addSeries(series.get(i), paramValues, currentValues);
 		}
 
 		return chart;
