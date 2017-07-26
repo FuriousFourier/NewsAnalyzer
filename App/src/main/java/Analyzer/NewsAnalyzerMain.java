@@ -1,18 +1,15 @@
 package Analyzer;
 
-import Analyzer.secondProject.rss.Main;
+import Analyzer.util.DbUtil;
+import Analyzer.util.FeedDownloaderWorker;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 import Analyzer.secondProject.tagger.MainTagger;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.Random;
 import java.util.Scanner;
-
-import static org.springframework.http.HttpHeaders.USER_AGENT;
 
 /**
  * Created by pawel on 07.07.17.
@@ -21,77 +18,95 @@ import static org.springframework.http.HttpHeaders.USER_AGENT;
 
 @SpringBootApplication
 public class NewsAnalyzerMain {
-
-    public static Long securityNumber;
     public static final long DENOMINATOR = 1000000000;
     private static ConfigurableApplicationContext configurableApplicationContext;
+    private static Long securityNumber;
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        Random random = new Random(System.currentTimeMillis());
-        securityNumber = random.nextLong();
-        configurableApplicationContext = SpringApplication.run(NewsAnalyzerMain.class, args);
-        MainTagger.initializeMainTagger();
+        String line;
+		Random random = new Random(System.currentTimeMillis());
+		securityNumber = random.nextLong();
+		configurableApplicationContext = SpringApplication.run(NewsAnalyzerMain.class, args);
+		try {
+			MainTagger.initializeMainTagger();
+		} catch (IOException e) {
+			System.err.println("Error occurred");
+			e.printStackTrace();
+			System.exit(1);
+		}
+
+		DbUtil dbUtil = new DbUtil();
+
+		System.out.println("Checking if DB is empty...");
+
+		try {
+			if (dbUtil.checkIfDbEmpty()){
+				while (true) {
+					System.out.println("DB seems to be empty. Would you like to initialize it?");
+					String answer = scanner.nextLine();
+					if (answer.toLowerCase().equals("y") || answer.toLowerCase().equals("yes")) {
+						try {
+							if (!dbUtil.addSomething()) {
+								System.out.println("Something went wrong.");
+								System.exit(2);
+							}
+							break;
+						} catch (IOException e) {
+							System.err.println("Error occurred. Look:");
+							e.printStackTrace();
+							System.exit(1);
+						}
+					} else if (answer.toLowerCase().equals("n") || answer.toLowerCase().equals("no")) {
+						break;
+					} else {
+						System.out.println("Unknown answer. Do you understand my question?");
+					}
+				}
+			}
+		} catch (IOException e) {
+			System.err.println("Service seems to be dead. Additional information:");
+			e.printStackTrace();
+			System.exit(1);
+		}
+
+		FeedDownloaderWorker feedDownloaderWorker = new FeedDownloaderWorker(dbUtil);
+		new Thread(feedDownloaderWorker).start();
 
         while (true) {
-            System.out.println("Napisz \"p\" to to zrobię (możesz też napisać \"d\", \"ts\" albo \"tl\")");
-            String line = scanner.nextLine();
-            if (line.equals("p")) {
-                getNewFeeds();
-            } else if (line.equals("q")) {
-                System.out.println("Bye");
-                System.exit(0);
-            } else if (line.equals("d")) {
-                URL url = new URL("http://localhost:8080/addThingsToDB?secNum=" + securityNumber);
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestProperty("User-Agent", USER_AGENT);
-                int responseCode = connection.getResponseCode();
-                System.out.println("*************");
-                System.out.println("Response Code: " + responseCode);
-                System.out.println("*************");
-            } else if (line.equals("ts")) {
-            	MainTagger.tagNewFeedsCurrency(0);
-			} else if (line.equals("tl")){
-				MainTagger.tagNewFeeds(0);
-				MainTagger.tagNewFeedsCurrency(1);
-				/*MainTagger.tagGeomedia(2);
-				MainTagger.tagGeomedia(3);*/
-			}else{
-                System.out.println("Błędna opcja");
-            }
-            System.gc();
-        }
+            System.out.println("Type \"p\" and I will do it. (You can type \"d\" too)");
+            line = scanner.nextLine();
+			try {
+				if (line.equals("p")) {
+					dbUtil.getNewFeeds();
+				} else if (line.equals("d")) {
+					dbUtil.addSomething();
+				} else if (line.equals("q")) {
+					System.out.println("Bye");
+					System.exit(0);
+				} else {
+					System.out.println("Unknown command");
+				}
+			} catch (IOException e) {
+				System.err.println("Something went wrong :/");
+				e.printStackTrace();
+			}
+		}
 
     }
 
-    private static void getNewFeeds(){
-        String [] tmp = new String[0];
-        try {
-            System.out.println("Im gonna download feeds");
-            Analyzer.secondProject.rss.Main.main(tmp);
-            System.out.println("Im tagging");
-            MainTagger.tagNewFeeds(1);
-            System.out.println("Lets go with db");
-
-            URL url = new URL("http://localhost:8080/addThingsToDB?secNum=" + securityNumber);
-            HttpURLConnection connection = (HttpURLConnection)url.openConnection();
-            connection.setRequestProperty("User-Agent", USER_AGENT);
-            int responseCode = connection.getResponseCode();
-            System.out.println("*************");
-            System.out.println("Response Code: " + responseCode);
-            System.out.println("*************");
-            System.out.println("Work finished");
-        } catch (IOException e) {
-            System.err.println("Exception in MainTagger");
-            e.printStackTrace();
-        }
-    }
+    private static void tagAllFeeds() throws IOException {
+		MainTagger.tagNewFeeds(1);
+		MainTagger.tagNewFeedsCurrency(2);
+		MainTagger.tagGeomedia(3);
+		MainTagger.tagGeomediaCurrency(4);
+	}
 
     public static ConfigurableApplicationContext getConfigurableApplicationContext() {
         return configurableApplicationContext;
     }
 
-    public static void setConfigurableApplicationContext(ConfigurableApplicationContext configurableApplicationContext) {
-        NewsAnalyzerMain.configurableApplicationContext = configurableApplicationContext;
-    }
+	public static Long getSecurityNumber() {
+		return securityNumber;
+	}
 }

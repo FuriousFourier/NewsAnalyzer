@@ -12,6 +12,9 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
+import static Analyzer.info.InfoContainer.COUNTRIES_FILE_PATH;
+import static Analyzer.info.InfoContainer.countryTagFile;
+
 //../../ -> ../SecondProject
 //./ -> ../SecondProject/Projekt-IO01/FeedsAnalyzer-master
 public class MainTagger {
@@ -20,11 +23,12 @@ public class MainTagger {
 
 	public static final String DEFAULT_CONTENT = "NO CONTENT";
 
-	private static final String[] tagFiles = {InfoContainer.countryTagFile, InfoContainer.ORGANIZATION_TAG_FILE_PATH, InfoContainer.ORGANIZATION_SHORT_TAG_FILE_PATH};
+	private static final String[] tagFiles = {countryTagFile, InfoContainer.ORGANIZATION_TAG_FILE_PATH, InfoContainer.ORGANIZATION_SHORT_TAG_FILE_PATH};
 	private static final String[] destinationSuffixes = {"taggedForCountry", "taggedForOrg", "taggedForOrg/SHORT"};
 
 	private static final String destinationCurrencyTagSuffix = "taggedForCurrency";
-	private static  CurrencyTagger[] currencyTaggers = new CurrencyTagger[2];
+	private static BasicTagger[] currencyTaggers = new BasicTagger[2];
+	private static BasicTagger[] normalTaggers = new BasicTagger[3];
 
 	/*public static void main(String[] args) throws IOException {
 		final long denominator = 1000000000;
@@ -68,10 +72,16 @@ public class MainTagger {
 	public static void initializeMainTagger() throws IOException {
 		currencyTaggers[0] = new PolishCurrencyTagger("Polish");
 		currencyTaggers[1] = new EnglishCurrencyTagger("English");
+		normalTaggers[0] = new CountryTagger();
+		normalTaggers[1] = new OrganizationTagger();
+		normalTaggers[2] = normalTaggers[1];
 
 		// recursively deleting folder with tagged feeds, code copied from
 		// https://stackoverflow.com/questions/779519/delete-directories-recursively-in-java
-		Path directory = Paths.get(InfoContainer.DESTINATION_TAGS_FOLDER_PATHS);
+	}
+
+	public static void deleteFolder(String folderPath) throws IOException {
+		Path directory = Paths.get(folderPath);
 		try {
 			Files.walkFileTree(directory, new SimpleFileVisitor<Path>() {
 				@Override
@@ -95,7 +105,7 @@ public class MainTagger {
 		long startTime = System.nanoTime();
 		for (int i=0; i<tagFiles.length; ++i) {
 			System.out.println("Work " + workId + "." + i);
-			tagFileNormalWay(tagFiles[i], InfoContainer.NEW_FEEDS_PATH, InfoContainer.DESTINATION_TAGS_FOLDER_PATHS + "/" + destinationSuffixes[i]);
+			normalTaggers[i].work(tagFiles[i], InfoContainer.NEW_FEEDS_PATH, InfoContainer.DESTINATION_TAGS_FOLDER_PATHS + "/" + destinationSuffixes[i]);
 		}
 		long finishTime = System.nanoTime();
 		System.out.println("Finished, time: " + ((finishTime-startTime)/ NewsAnalyzerMain.DENOMINATOR));
@@ -105,16 +115,16 @@ public class MainTagger {
 		long startTime = System.nanoTime();
 		for (int i=0; i<tagFiles.length; ++i) {
             System.out.println("Work " + workId + "." + i);
-            tagFileWithUniqueInName(tagFiles[i], InfoContainer.oldFeedsFolderPaths, InfoContainer.DESTINATION_TAGS_FOLDER_PATHS + "/" + destinationSuffixes[i]);
+			normalTaggers[i].work(tagFiles[i], InfoContainer.oldFeedsFolderPaths, InfoContainer.DESTINATION_TAGS_FOLDER_PATHS + "/" + destinationSuffixes[i]);
         }
 		long finishTime = System.nanoTime();
 		System.out.println("Finished, time: " + ((finishTime-startTime)/ NewsAnalyzerMain.DENOMINATOR));
 	}
 
-	public static void tagNewFeedsCurrency(int workId) {
+	public static void tagNewFeedsCurrency(int workId) throws InvalidDataException {
 		if (InfoContainer.currencyTagFiles.length != currencyTaggers.length) {
 			System.err.println("Error in start of currency, lengths: " + InfoContainer.currencyTagFiles.length + ", " + currencyTaggers.length);
-			return;
+			throw new InvalidDataException();
 		}
 		long startTime = System.nanoTime();
 		for (int i=0; i<currencyTaggers.length; ++i) {
@@ -137,6 +147,7 @@ public class MainTagger {
 		long startTime = System.nanoTime();
 		for (int i=0; i<currencyTaggers.length; ++i) {
 			try {
+				System.out.println("Work " + workId + "." + i);
 				currencyTaggers[i].work(InfoContainer.currencyTagFiles[i], InfoContainer.oldFeedsFolderPaths, InfoContainer.DESTINATION_TAGS_FOLDER_PATHS + "/" + destinationCurrencyTagSuffix);
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -146,103 +157,9 @@ public class MainTagger {
 		System.out.println("Finished, time: " + ((finishTime-startTime)/ NewsAnalyzerMain.DENOMINATOR));
 	}
 
-	private static void tagFileNormalWay(String tagsFilePath, String sourceFolderPath, String destinationFolderPath) throws IOException {
-		File file = new File(sourceFolderPath);
-		File[] files = file.listFiles();
-		if (files == null) {
-			System.out.println("Null files for " + sourceFolderPath);
-			return;
-		}
-
-		Set<ComplexTag> complexTags = null;
-
-		for (File f: files){
-			if (f.isFile()) {
-				String sourceFilePath = f.getAbsolutePath();
-				String destinationFilePath = destinationFolderPath + "/" + f.getName();
-				int[] dataPositions = getDataPositions(sourceFilePath, tagsFilePath);
-
-				List<String> feeds = ReaderCsvFiles.readAtPosition(sourceFilePath, dataPositions[0]);
-				List<String> times = ReaderCsvFiles.readAtPosition(sourceFilePath, dataPositions[1]);
-				List<String> titles = ReaderCsvFiles.readAtPosition(sourceFilePath, dataPositions[2]);
-				List<String> descriptions = ReaderCsvFiles.readAtPosition(sourceFilePath, dataPositions[3]);
-
-				if (complexTags == null) {
-					complexTags = ReaderCsvFiles.getComplexTags(tagsFilePath, dataPositions[4], dataPositions[5]);
-				}
-
-				System.out.println(sourceFilePath + " is being tagged");
-				TagDataContainer tagDataContainer = new TagDataContainer(feeds, times, titles, descriptions, complexTags, destinationFilePath);
-				tagFile(tagDataContainer);
-			}
-		}
-
-
-
-	}
-	private static void tagFileWithUniqueInName(String tagsFilePath, String sourceFolderPath, String destinationFolderPath) throws IOException {
-		File file = new File(sourceFolderPath);
-		String[] directories = file.list(new FilenameFilter() {
-			public boolean accept(File dir, String name) {
-				return new File(dir, name).isDirectory();
-			}
-		});
-		if (directories == null) {
-			System.out.println("No directories in " + file.getAbsolutePath());
-			return;
-		}
-		Set<ComplexTag> complexTags = null;
-
-		for (String dir: directories){
-			String sourceFilePath = sourceFolderPath + "/" + dir + "/rss_unique.csv";
-			String destinationFilePath = destinationFolderPath + "/" + dir + ".csv";
-
-			int[] dataPositions = getDataPositions(sourceFilePath, tagsFilePath);
-
-			List<String> feeds = ReaderCsvFiles.readAtPosition(sourceFilePath, dataPositions[0]);
-			List<String> times = ReaderCsvFiles.readAtPosition(sourceFilePath, dataPositions[1]);
-			List<String> titles = ReaderCsvFiles.readAtPosition(sourceFilePath, dataPositions[2]);
-			List<String> descriptions = ReaderCsvFiles.readAtPosition(sourceFilePath, dataPositions[3]);
-
-			if (complexTags == null) {
-				complexTags = ReaderCsvFiles.getComplexTags(tagsFilePath, dataPositions[4], dataPositions[5]);
-			}
-
-			System.out.println(sourceFilePath + " is being tagged");
-			TagDataContainer tagDataContainer = new TagDataContainer(feeds, times, titles, descriptions, complexTags, destinationFilePath);
-			tagFile(tagDataContainer);
-		}
-
-	}
-
-
-
-	private static void tagFile(TagDataContainer tagDataContainer) throws IOException {
-
-		for (int i = 0; i < tagDataContainer.getTitles().size(); i++) {
-			String title = tagDataContainer.getTitles().get(i).toLowerCase();
-			String description = tagDataContainer.getDescriptions().get(i).toLowerCase();
-
-			for (ComplexTag complexTag: tagDataContainer.getComplexTags()){
-				for (String keyword: complexTag.getKeyWords()) {
-					try {
-						if ((title.contains(keyword)) || (description.contains(keyword))) {
-							WriterCsvFiles.write(tagDataContainer.getDestinationFilePath(), tagDataContainer.getFeeds().get(i), tagDataContainer.getTimes().get(i), tagDataContainer.getTitles().get(i), tagDataContainer.getDescriptions().get(i), complexTag.getName());
-							break;
-						}
-					} catch (IndexOutOfBoundsException e) {
-						System.err.println("Index out of bound: " + e.getMessage() + ", i: " + i);
-					}
-				}
-			}
-		}
-	}
-
 	private static void createTagsAndCountriesFile() throws IOException {
-		String resultFilePath = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/tagDataContainer.getTags()AndCountries.csv";
-		String tagsFilePath = "../SecondProject/geomedia/cist-sample_geomedia-db/Sample_GeomediaDB/Dico_Country_Free.csv";
-		String countriesFilePath = "../SecondProject/geomedia/cist-sample_geomedia-db/Sample_GeomediaDB/countries.csv";
-		Map<String,String> tagsAndCountries = ReaderCsvFiles.readTwoFilesAndReturnTagsWithCountries(tagsFilePath,countriesFilePath);
+		String resultFilePath = InfoContainer.TAGS_AND_COUNTRIES_FILE_PATH;
+		Map<String,String> tagsAndCountries = ReaderCsvFiles.readTwoFilesAndReturnTagsWithCountries(countryTagFile, COUNTRIES_FILE_PATH);
 		WriterCsvFiles.writeTagsAndCountries(resultFilePath, tagsAndCountries);
 	}
 

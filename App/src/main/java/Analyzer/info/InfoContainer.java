@@ -247,20 +247,22 @@ public class InfoContainer {
 			"Polish"
 	};
 
-	public static final String DESTINATION_TAGS_FOLDER_PATHS = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/TaggedFeeds";
-	public static final String NEW_FEEDS_PATH = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/Feeds";
-	public static final String ORGANIZATION_TAG_FILE_PATH = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/orgs.csv";
-	public static final String ORGANIZATION_SHORT_TAG_FILE_PATH = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/orgs_short.csv";
-	public static final String TAGS_AND_COUNTRIES_FILE_PATH = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/tagsAndCountries.csv";
+	public static final String DESTINATION_TAGS_FOLDER_PATHS = "./data/TaggedFeeds";
+	public static final String NEW_FEEDS_PATH = "./data/Feeds";
+	public static final String ORGANIZATION_TAG_FILE_PATH = "./data/datafiles/orgs.csv";
+	public static final String ORGANIZATION_SHORT_TAG_FILE_PATH = "./data/datafiles/orgs_short.csv";
+	public static final String TAGS_AND_COUNTRIES_FILE_PATH = "./data/datafiles/tagsAndCountries.csv";
 	public static final String COUNTRY_TAG_FILE_NAME = "Dico_Country_Free.csv";
 	public static final String EBOLA_TAG_FILE_NAME = "Dico_Ebola_Free.csv";
 	public static final String GEOMEDIA_EBOLA_TAGGED_FILE_NAME = "rss_unique_TAG_country_Ebola.csv";
 	public static final String GEOMEDIA_RSS_FILE_NAME = "rss.csv";
 	public static final String GEOMEDIA_UNIQUE_FILE_NAME = "rss_unique.csv";
 	public static final String ORG_TAGGED_FILE_NAME = "rss_org_tagged.csv";
+	public static final String STEMMING_FOLDER_PATH = "./data/datafiles";
+	public static final String COUNTRIES_FILE_PATH = "../SecondProject/geomedia/cist-sample_geomedia-db/Sample_GeomediaDB/countries.csv";
 
-	public static final String oldFeedsFolderPaths = "../SecondProject/geomedia/Geomedia_extract_AGENDA/Geomedia_extract_AGENDA";
-	public static final String countryTagFile = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/Dico_Country_Free.csv";
-	public static final String[] currencyTagFiles = {"../SecondProject/Projekt-IO01/FeedsAnalyzer-master/currencies_Polish.csv",
-			"../SecondProject/Projekt-IO01/FeedsAnalyzer-master/currencies_English.csv"};
+	public static final String oldFeedsFolderPaths = "./data/Geomedia_extract_AGENDA";
+	public static final String countryTagFile = "./data/datafiles/Dico_Country_Free.csv";
+	public static final String[] currencyTagFiles = {"./data/datafiles/currencies_Polish.csv",
+			"./data/datafiles/currencies_English.csv"};
 }

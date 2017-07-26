@@ -81,8 +81,14 @@ public class ReaderCsvFiles {
 		return separator;
 	}
 
-	public static Map<String, String> readAtTwoPosition(String filePath, int firstPosition, int secondPosition, char separator) throws IOException {
+	public static Map<String, String> readAtTwoPosition(String filePath, int firstPosition, int secondPosition) throws IOException {
 		Map<String, String> result = null;
+		char separator = getSeparator(filePath);
+		if (separator == 0) {
+			System.out.println("Kapa");
+			System.exit(33);
+		}
+		System.out.println("Separator: " + separator);
 		FileReader fileReader = new FileReader(filePath);
 		try {
 			CSVReader reader = new CSVReader(fileReader, separator);

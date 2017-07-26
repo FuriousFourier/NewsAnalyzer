@@ -1,67 +1,32 @@
 package Analyzer.secondProject.tagger;
 
+import Analyzer.info.InfoContainer;
 import Analyzer.model.Feed;
 import Analyzer.secondProject.csv.reader.ReaderCsvFiles;
-import Analyzer.secondProject.csv.writer.WriterCsvFiles;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-public class EnglishCurrencyTagger extends CurrencyTagger{
+public class EnglishCurrencyTagger extends BasicTagger {
 
 	@Override
-	public void tagFile(TagDataContainer tagDataContainer) throws IOException {
-
-		long tagCount = 0;
-		Set<String> words = new HashSet<>();
-
-		for (int i = 0; i < tagDataContainer.getTitles().size(); i++) {
-			words.clear();
-			String [] splitted = tagDataContainer.getTitles().get(i).split(REGEX);
-			for (String s: splitted){
-				if (!s.isEmpty()) {
-					words.add(s.toLowerCase());
-				}
-			}
-			splitted = tagDataContainer.getDescriptions().get(i).split(REGEX);
-			for (String s: splitted){
-				if (!s.isEmpty()) {
-					words.add(s.toLowerCase());
-				}
-			}
-
-			tagLoop:
-			for (ComplexTag complexTag: tagDataContainer.getComplexTags()){
-				for (String keyword: complexTag.getKeyWords()) {
-					try {
-						for (String word: words){
-							if (word.startsWith(keyword)) {
-								//if (words.contains(keyword)) {
-								++tagCount;
-								WriterCsvFiles.write(tagDataContainer.getDestinationFilePath(), tagDataContainer.getFeeds().get(i), tagDataContainer.getTimes().get(i), tagDataContainer.getTitles().get(i), tagDataContainer.getDescriptions().get(i), complexTag.getName());
-								continue tagLoop;
-							}
-						}
-					} catch (IndexOutOfBoundsException e) {
-						System.err.println("Index out of bound: " + e.getMessage() + ", i: " + i);
-					}
-				}
-			}
-		}
-		if (tagCount > 0)
-			System.err.println(tagDataContainer.getDestinationFilePath() + "; " + tagCount);
-	}
-
-	@Override
-	public void work(String tagFilePath, String sourceDirectoryPath, String destinationFolderPath) throws IOException {
-		File file = new File(sourceDirectoryPath);
+	public void work(String tagsFilePath, String sourceFolderPath, String destinationFolderPath) throws IOException {
+		File file = new File(sourceFolderPath);
 		File[] files = file.listFiles();
 		if (files == null) {
 			throw new FileNotFoundException();
+		}
+
+		Map<String, String> stemmingData = null;
+		String stemmingFilePath = InfoContainer.STEMMING_FOLDER_PATH + "/" + "Stemming_" + this.languageName + ".csv";
+		try {
+			stemmingData = ReaderCsvFiles.readAtTwoPosition(stemmingFilePath, 0, 1);
+		} catch (FileNotFoundException e) {
+			System.out.println(stemmingFilePath + " doesn't exist");
 		}
 
 		Set<ComplexTag> complexTags = null;
@@ -71,7 +36,7 @@ public class EnglishCurrencyTagger extends CurrencyTagger{
 				try {
 					String sourceFilePath = f.getAbsolutePath();
 					String destinationFilePath = destinationFolderPath + "/" + f.getName();
-					int[] dataPositions = MainTagger.getDataPositions(sourceFilePath, tagFilePath);
+					int[] dataPositions = MainTagger.getDataPositions(sourceFilePath, tagsFilePath);
 
 					List<String> feeds = ReaderCsvFiles.readAtPosition(sourceFilePath, dataPositions[0]);
 
@@ -91,11 +56,11 @@ public class EnglishCurrencyTagger extends CurrencyTagger{
 					List<String> descriptions = ReaderCsvFiles.readAtPosition(sourceFilePath, dataPositions[3]);
 
 					if (complexTags == null) {
-						complexTags = ReaderCsvFiles.getComplexTags(tagFilePath, dataPositions[4], dataPositions[5]);
+						complexTags = ReaderCsvFiles.getComplexTags(tagsFilePath, dataPositions[4], dataPositions[5]);
 					}
 
 					System.out.println(sourceFilePath + " is being tagged");
-					TagDataContainer tagDataContainer = new TagDataContainer(feeds, times, titles, descriptions, complexTags, destinationFilePath);
+					TagDataContainer tagDataContainer = new TagDataContainer(feeds, times, titles, descriptions, complexTags, destinationFilePath, stemmingData);
 					this.tagFile(tagDataContainer);
 				} catch (IOException e) {
 					System.err.println("Something went wrong for " + f.getAbsolutePath());
@@ -106,6 +71,7 @@ public class EnglishCurrencyTagger extends CurrencyTagger{
 	}
 
 	public EnglishCurrencyTagger(String languageName) {
+		super(languageName);
 		this.languageName = languageName;
 	}
 }

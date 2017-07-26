@@ -1,5 +1,6 @@
 package Analyzer.secondProject.tagger;
 
+import Analyzer.info.InfoContainer;
 import Analyzer.model.Feed;
 import Analyzer.secondProject.csv.reader.ReaderCsvFiles;
 import Analyzer.secondProject.csv.writer.WriterCsvFiles;
@@ -12,7 +13,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 
-public class PolishCurrencyTagger extends CurrencyTagger {
+public class PolishCurrencyTagger extends BasicTagger {
 
 	@Override
 	public void tagFile(TagDataContainer tagDataContainer) throws IOException {
@@ -73,13 +74,21 @@ public class PolishCurrencyTagger extends CurrencyTagger {
 	}
 
 	@Override
-	public void work(String tagFilePath, String sourceDirectoryPath, String destinationFolderPath) throws IOException {
-		Set<ComplexTag> complexTags = PolishCurrencyTagger.getComplexTags(tagFilePath);
+	public void work(String tagsFilePath, String sourceFolderPath, String destinationFolderPath) throws IOException {
+		Set<ComplexTag> complexTags = PolishCurrencyTagger.getComplexTags(tagsFilePath);
 
-		File file = new File(sourceDirectoryPath);
+		File file = new File(sourceFolderPath);
 		File[] files = file.listFiles();
 		if (files == null) {
 			throw new FileNotFoundException();
+		}
+
+		Map<String, String> stemmingData = null;
+		String stemmingFilePath = InfoContainer.STEMMING_FOLDER_PATH + "/" + "Stemming_" + this.languageName + ".csv";
+		try {
+			stemmingData = ReaderCsvFiles.readAtTwoPosition(stemmingFilePath, 0, 1);
+		} catch (FileNotFoundException e) {
+			System.out.println(stemmingFilePath + " doesn't exist");
 		}
 
 		for (File f: files){
@@ -87,7 +96,7 @@ public class PolishCurrencyTagger extends CurrencyTagger {
 				try {
 					String sourceFilePath = f.getAbsolutePath();
 					String destinationFilePath = destinationFolderPath + "/" + f.getName();
-					int[] dataPositions = MainTagger.getDataPositions(sourceFilePath, tagFilePath);
+					int[] dataPositions = MainTagger.getDataPositions(sourceFilePath, tagsFilePath);
 
 					List<String> feeds = ReaderCsvFiles.readAtPosition(sourceFilePath, dataPositions[0]);
 					Feed feed = feedRepository.findByName(feeds.get(0));
@@ -105,7 +114,7 @@ public class PolishCurrencyTagger extends CurrencyTagger {
 					List<String> descriptions = ReaderCsvFiles.readAtPosition(sourceFilePath, dataPositions[3]);
 
 					System.out.println(sourceFilePath + " is being tagged");
-					TagDataContainer tagDataContainer = new TagDataContainer(feeds, times, titles, descriptions, complexTags, destinationFilePath);
+					TagDataContainer tagDataContainer = new TagDataContainer(feeds, times, titles, descriptions, complexTags, destinationFilePath, stemmingData);
 					this.tagFile(tagDataContainer);
 				} catch (IOException e) {
 					System.err.println("Something went wrong for " + f.getAbsolutePath());
@@ -131,7 +140,7 @@ public class PolishCurrencyTagger extends CurrencyTagger {
 			String[] nextLine = reader.readNext();
 
 			while (nextLine != null) {
-				String[] keyWords = nextLine[1].split(CurrencyTagger.REGEX);
+				String[] keyWords = nextLine[1].split(BasicTagger.REGEX);
 				ComplexTag complexTag = new CurrencyTag(nextLine[0], keyWords[0].toLowerCase());
 				for (int i=1; i<keyWords.length; ++i) {
 					complexTag.keyWords.add(keyWords[i].toLowerCase());
@@ -146,7 +155,6 @@ public class PolishCurrencyTagger extends CurrencyTagger {
 	}
 
 	public PolishCurrencyTagger(String languageName) {
-		super();
-		this.languageName = languageName;
+		super(languageName);
 	}
 }

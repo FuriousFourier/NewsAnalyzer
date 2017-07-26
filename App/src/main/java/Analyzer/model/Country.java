@@ -11,7 +11,8 @@ import java.util.Set;
 @Table(name = "Countries")
 public class Country {
 
-    final static private String DUMMY_NAME = "NOWHERE";
+	public static final String UNKNOWN_COUNTRY_NAME = "UNKNOWN COUNTRY";
+	final static private String DUMMY_NAME = "NOWHERE";
 
     @Id
     @GeneratedValue

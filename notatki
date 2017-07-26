@@ -40,5 +40,28 @@ Wyniki wybrane podać (pogadamy)
 Analizy związane z walutami (o tym pogadamy)
 Testy
 
-Zrobić na razie punkty do dok. końcowej
 Przysłać statystykę do walut
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+W wizji i celu rozwiązania dopisać punkty co w niej ma być (podać te 3 punkty które mamy robić, czyli pobieranie, tagowanie, analiza)
+W analizie opisać ile danych udało się zebrać itp.
+W planie ustalić jakie statystyki chcemy zebrać (pliki csv, wykresy, zintegrowane wyniki mają znaleźć się w dokumentacji), np. ile danych pobrano, ile notek dodatkowo pobranych
+Na końcu referencje dopisać
+Miary dla poszczególnych czasopism albo są dla państw albo dla walut, sprawdzić czy są dobrze znormalizowane. Policzyć korelacje między tymi grafami, między poszczególnymi czasopismami
+Pliczyć korelacje by można albo po wartościach miar dla czasopisma albo pozycja państwa w rankingu w danej mierze – rozkminić to jeszcze - tu normalizacja nie jest szczególnie istotna
+Ciekawe państwa – Syria, Irak, Libia, Francja, tam gdzie wojny zamachy i inne inby
+Istotne jest np. jak mocno dane wydarzenie przekształciło sieć i wpłynęło na wyniki
+Obok nazw walut słowa kluczowe
+Ile razy poszczególne waluty występują globalnie i po czasopismach (co do statystyk do zrobienia na już)

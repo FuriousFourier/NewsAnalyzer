@@ -37,3 +37,5 @@ Feeds_old
 *.bak
 
 target/
+cmake-build-debug
+CMakeList.txt

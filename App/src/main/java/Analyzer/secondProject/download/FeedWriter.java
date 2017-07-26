@@ -12,19 +12,20 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
+import static Analyzer.info.InfoContainer.NEW_FEEDS_PATH;
+
 public class FeedWriter {
 
-	public static final String FEED_DIRECTORY_PATH = "../SecondProject/Projekt-IO01/FeedsAnalyzer-master/Feeds";
 
 	public static void writeFeeds(DownloadedFeed[] downloadedFeeds){
-		File directory = new File(FEED_DIRECTORY_PATH);
+		File directory = new File(NEW_FEEDS_PATH);
 		directory.mkdirs();
 		for (DownloadedFeed feed: downloadedFeeds){
-            String filename = FEED_DIRECTORY_PATH + "/" + feed.getName() +".csv";
+            String filename = NEW_FEEDS_PATH + "/" + feed.getName() +".csv";
             if (feed.getSyndFeed() != null) {
                 writeFeed(filename, feed.getSyndFeed(), feed.getName());
             } else {
-                System.out.println("null dla " + feed.getName());
+                System.out.println("null for " + feed.getName());
             }
         }
     }

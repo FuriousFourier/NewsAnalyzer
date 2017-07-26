@@ -1,6 +1,7 @@
 package Analyzer.model;
 
 import javax.persistence.*;
+import javax.transaction.Transactional;
 import java.util.Set;
 
 /**
@@ -47,6 +48,7 @@ public class Language {
         this.name = name;
     }
 
+    @Transactional
     public Set<Newspaper> getNewspapers() {
         return newspapers;
     }

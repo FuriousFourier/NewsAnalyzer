@@ -1,6 +1,7 @@
 package Analyzer.secondProject.tagger;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -13,14 +14,16 @@ public class TagDataContainer {
 	private List<String> descriptions;
 	private Set<ComplexTag> complexTags;
 	private String destinationFilePath;
+	private Map<String, String>  stemmingDictionary;
 
-	public TagDataContainer(List<String> feeds, List<String> times, List<String> titles, List<String> descriptions, Set<ComplexTag> complexTags, String destinationFilePath) {
+	public TagDataContainer(List<String> feeds, List<String> times, List<String> titles, List<String> descriptions, Set<ComplexTag> complexTags, String destinationFilePath, Map<String, String> stemmingDictionary) {
 		this.feeds = feeds;
 		this.times = times;
 		this.titles = titles;
 		this.descriptions = descriptions;
 		this.complexTags = complexTags;
 		this.destinationFilePath = destinationFilePath;
+		this.stemmingDictionary = stemmingDictionary;
 	}
 
 	public List<String> getFeeds() {
@@ -69,5 +72,13 @@ public class TagDataContainer {
 
 	public void setDestinationFilePath(String destinationFilePath) {
 		this.destinationFilePath = destinationFilePath;
+	}
+
+	public Map<String, String> getStemmingDictionary() {
+		return stemmingDictionary;
+	}
+
+	public void setStemmingDictionary(Map<String, String> stemmingDictionary) {
+		this.stemmingDictionary = stemmingDictionary;
 	}
 }
