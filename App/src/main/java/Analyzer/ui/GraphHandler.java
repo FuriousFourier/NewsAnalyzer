@@ -28,6 +28,7 @@ public class GraphHandler {
 	private static Set<PressRelease> notes;
 	private static ReportInput input;
 	private static GraphModel graphModel;
+	private static Map<String, Integer> nrOfTagOccurences;
 
 	private static String[] columnsToSee = {
 			GraphDistance.BETWEENNESS,
@@ -60,8 +61,9 @@ public class GraphHandler {
 	/*public static ReportInput getInput(){
 		return input;
 	}*/
-	public static void resetInput() {
-		input = null;
+	public static void reset() {
+		nrOfTagOccurences = new HashMap<>();
+		input = new ReportInput();
 	}
 
 	public static void initFakePressReleases(){
@@ -123,17 +125,22 @@ public class GraphHandler {
 		for (PressRelease pr : notes) {
 			Set<Tag> noteTags = pr.getTags();
 			List<Tag> noteTagsList = new ArrayList<>(noteTags);
-			for (int i = 0; i < noteTags.size(); i++) {
-				for (int j = i + 1; j < noteTags.size(); j++) {
-					Tag tag1 = noteTagsList.get(i);
-					Tag tag2 = noteTagsList.get(j);
+			for (int i = 0; i < noteTags.size(); i++) {//tu juz dodaje wezel
+				Tag tag1 = noteTagsList.get(i);
+				Node n1 = directedGraph.getNode(tag1.getName());
+				Integer currentCount = nrOfTagOccurences.get(tag1.getName());
+				if (currentCount == null)
+					nrOfTagOccurences.put(tag1.getName(), 1);
+				else
+					nrOfTagOccurences.put(tag1.getName(), currentCount+1);
 
-					Node n1 = directedGraph.getNode(tag1.getName());
-					if (n1 == null){
-						n1 = graphModel.factory().newNode(tag1.getName());
-						n1.setLabel(tag1.getName());
-						directedGraph.addNode(n1);
-					}
+				if (n1 == null){
+					n1 = graphModel.factory().newNode(tag1.getName());
+					n1.setLabel(tag1.getName());
+					directedGraph.addNode(n1);
+				}
+				for (int j = i + 1; j < noteTags.size(); j++) {
+					Tag tag2 = noteTagsList.get(j);
 					Node n2 = directedGraph.getNode(tag2.getName());
 					if (n2 == null) {
 						n2 = graphModel.factory().newNode(tag2.getName());
@@ -315,18 +322,17 @@ public class GraphHandler {
 			}
 			nodesWriter.writeNext(textForNodes);
 		}
-
-		//get nodes for each connected component and for each modularity class
-		Map<Integer, List<Node>> componentsMap = new HashMap<Integer, List<Node>>();
-		Map<Integer, List<Node>> modularityMap = new HashMap<Integer, List<Node>>(); //jak znalezc liczbe spolecznosci?
-		for (int i = 0; i < connectedComponents.getConnectedComponentsCount(); i++){
-			componentsMap.put(new Integer(i), new ArrayList<>());
+		textForNodes[2] = "Nr of occurences"; //TODO: dolozyc kolumne do grafu - wtedy wychwyci go tez ReportInput
+		j = 3;
+		for (Tag t : tags) {
+			Integer currentCount = nrOfTagOccurences.get(t.getName());
+			if (currentCount == null)
+				textForNodes[j] = String.valueOf(0);
+			else
+				textForNodes[j] = currentCount.toString();
+			j++;
 		}
-		for (Node n: graphModel.getGraph().getNodes()){
-			componentsMap.get(n.getAttribute(ConnectedComponents.STRONG)).add(n);
-		}
 
-		input = new ReportInput();
 		input.initNodeMaxValues(graphModel);
 		input.setGraphValue("Nr of nodes", directedGraph.getNodeCount());
 		input.setGraphValue("Nr of edges", directedGraph.getEdgeCount());
