@@ -4,7 +4,12 @@ import com.itextpdf.text.DocumentException;
 import Analyzer.controller.AnalysisController;
 
 import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.ParseException;
+
+import static org.springframework.http.HttpHeaders.USER_AGENT;
+
 /**
  * Created by karolina on 11.07.17.
  */
@@ -12,9 +17,8 @@ public class AnalysisHandler {
     private BufferedReader br;
     private AnalysisController controller;
 
-    public AnalysisHandler(BufferedReader br, AnalysisController controller) {
+    public AnalysisHandler(BufferedReader br) {
         this.br = br;
-        this.controller = controller;
     }
 
     public void startHandling() throws IOException, ParseException, DocumentException {
@@ -35,7 +39,10 @@ public class AnalysisHandler {
         } else if (field.startsWith("n")) {
             fieldName = "newspaper title";
         } else if (field.startsWith("r")){
-            controller.analyse();
+            URL url = new URL("http://localhost:8080/broadAnalysis");controller.analyse();
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestProperty("User-Agent", USER_AGENT);
+            int responseCode = connection.getResponseCode();
             return;
         }
         System.out.println("Type:\n" +
@@ -45,41 +52,53 @@ public class AnalysisHandler {
         value = br.readLine();
 
         if (value.startsWith("??")) {
+            URL url = null;
             if (field.startsWith("d")) {
-              controller.getPressReleasesSortedByDate();
+                url = new URL("http://localhost:8080/dates");
             } else if (field.startsWith("n")) {
-                controller.getAllNewspapers();
+                url = new URL("http://localhost:8080/news");
             }
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestProperty("User-Agent", USER_AGENT);
+            int responseCode = connection.getResponseCode();
             value = br.readLine();
         } else if (value.startsWith("#")) {
             System.out.println("Redirection to controller...");
+            URL url = null;
             if (field.startsWith("d")) {
-                controller.analyseByDate();
+                url = new URL("http://localhost:8080/analyseDate");
             } else if (field.startsWith("nm")) {
-                controller.setIsIteratingOverDates(true);
-                controller.analyseByNewspaper();
+                AnalysisController.setIsIteratingOverDates(true);
+                url = new URL("http://localhost:8080/analyseNewspaper");
             } else if (field.startsWith("nd")) {
-                controller.setIsIteratingOverDays(true);
-                controller.setIsIteratingOverDates(true);
-                controller.analyseByNewspaper();
+                AnalysisController.setIsIteratingOverDays(true);
+                AnalysisController.setIsIteratingOverDates(true);
+                url = new URL("http://localhost:8080/analyseNewspaper");
             } else if (field.startsWith("n")) {
-                controller.setIsIteratingOverDates(false);
-                controller.analyseByNewspaper();
+                AnalysisController.setIsIteratingOverDates(false);
+                url = new URL("http://localhost:8080/analyseNewspaper");
             }
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestProperty("User-Agent", USER_AGENT);
+            int responseCode = connection.getResponseCode();
         }
         if (value.startsWith("$")) {
             System.out.println("Redirection to controller...");
-            controller.setIsAskingForValue(true);
+            AnalysisController.setIsAskingForValue(true);
+            URL url = null;
             if (field.startsWith("d")) {
                 System.out.println("-----for dates-----");
-                controller.getPressReleasesByDate();
+                url = new URL("http://localhost:8080/notesDate");
             } else if (field.startsWith("n")) {
                 System.out.println("-----for newspapers-----");
-                controller.getPressReleasesByNews();
+                url = new URL("http://localhost:8080/notesNews");
             }else {
                 System.out.println("field: " + field + " - returning...");
                 return;
             }
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestProperty("User-Agent", USER_AGENT);
+            int responseCode = connection.getResponseCode();
         }
 
     }

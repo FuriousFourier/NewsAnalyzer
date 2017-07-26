@@ -24,15 +24,13 @@ import static org.springframework.http.HttpHeaders.USER_AGENT;
 @SpringBootApplication
 public class MainUI {
     public static Long securityNumber;
-    private static ConfigurableApplicationContext configurableApplicationContext;
 
     public static void main (String args[]){
         Random random = new Random(System.currentTimeMillis());
         securityNumber = random.nextLong();
-        configurableApplicationContext = SpringApplication.run(MainUI.class, args);
+        SpringApplication.run(MainUI.class, args);
         final BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        final AnalysisController analysisController = new AnalysisController(br);
-        final AnalysisHandler handler = new AnalysisHandler(br, analysisController);
+        final AnalysisHandler handler = new AnalysisHandler(br);
         boolean isRunning = true;
         try {
             while (isRunning) {
@@ -56,7 +54,7 @@ public class MainUI {
                     //Tagger.main(null);
                     myPrint("Tagging finished successfully");
                 }
-                else if (line.startsWith("u")) {//TODO: zmienic na bezposrednie wolanie DbUtil!
+                else if (line.startsWith("u")) {
                     myPrint("Database will be updated with new data");
                     URL url = new URL("http://localhost:8080/addThingsToDB?secNum=" + securityNumber);
                     HttpURLConnection connection = (HttpURLConnection)url.openConnection();
@@ -67,7 +65,7 @@ public class MainUI {
                     System.out.println("*************");
                     myPrint("Database updated successfully");
                 }
-                else if (line.startsWith("p")) { //TODO: zmienic na bezposrednie wolanie DbUtil!
+                else if (line.startsWith("p")) {
                     myPrint("Tags will be fetched soon...");
                     URL url = new URL("http://localhost:8080/getTags");
                     HttpURLConnection connection = (HttpURLConnection)url.openConnection();
@@ -111,11 +109,4 @@ public class MainUI {
         System.out.println(s);
     }
 
-    public static ConfigurableApplicationContext getConfigurableApplicationContext() {
-        return configurableApplicationContext;
-    }
-
-    public static void setConfigurableApplicationContext(ConfigurableApplicationContext configurableApplicationContext) {
-        MainUI.configurableApplicationContext = configurableApplicationContext;
-    }
 }

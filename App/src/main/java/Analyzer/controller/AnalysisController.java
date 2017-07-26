@@ -8,6 +8,9 @@ import Analyzer.model.*;
 import Analyzer.repository.*;
 import Analyzer.ui.GraphHandler;
 import Analyzer.ui.ReportCreator;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 
 import java.io.*;
 import java.text.ParseException;
@@ -17,53 +20,44 @@ import java.util.List;
 /**
  * Created by karolina on 12.07.17.
  */
-
+@Controller
 public class AnalysisController {
+	@Autowired
     private FeedRepository feedRepository;
+	@Autowired
     private NewspaperRepository newspaperRepository;
-    private LanguageRepository languageRepository;
-    private CountryRepository countryRepository;
-    private PressReleaseRepository pressReleaseRepository;
-    private TagRepository tagRepository;
+	@Autowired
+	private LanguageRepository languageRepository;
+	@Autowired
+	private CountryRepository countryRepository;
+	@Autowired
+	private PressReleaseRepository pressReleaseRepository;
+	@Autowired
+	private TagRepository tagRepository;
 
-    private BufferedReader br;
-    private List<Newspaper> fetchedNewspapers;
-    private Set<PressRelease> fetchedNotes;
-    private SortedSet<Tag> fetchedTags;
-    private Date firstDate;
+    private final BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+    private List<Newspaper> fetchedNewspapers = new ArrayList<>();
+    private Set<PressRelease> fetchedNotes = new HashSet<>();
+    private SortedSet<Tag> fetchedTags = new TreeSet<>();
+    private Date firstDate = new Date();
     private Date lastDate = new Date();
 	private String value;
 	private Newspaper currentNewspaper;
-    private boolean isAskingForValue = false;
-    private boolean isIteratingOverDates = false;
-    private boolean isIteratingOverDays = false;
-    private Calendar cal;
-    ReportCreator reportCreator;
+    private static boolean isAskingForValue = false;
+    private static boolean isIteratingOverDates = false;
+    private static boolean isIteratingOverDays = false;
+    private Calendar cal = Calendar.getInstance();
+    ReportCreator reportCreator = new ReportCreator();
 
-    public void setIsAskingForValue(boolean val){
+    public static void setIsAskingForValue(boolean val){
         isAskingForValue = val;
     }
-    public void setIsIteratingOverDates(boolean val) { isIteratingOverDates = val; }
-	public void setIsIteratingOverDays(boolean val) { isIteratingOverDays = val; }
+    public static void setIsIteratingOverDates(boolean val) { isIteratingOverDates = val; }
+	public static void setIsIteratingOverDays(boolean val) { isIteratingOverDays = val; }
 
-  public AnalysisController(BufferedReader br){
-    fetchedNewspapers = new ArrayList<>();
-    fetchedNotes = new HashSet<>();
-    fetchedTags = new TreeSet<>();
-    firstDate = lastDate = new Date();
-    isAskingForValue = isIteratingOverDates = isIteratingOverDays = false;
-    cal = Calendar.getInstance();
-    reportCreator = new ReportCreator();
-    feedRepository = MainUI.getConfigurableApplicationContext().getBean(FeedRepository.class);
-    newspaperRepository = MainUI.getConfigurableApplicationContext().getBean(NewspaperRepository.class);
-    languageRepository = MainUI.getConfigurableApplicationContext().getBean(LanguageRepository.class);
-    countryRepository = MainUI.getConfigurableApplicationContext().getBean(CountryRepository.class);
-    pressReleaseRepository = MainUI.getConfigurableApplicationContext().getBean(PressReleaseRepository.class);
-    tagRepository = MainUI.getConfigurableApplicationContext().getBean(TagRepository.class);
-    this.br = br;
-  }
 
-    public String printResults(){
+	@GetMapping("/results")
+	public String printResults(){
         System.out.println("Result: ");
         for (PressRelease pr : fetchedNotes) {
             System.out.print("ID: " + pr.getId() + "; Tags:");
@@ -74,7 +68,7 @@ public class AnalysisController {
         }
         return "foo";
     }
-
+	@GetMapping("/news")
     public String getAllNewspapers(){
         System.out.println("Newspapers");
         if (newspaperRepository== null){
@@ -88,7 +82,7 @@ public class AnalysisController {
         fetchedNewspapers = result;
         return "foo";
     }
-
+	@GetMapping("/dates")
     public String getPressReleasesSortedByDate(){
         if (pressReleaseRepository == null){
             System.out.println("repository not initialised");
@@ -103,7 +97,7 @@ public class AnalysisController {
 
       return "foo";
     }
-
+	@GetMapping("/notesDate")
     public String getPressReleasesByDate(){
 
         if (pressReleaseRepository == null){
@@ -136,7 +130,7 @@ public class AnalysisController {
           printResults();
         return "foo";
     }
-
+	@GetMapping("/notesNews")
     public String getPressReleasesByNews(){
         if (pressReleaseRepository == null){
             System.out.println("repository not initialised");
@@ -167,7 +161,7 @@ public class AnalysisController {
             printResults();
         return "foo";
     }
-
+	@GetMapping("/notesForOneNewspaper")
 	public String getNotesForOneNewspaper(){
 		Set<Feed> feeds = currentNewspaper.getFeeds();//get feeds
 		Set<PressRelease> result;
@@ -178,7 +172,7 @@ public class AnalysisController {
 		}
 		return "foo";
 	}
-
+	@GetMapping("/analyseDate")
 	public String analyseByDate() throws IOException, DocumentException {
 		if (pressReleaseRepository == null){
 			System.out.println("repository not initialised");
@@ -225,7 +219,7 @@ public class AnalysisController {
 				setIsAskingForValue(false);
 				if (getPressReleasesByDate().equals("foo") && fetchedNotes != null && !fetchedNotes.isEmpty()) {
 					System.out.println("******************* *Date: "+value + " ************************");
-					GraphHandler.resetInput();
+					GraphHandler.reset();
 					GraphHandler.initGraphFromPressReleases(fetchedNotes);
 					GraphHandler.graphCreator(value, "", fetchedTags, graphWriter, nodesWriter, edgesWriter, initColumns);
 					initColumns = false;
@@ -237,7 +231,7 @@ public class AnalysisController {
 		nodesWriter.close();
 		return "foo";
 	}
-
+	@GetMapping("/analyseNewspaper")
 	public String analyseByNewspaper() throws IOException, DocumentException {
 		if (pressReleaseRepository == null){
 			System.out.println("repository not initialised");
@@ -282,10 +276,10 @@ public class AnalysisController {
 			edgesGlobalWriter = new CSVWriter(new FileWriter(edgesGlobalFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
 		}
 		String[] newspaperList = { "Interia", "Fakt", "Newsweek", "RMF24", "Today", "China Daily"};
-		//for (Newspaper n : fetchedNewspapers) {
-			//value = n.getName();
-		for (String s: newspaperList) {
-			value = s;
+		for (Newspaper n : fetchedNewspapers) {
+			value = n.getName();
+		//for (String s: newspaperList) {
+			//value = s;
 			setIsAskingForValue(false);
 			if ((getPressReleasesByNews().equals("foo")) && (fetchedNotes != null) && (!fetchedNotes.isEmpty())){
 				System.out.println("******************* *Newspaper: "+value + " ************************");
@@ -336,7 +330,7 @@ public class AnalysisController {
 					for (String d : notesKeySet){
 						System.out.println("------> " + d);
 
-						GraphHandler.resetInput();
+						GraphHandler.reset();
 						GraphHandler.initGraphFromPressReleases(newspaperNotes.get(d));
 						GraphHandler.graphCreator(d, value, fetchedTags, graphWriter, nodesWriter, edgesWriter, initColumns);
 						initColumns = false;
@@ -350,7 +344,7 @@ public class AnalysisController {
 					notesKeySet = null;
 				}
 				else {
-					GraphHandler.resetInput();
+					GraphHandler.reset();
 					GraphHandler.initGraphFromPressReleases(fetchedNotes);
 					GraphHandler.graphCreator("", value, fetchedTags, graphGlobalWriter, nodesGlobalWriter, edgesGlobalWriter, initColumns);
 					initColumns = false;
@@ -364,7 +358,7 @@ public class AnalysisController {
 		}
 		return "foo";
 	}
-
+	@GetMapping("/broadAnalysis")
 	public String analyse() throws IOException, DocumentException, ParseException {
 		fetchedTags = new TreeSet<>((List<Tag>)tagRepository.findAll());
 		String title1, title2, date1, date2;
@@ -436,11 +430,11 @@ public class AnalysisController {
 		reader1 = new CSVReader(fileReader1, '\t');
 		reader2 = new CSVReader(fileReader2, '\t');
 
-		GraphHandler.resetInput();
+		GraphHandler.reset();
 		GraphHandler.initGraphFromCsv(date1, date2, reader1);
 		GraphHandler.graphCreator(date1+"_"+date2, title1, fetchedTags, graphWriter, nodesWriter, edgesWriter, true);
 
-		GraphHandler.resetInput();
+		GraphHandler.reset();
 		GraphHandler.initGraphFromCsv(date1, date2, reader2);
 		GraphHandler.graphCreator(date1+"_"+date2, title2, fetchedTags, graphWriter, nodesWriter, edgesWriter, false);
 
@@ -458,6 +452,7 @@ public class AnalysisController {
 		return "foo";
 	}
 
+	@GetMapping("/getTags")
 	public String getAllTags(){
 		if (tagRepository == null){
 			System.out.println("Kiepsko");
