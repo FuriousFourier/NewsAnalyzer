@@ -1,9 +1,11 @@
 package Analyzer;
 
+import Analyzer.controller.AnalysisController;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import Analyzer.ui.AnalysisHandler;
 import Analyzer.secondProject.rss.Main;
+import org.springframework.context.ConfigurableApplicationContext;
 //import Analyzer.secondProject.tagger.Tagger;
 
 import java.io.BufferedReader;
@@ -22,12 +24,15 @@ import static org.springframework.http.HttpHeaders.USER_AGENT;
 @SpringBootApplication
 public class MainUI {
     public static Long securityNumber;
+    private static ConfigurableApplicationContext configurableApplicationContext;
+
     public static void main (String args[]){
         Random random = new Random(System.currentTimeMillis());
         securityNumber = random.nextLong();
-        SpringApplication.run(MainUI.class, args);
+        configurableApplicationContext = SpringApplication.run(MainUI.class, args);
         final BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        final AnalysisHandler handler = new AnalysisHandler(br);
+        final AnalysisController analysisController = new AnalysisController(br);
+        final AnalysisHandler handler = new AnalysisHandler(br, analysisController);
         boolean isRunning = true;
         try {
             while (isRunning) {
@@ -51,7 +56,7 @@ public class MainUI {
                     //Tagger.main(null);
                     myPrint("Tagging finished successfully");
                 }
-                else if (line.startsWith("u")) {
+                else if (line.startsWith("u")) {//TODO: zmienic na bezposrednie wolanie DbUtil!
                     myPrint("Database will be updated with new data");
                     URL url = new URL("http://localhost:8080/addThingsToDB?secNum=" + securityNumber);
                     HttpURLConnection connection = (HttpURLConnection)url.openConnection();
@@ -62,7 +67,7 @@ public class MainUI {
                     System.out.println("*************");
                     myPrint("Database updated successfully");
                 }
-                else if (line.startsWith("p")) {
+                else if (line.startsWith("p")) { //TODO: zmienic na bezposrednie wolanie DbUtil!
                     myPrint("Tags will be fetched soon...");
                     URL url = new URL("http://localhost:8080/getTags");
                     HttpURLConnection connection = (HttpURLConnection)url.openConnection();
@@ -104,5 +109,13 @@ public class MainUI {
 
     private static final void myPrint(String s){
         System.out.println(s);
+    }
+
+    public static ConfigurableApplicationContext getConfigurableApplicationContext() {
+        return configurableApplicationContext;
+    }
+
+    public static void setConfigurableApplicationContext(ConfigurableApplicationContext configurableApplicationContext) {
+        MainUI.configurableApplicationContext = configurableApplicationContext;
     }
 }

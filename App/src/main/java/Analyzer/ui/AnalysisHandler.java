@@ -1,37 +1,23 @@
 package Analyzer.ui;
 
-import Analyzer.secondProject.tagger.ComplexTag;
-import au.com.bytecode.opencsv.CSVReader;
-import au.com.bytecode.opencsv.CSVWriter;
-import org.gephi.graph.api.*;
-import org.gephi.project.api.ProjectController;
-import org.gephi.project.api.Workspace;
-import org.gephi.statistics.plugin.*;
-import org.openide.util.Lookup;
-import Analyzer.model.*;
+import com.itextpdf.text.DocumentException;
 import Analyzer.controller.AnalysisController;
 
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.*;
-
-import static org.springframework.http.HttpHeaders.USER_AGENT;
-import static Analyzer.ui.GraphHandler.graphCreator;
-
-
+import java.text.ParseException;
 /**
  * Created by karolina on 11.07.17.
  */
 public class AnalysisHandler {
     private BufferedReader br;
+    private AnalysisController controller;
 
-    public AnalysisHandler(BufferedReader br) {
+    public AnalysisHandler(BufferedReader br, AnalysisController controller) {
         this.br = br;
+        this.controller = controller;
     }
 
-    public void startHandling() throws IOException {
+    public void startHandling() throws IOException, ParseException, DocumentException {
         String field = "", value = "", fieldName = "";
 
         System.out.println("Enter the field you'd like to focus on: \n" +
@@ -49,10 +35,7 @@ public class AnalysisHandler {
         } else if (field.startsWith("n")) {
             fieldName = "newspaper title";
         } else if (field.startsWith("r")){
-            URL url = new URL("http://localhost:8080/broadAnalysis");
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestProperty("User-Agent", USER_AGENT);
-            int responseCode = connection.getResponseCode();
+            controller.analyse();
             return;
         }
         System.out.println("Type:\n" +
@@ -62,53 +45,41 @@ public class AnalysisHandler {
         value = br.readLine();
 
         if (value.startsWith("??")) {
-            URL url = null;
             if (field.startsWith("d")) {
-                url = new URL("http://localhost:8080/dates");
+              controller.getPressReleasesSortedByDate();
             } else if (field.startsWith("n")) {
-                url = new URL("http://localhost:8080/news");
+                controller.getAllNewspapers();
             }
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestProperty("User-Agent", USER_AGENT);
-            int responseCode = connection.getResponseCode();
             value = br.readLine();
         } else if (value.startsWith("#")) {
             System.out.println("Redirection to controller...");
-            URL url = null;
             if (field.startsWith("d")) {
-                url = new URL("http://localhost:8080/analyseDate");
+                controller.analyseByDate();
             } else if (field.startsWith("nm")) {
-                AnalysisController.setIsIteratingOverDates(true);
-                url = new URL("http://localhost:8080/analyseNewspaper");
+                controller.setIsIteratingOverDates(true);
+                controller.analyseByNewspaper();
             } else if (field.startsWith("nd")) {
-                AnalysisController.setIsIteratingOverDays(true);
-                AnalysisController.setIsIteratingOverDates(true);
-                url = new URL("http://localhost:8080/analyseNewspaper");
+                controller.setIsIteratingOverDays(true);
+                controller.setIsIteratingOverDates(true);
+                controller.analyseByNewspaper();
             } else if (field.startsWith("n")) {
-                AnalysisController.setIsIteratingOverDates(false);
-                url = new URL("http://localhost:8080/analyseNewspaper");
+                controller.setIsIteratingOverDates(false);
+                controller.analyseByNewspaper();
             }
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestProperty("User-Agent", USER_AGENT);
-            int responseCode = connection.getResponseCode();
         }
         if (value.startsWith("$")) {
             System.out.println("Redirection to controller...");
-            AnalysisController.setIsAskingForValue(true);
-            URL url = null;
+            controller.setIsAskingForValue(true);
             if (field.startsWith("d")) {
                 System.out.println("-----for dates-----");
-                url = new URL("http://localhost:8080/notesDate");
+                controller.getPressReleasesByDate();
             } else if (field.startsWith("n")) {
                 System.out.println("-----for newspapers-----");
-                url = new URL("http://localhost:8080/notesNews");
+                controller.getPressReleasesByNews();
             }else {
                 System.out.println("field: " + field + " - returning...");
                 return;
             }
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestProperty("User-Agent", USER_AGENT);
-            int responseCode = connection.getResponseCode();
         }
 
     }

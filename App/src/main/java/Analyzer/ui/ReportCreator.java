@@ -6,27 +6,20 @@ import com.itextpdf.text.*;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.Image;
 import com.itextpdf.text.pdf.PdfWriter;
-import org.gephi.graph.api.Node;
 import org.knowm.xchart.BitmapEncoder;
 import org.knowm.xchart.CategoryChart;
 import org.knowm.xchart.CategoryChartBuilder;
-import org.knowm.xchart.SwingWrapper;
 import org.knowm.xchart.demo.charts.ExampleChart;
 import org.knowm.xchart.style.Styler;
-import org.wouterspekkink.plugins.metric.lineage.Lineage;
 
-import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.io.*;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 
 import static java.util.Collections.sort;
 

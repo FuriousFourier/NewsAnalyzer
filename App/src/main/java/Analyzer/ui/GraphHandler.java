@@ -3,22 +3,12 @@ package Analyzer.ui;
 import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.CSVWriter;
 import com.itextpdf.text.*;
-import com.itextpdf.text.Font;
-import com.itextpdf.text.pdf.PdfContentByte;
-import com.itextpdf.text.pdf.PdfWriter;
-import org.gephi.appearance.api.Partition;
 import org.gephi.graph.api.*;
-import org.gephi.io.exporter.api.ExportController;
-import org.gephi.io.exporter.preview.PDFExporter;
 import org.gephi.plugins.prestige.PrestigeStatistics;
 import org.gephi.plugins.prestige.calculation.DomainCalculator;
 import org.gephi.plugins.prestige.calculation.IndegreeCalculator;
 import org.gephi.plugins.prestige.calculation.ProximityCalculator;
 import org.gephi.plugins.prestige.calculation.RankCalculator;
-import org.gephi.preview.api.PreviewController;
-import org.gephi.preview.api.PreviewModel;
-import org.gephi.preview.api.PreviewProperty;
-import org.gephi.preview.types.DependantOriginalColor;
 import org.gephi.project.api.ProjectController;
 import org.gephi.project.api.Workspace;
 import org.gephi.statistics.plugin.*;
@@ -27,11 +17,6 @@ import Analyzer.model.Country;
 import Analyzer.model.Feed;
 import Analyzer.model.PressRelease;
 import Analyzer.model.Tag;
-
-import java.awt.*;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
@@ -72,9 +57,9 @@ public class GraphHandler {
 
 	};
 
-	public static ReportInput getInput(){
+	/*public static ReportInput getInput(){
 		return input;
-	}
+	}*/
 	public static void resetInput() {
 		input = null;
 	}
@@ -205,7 +190,7 @@ public class GraphHandler {
 	}
 
 
-	public static void graphCreator(String date, String newspaper, Document report, SortedSet<Tag> tags,
+	public static void graphCreator(String date, String newspaper, SortedSet<Tag> tags,
 									CSVWriter graphWriter, CSVWriter nodesWriter, CSVWriter edgesWriter,
 									boolean initColumns) throws DocumentException {
         /*//Iterate over nodes
@@ -224,12 +209,7 @@ public class GraphHandler {
 			return;
 		}
         System.out.println("Nodes analysis:");
-		//do not create pdf
-		/*Font subtitleFont = FontFactory.getFont(FontFactory.HELVETICA, 12, BaseColor.BLACK);
-		Font font = FontFactory.getFont(FontFactory.COURIER, 12, BaseColor.BLACK);
-		Font fontSmall = FontFactory.getFont(FontFactory.COURIER, 8, BaseColor.BLUE);
-		Paragraph chunk = new Paragraph(newspaper + " " + date, subtitleFont);
-		report.add(chunk);*/
+
 
 		GraphDistance distance = new GraphDistance();
 		distance.setDirected(true);
@@ -321,16 +301,13 @@ public class GraphHandler {
 			textForNodes[2] = col;
 			Column current = attributes.getColumn(col);
 			System.out.println(col+ ":");
-			/*chunk = new Paragraph(col+ ":\n", font);
-			report.add(chunk);*/
+
 			j = 3;
 			for (Tag t : tags) {
 				Node n = graphModel.getGraph().getNode(t.getName());
 				if (n != null){
 					System.out.println(n.getLabel() + ": " + n.getAttribute(current));
 					textForNodes[j] = n.getAttribute(current).toString();
-					/*chunk = new Paragraph(n.getLabel() + ": " + n.getAttribute(current) + "\n", fontSmall);
-					report.add(chunk);*/
 				}
 				else
 					textForNodes[j] = String.valueOf(0);
@@ -386,8 +363,7 @@ public class GraphHandler {
 			System.out.println(s + ": "+  input.getGraphValue(s));
 			textForGraph[j] = input.getGraphValue(s).toString();
 			j++;
-			//chunk = new Paragraph(s + input.getGraphValue(s), fontSmall);
-			//report.add(chunk);
+
 		}
 		graphWriter.writeNext(textForGraph);
 

@@ -1,17 +1,13 @@
 package Analyzer.controller;
 
+import Analyzer.MainUI;
 import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.CSVWriter;
 import com.itextpdf.text.*;
-import com.itextpdf.text.pdf.PdfWriter;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
 import Analyzer.model.*;
 import Analyzer.repository.*;
 import Analyzer.ui.GraphHandler;
 import Analyzer.ui.ReportCreator;
-import Analyzer.ui.ReportInput;
 
 import java.io.*;
 import java.text.ParseException;
@@ -22,47 +18,51 @@ import java.util.List;
  * Created by karolina on 12.07.17.
  */
 
-@Controller
 public class AnalysisController {
-    @Autowired
     private FeedRepository feedRepository;
-
-    @Autowired
     private NewspaperRepository newspaperRepository;
-
-    @Autowired
     private LanguageRepository languageRepository;
-
-    @Autowired
     private CountryRepository countryRepository;
-
-    @Autowired
     private PressReleaseRepository pressReleaseRepository;
-
-    @Autowired
     private TagRepository tagRepository;
 
-    private final BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-    private List<Newspaper> fetchedNewspapers = new ArrayList<>();
-    private Set<PressRelease> fetchedNotes = new HashSet<>();
-    private SortedSet<Tag> fetchedTags = new TreeSet<>();
-    private Date firstDate = new Date();
+    private BufferedReader br;
+    private List<Newspaper> fetchedNewspapers;
+    private Set<PressRelease> fetchedNotes;
+    private SortedSet<Tag> fetchedTags;
+    private Date firstDate;
     private Date lastDate = new Date();
 	private String value;
 	private Newspaper currentNewspaper;
-    private static boolean isAskingForValue = false;
-    private static boolean isIteratingOverDates = false;
-    private static boolean isIteratingOverDays = false;
-    private Calendar cal = Calendar.getInstance();
-    ReportCreator reportCreator = new ReportCreator();
+    private boolean isAskingForValue = false;
+    private boolean isIteratingOverDates = false;
+    private boolean isIteratingOverDays = false;
+    private Calendar cal;
+    ReportCreator reportCreator;
 
-    public static void setIsAskingForValue(boolean val){
+    public void setIsAskingForValue(boolean val){
         isAskingForValue = val;
     }
-    public static void setIsIteratingOverDates(boolean val) { isIteratingOverDates = val; }
-	public static void setIsIteratingOverDays(boolean val) { isIteratingOverDays = val; }
+    public void setIsIteratingOverDates(boolean val) { isIteratingOverDates = val; }
+	public void setIsIteratingOverDays(boolean val) { isIteratingOverDays = val; }
 
-    @GetMapping("/results")
+  public AnalysisController(BufferedReader br){
+    fetchedNewspapers = new ArrayList<>();
+    fetchedNotes = new HashSet<>();
+    fetchedTags = new TreeSet<>();
+    firstDate = lastDate = new Date();
+    isAskingForValue = isIteratingOverDates = isIteratingOverDays = false;
+    cal = Calendar.getInstance();
+    reportCreator = new ReportCreator();
+    feedRepository = MainUI.getConfigurableApplicationContext().getBean(FeedRepository.class);
+    newspaperRepository = MainUI.getConfigurableApplicationContext().getBean(NewspaperRepository.class);
+    languageRepository = MainUI.getConfigurableApplicationContext().getBean(LanguageRepository.class);
+    countryRepository = MainUI.getConfigurableApplicationContext().getBean(CountryRepository.class);
+    pressReleaseRepository = MainUI.getConfigurableApplicationContext().getBean(PressReleaseRepository.class);
+    tagRepository = MainUI.getConfigurableApplicationContext().getBean(TagRepository.class);
+    this.br = br;
+  }
+
     public String printResults(){
         System.out.println("Result: ");
         for (PressRelease pr : fetchedNotes) {
@@ -75,7 +75,6 @@ public class AnalysisController {
         return "foo";
     }
 
-    @GetMapping("/news")
     public String getAllNewspapers(){
         System.out.println("Newspapers");
         if (newspaperRepository== null){
@@ -90,7 +89,6 @@ public class AnalysisController {
         return "foo";
     }
 
-    @GetMapping("/dates")
     public String getPressReleasesSortedByDate(){
         if (pressReleaseRepository == null){
             System.out.println("repository not initialised");
@@ -106,7 +104,6 @@ public class AnalysisController {
       return "foo";
     }
 
-    @GetMapping("/notesDate")
     public String getPressReleasesByDate(){
 
         if (pressReleaseRepository == null){
@@ -139,7 +136,7 @@ public class AnalysisController {
           printResults();
         return "foo";
     }
-    @GetMapping("/notesNews")
+
     public String getPressReleasesByNews(){
         if (pressReleaseRepository == null){
             System.out.println("repository not initialised");
@@ -171,7 +168,6 @@ public class AnalysisController {
         return "foo";
     }
 
-    @GetMapping("/notesForOneNewspaper")
 	public String getNotesForOneNewspaper(){
 		Set<Feed> feeds = currentNewspaper.getFeeds();//get feeds
 		Set<PressRelease> result;
@@ -183,7 +179,6 @@ public class AnalysisController {
 		return "foo";
 	}
 
-    @GetMapping("/analyseDate")
 	public String analyseByDate() throws IOException, DocumentException {
 		if (pressReleaseRepository == null){
 			System.out.println("repository not initialised");
@@ -201,13 +196,6 @@ public class AnalysisController {
 			System.out.println("First month: " + firstMonth + "; first year: "+ firstYear);
 			System.out.println("Last month: "+ lastMonth + "; last year: "+ lastYear);
 		}
-		List<ReportInput> inputs = new ArrayList<>();
-		Document report = new Document();
-		PdfWriter.getInstance(report, new FileOutputStream("src/main/resources/reports/Month.pdf"));
-		report.open();
-		Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD,14,BaseColor.BLACK);
-		Paragraph p = new Paragraph("Months", titleFont);
-		report.add(p);
 
 		String graphFileName = "src/main/resources/csv/Month.csv";
 		String nodesFileName = "src/main/resources/csv/Month_nodes.csv";
@@ -239,22 +227,17 @@ public class AnalysisController {
 					System.out.println("******************* *Date: "+value + " ************************");
 					GraphHandler.resetInput();
 					GraphHandler.initGraphFromPressReleases(fetchedNotes);
-					GraphHandler.graphCreator(value, "", report, fetchedTags, graphWriter, nodesWriter, edgesWriter, initColumns);
+					GraphHandler.graphCreator(value, "", fetchedTags, graphWriter, nodesWriter, edgesWriter, initColumns);
 					initColumns = false;
-					/*ReportInput input = GraphHandler.getInput();
-					if (input != null)
-						inputs.add(GraphHandler.getInput());*/
 				}
 			}
 
 		}
-		//reportCreator.showChart(inputs, report);
-		report.close();
 		graphWriter.close();
 		nodesWriter.close();
 		return "foo";
 	}
-	@GetMapping("/analyseNewspaper")
+
 	public String analyseByNewspaper() throws IOException, DocumentException {
 		if (pressReleaseRepository == null){
 			System.out.println("repository not initialised");
@@ -265,9 +248,6 @@ public class AnalysisController {
 		}
 
 		fetchedTags = new TreeSet<>((List<Tag>)tagRepository.findAll());
-
-		List<ReportInput> newsInputs = new ArrayList<>();
-		Document newsReport = new Document();
 		String graphGlobalFileName;
 		String nodesGlobalFileName;
 		String edgesGlobalFileName;
@@ -284,12 +264,6 @@ public class AnalysisController {
 		else if (isIteratingOverDates)
 			descr = "months";
 		if (!isIteratingOverDates) {
-			PdfWriter.getInstance(newsReport, new FileOutputStream("src/main/resources/reports/Newspaper.pdf"));
-			newsReport.open();
-			Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD,14,BaseColor.BLACK);
-			Paragraph p = new Paragraph("Newspaper", titleFont);
-			newsReport.add(p);
-
 			graphGlobalFileName = "src/main/resources/csv/Newspaper.csv";
 			nodesGlobalFileName = "src/main/resources/csv/Newspaper_nodes.csv";
 			edgesGlobalFileName = "src/main/resources/csv/Newspaper_edges.csv";
@@ -306,7 +280,6 @@ public class AnalysisController {
 			graphGlobalWriter = new CSVWriter(new FileWriter(graphGlobalFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
 			nodesGlobalWriter = new CSVWriter(new FileWriter(nodesGlobalFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
 			edgesGlobalWriter = new CSVWriter(new FileWriter(edgesGlobalFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
-
 		}
 		String[] newspaperList = { "Interia", "Fakt", "Newsweek", "RMF24", "Today", "China Daily"};
 		//for (Newspaper n : fetchedNewspapers) {
@@ -343,13 +316,6 @@ public class AnalysisController {
 					}
 					fetchedNotes =null;
 					SortedSet<String> notesKeySet = new TreeSet<>(newspaperNotes.keySet());
-					List<ReportInput> inputs = new ArrayList<>();
-					Document report = new Document();
-					PdfWriter.getInstance(report, new FileOutputStream("src/main/resources/reports/"+value+"("+descr+").pdf"));
-					report.open();
-					Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD,14,BaseColor.BLACK);
-					Paragraph p = new Paragraph("Newspaper&date: " + value, titleFont);
-					report.add(p);
 
 					String graphFileName = "src/main/resources/csv/"+value+"("+descr+").csv";
 					String nodesFileName = "src/main/resources/csv/"+value+"("+descr+")_nodes.csv";
@@ -372,14 +338,9 @@ public class AnalysisController {
 
 						GraphHandler.resetInput();
 						GraphHandler.initGraphFromPressReleases(newspaperNotes.get(d));
-						GraphHandler.graphCreator(d, value, report, fetchedTags, graphWriter, nodesWriter, edgesWriter, initColumns);
-						/*ReportInput input = GraphHandler.getInput();
-						if (input != null)
-							inputs.add(GraphHandler.getInput());*/
+						GraphHandler.graphCreator(d, value, fetchedTags, graphWriter, nodesWriter, edgesWriter, initColumns);
 						initColumns = false;
 					}
-					//reportCreator.showChart(inputs, report);
-					report.close();
 					graphWriter.close();
 					nodesWriter.close();
 					edgesWriter.close();
@@ -387,22 +348,16 @@ public class AnalysisController {
 					//remove values
 					newspaperNotes = null;
 					notesKeySet = null;
-					inputs = null;
 				}
 				else {
 					GraphHandler.resetInput();
 					GraphHandler.initGraphFromPressReleases(fetchedNotes);
-					GraphHandler.graphCreator("", value, newsReport, fetchedTags, graphGlobalWriter, nodesGlobalWriter, edgesGlobalWriter, initColumns);
-					/*ReportInput input = GraphHandler.getInput();
-					if (input != null)
-						newsInputs.add(GraphHandler.getInput());*/
+					GraphHandler.graphCreator("", value, fetchedTags, graphGlobalWriter, nodesGlobalWriter, edgesGlobalWriter, initColumns);
 					initColumns = false;
 				}
 			}
 		}
 		if (!isIteratingOverDates){
-			//reportCreator.showChart(newsInputs, newsReport);
-			newsReport.close();
 			graphGlobalWriter.close();
 			nodesGlobalWriter.close();
 			edgesGlobalWriter.close();
@@ -410,7 +365,6 @@ public class AnalysisController {
 		return "foo";
 	}
 
-	@GetMapping("/broadAnalysis")
 	public String analyse() throws IOException, DocumentException, ParseException {
 		fetchedTags = new TreeSet<>((List<Tag>)tagRepository.findAll());
 		String title1, title2, date1, date2;
@@ -484,11 +438,11 @@ public class AnalysisController {
 
 		GraphHandler.resetInput();
 		GraphHandler.initGraphFromCsv(date1, date2, reader1);
-		GraphHandler.graphCreator(date1+"_"+date2, title1, null, fetchedTags, graphWriter, nodesWriter, edgesWriter, true);
+		GraphHandler.graphCreator(date1+"_"+date2, title1, fetchedTags, graphWriter, nodesWriter, edgesWriter, true);
 
 		GraphHandler.resetInput();
 		GraphHandler.initGraphFromCsv(date1, date2, reader2);
-		GraphHandler.graphCreator(date1+"_"+date2, title2, null, fetchedTags, graphWriter, nodesWriter, edgesWriter, false);
+		GraphHandler.graphCreator(date1+"_"+date2, title2, fetchedTags, graphWriter, nodesWriter, edgesWriter, false);
 
 		graphWriter.close();
 		nodesWriter.close();
@@ -498,13 +452,12 @@ public class AnalysisController {
 		if (br.readLine().startsWith("t")){
 			Document report= reportCreator.createReportBase(title1+"_"+title2+"("+date1+"_"+date2+")");
 			reportCreator.showChart(daysFileName, report, title1+"_"+title2+"("+date1+"_"+date2+") - day by day");
-			//reportCreator.showChart(graphFileName, report, title1+"_"+title2+"("+date1+"_"+date2+")");
+			reportCreator.showChart(graphFileName, report, title1+"_"+title2+"("+date1+"_"+date2+")");
 			report.close();
 		}
 		return "foo";
 	}
 
-	@GetMapping("/getTags")
 	public String getAllTags(){
 		if (tagRepository == null){
 			System.out.println("Kiepsko");
@@ -521,5 +474,4 @@ public class AnalysisController {
 		}
 		return "foo";
 	}
-
 }
