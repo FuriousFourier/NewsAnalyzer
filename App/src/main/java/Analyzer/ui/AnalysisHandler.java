@@ -39,7 +39,7 @@ public class AnalysisHandler {
         } else if (field.startsWith("n")) {
             fieldName = "newspaper title";
         } else if (field.startsWith("r")){
-            URL url = new URL("http://localhost:8080/broadAnalysis");controller.analyse();
+            URL url = new URL("http://localhost:8080/broadAnalysis");
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestProperty("User-Agent", USER_AGENT);
             int responseCode = connection.getResponseCode();

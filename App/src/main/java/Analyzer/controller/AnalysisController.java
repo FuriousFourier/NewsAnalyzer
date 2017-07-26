@@ -47,6 +47,12 @@ public class AnalysisController {
     private static boolean isIteratingOverDates = false;
     private static boolean isIteratingOverDays = false;
     private Calendar cal = Calendar.getInstance();
+	private List<String> newspaperTitles = new ArrayList<>();
+	private String titleToCompare = "";
+	private int nrOfNewspapers;
+	private String date1, date2;
+	private String reportTitle;
+
     ReportCreator reportCreator = new ReportCreator();
 
     public static void setIsAskingForValue(boolean val){
@@ -359,61 +365,90 @@ public class AnalysisController {
 		return "foo";
 	}
 	@GetMapping("/broadAnalysis")
-	public String analyse() throws IOException, DocumentException, ParseException {
-		fetchedTags = new TreeSet<>((List<Tag>)tagRepository.findAll());
-		String title1, title2, date1, date2;
+	public String chooseParams() throws IOException, DocumentException, ParseException {
+		fetchedTags = new TreeSet<>((List<Tag>) tagRepository.findAll());
 
-		System.out.println("Enter newspapers' titles and date range (yyyy-mm-dd)");
-		System.out.print("Title 1: ");
-		title1 = br.readLine();
-		System.out.print("Title 2: ");
-		title2 = br.readLine();
+		System.out.println("Choose option" +
+				"\ta -> compare all newspapers together\n" +
+				"\to -> compare one newspaper with all others +\n" +
+				"\tm -> manually type newspapers' titles to compare together\n");
+		String option = br.readLine();
+
+		System.out.print("Enter date range");
 		System.out.print("Date 1: ");
 		date1 = br.readLine();
 		System.out.print("Date 2: ");
 		date2 = br.readLine();
+		if (option.startsWith("o")) {
+			System.out.print("Newspaper to compare with others: ");
+			titleToCompare = br.readLine();
+			reportTitle = titleToCompare+"_with_others_";
+			getAllNewspapers();
 
-		//utworzenie plikow dzien po dniu
-		String filePath1 = "src/main/resources/csv/"+title1+"(days).csv";
-		String filePath2 = "src/main/resources/csv/"+title2+"(days).csv";
-		FileReader fileReader1, fileReader2;
-		try {
-			fileReader1 = new FileReader(filePath1);
-			fileReader2 = new FileReader(filePath2);
-		} catch(FileNotFoundException e){
-			System.out.println("Necessary data hasn't been created yet. To do it, choose analysis by newspaper " +
-					"and date. After it is finished, please try again.");
-			return "foo";
+		} else if (option.startsWith("m")) {
+			System.out.print("Nr of newspapers to compare: ");
+			nrOfNewspapers = Integer.parseInt(br.readLine());
+			System.out.println("Enter one title per line:");
+			reportTitle = "";
+			for (int i = 0; i < nrOfNewspapers; i++) {
+				titleToCompare = br.readLine();
+				newspaperTitles.add(titleToCompare);
+				reportTitle +=  titleToCompare+"_";
+			}
+		}
+		if (option.startsWith("o")) {
+			for (Newspaper n : fetchedNewspapers) {
+				if (n.getName().equals(titleToCompare))
+					continue;
+				newspaperTitles = new ArrayList<>();
+				newspaperTitles.add(titleToCompare);
+				newspaperTitles.add(n.getName());
+				compare();
+			}
+		} else if (option.startsWith("m")) {
+			compare();
 		}
 
-		String daysFileName = "src/main/resources/csv/"+title1+"_"+title2+"("+date1+"_"+date2+")_days.csv";
+		System.out.println("Shall I create pdf with charts? (t/n)");
+		if (br.readLine().startsWith("t")){
+			String daysFileName = "src/main/resources/csv/"+reportTitle+"("+date1+"_"+date2+")_days.csv";
+			String graphFileName = "src/main/resources/csv/"+reportTitle+"("+date1+"_"+date2+").csv";
+			Document report= reportCreator.createReportBase(reportTitle+"("+date1+"_"+date2+")");
+			System.out.println("Nr of newspaper titles: " + newspaperTitles.size());
+			reportCreator.showChart(daysFileName, newspaperTitles.size(), report, reportTitle+"("+date1+"_"+date2+") - day by day");
+			reportCreator.showChart(graphFileName, newspaperTitles.size(), report, reportTitle+"("+date1+"_"+date2+")");
+			report.close();
+		}
+
+		return "foo";
+	}
+
+	@GetMapping("/broadAnalysis2")
+	public String compare() throws IOException, DocumentException, ParseException {
+		String daysFileName = "src/main/resources/csv/"+reportTitle+"("+date1+"_"+date2+")_days.csv";
 		File graphFile = new File(daysFileName);
 		graphFile.delete();
 		graphFile.createNewFile();
 		CSVWriter graphWriter = new CSVWriter(new FileWriter(daysFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
 
-		CSVReader reader1 = new CSVReader(fileReader1, '\t');
-		CSVReader reader2 = new CSVReader(fileReader2, '\t');
-		reportCreator.extractRelevantInputs(reader1, graphWriter, date1, date2, true);
-		reportCreator.extractRelevantInputs(reader2, graphWriter, date1, date2, false);
+		for (String n : newspaperTitles){
+			String filePath = "src/main/resources/csv/"+n+"(days).csv";
+			FileReader fileReader;
+			try {
+				fileReader = new FileReader(filePath);
+			} catch(FileNotFoundException e){
+				System.out.println("Necessary data hasn't been created yet. To do it, choose analysis by newspaper " +
+						"and date. After it is finished, please try again.");
+				return "foo";
+			}
+			CSVReader reader = new CSVReader(fileReader, '\t');
+			reportCreator.extractRelevantInputs(reader, graphWriter, date1, date2, true);
+		}
 		graphWriter.close();
 		//utworzenie plikow zbiorczych
-
-		//read appropriate files
-		filePath1 = "src/main/resources/csv/"+title1+"(days)_edges.csv";
-		filePath2 = "src/main/resources/csv/"+title2+"(days)_edges.csv";
-		try {
-			fileReader1 = new FileReader(filePath1);
-			fileReader2 = new FileReader(filePath2);
-		} catch(FileNotFoundException e){
-			System.out.println("Necessary data hasn't been created yet. To do it, choose analysis by newspaper " +
-					"and date. After it is finished, please try again.");
-			return "foo";
-		}
-
-		String graphFileName = "src/main/resources/csv/"+title1+"_"+title2+"("+date1+"_"+date2+").csv";
-		String nodesFileName = "src/main/resources/csv/"+title1+"_"+title2+"("+date1+"_"+date2+")_nodes.csv";
-		String edgesFileName = "src/main/resources/csv/"+title1+"_"+title2+"("+date1+"_"+date2+")_edges.csv";
+		String graphFileName = "src/main/resources/csv/"+reportTitle+"("+date1+"_"+date2+").csv";
+		String nodesFileName = "src/main/resources/csv/"+reportTitle+"("+date1+"_"+date2+")_nodes.csv";
+		String edgesFileName = "src/main/resources/csv/"+reportTitle+"("+date1+"_"+date2+")_edges.csv";
 		graphFile = new File(graphFileName);
 		File nodesFile = new File(nodesFileName);
 		File edgesFile = new File(edgesFileName);
@@ -427,28 +462,26 @@ public class AnalysisController {
 		CSVWriter nodesWriter = new CSVWriter(new FileWriter(nodesFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
 		CSVWriter edgesWriter = new CSVWriter(new FileWriter(edgesFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
 
-		reader1 = new CSVReader(fileReader1, '\t');
-		reader2 = new CSVReader(fileReader2, '\t');
-
-		GraphHandler.reset();
-		GraphHandler.initGraphFromCsv(date1, date2, reader1);
-		GraphHandler.graphCreator(date1+"_"+date2, title1, fetchedTags, graphWriter, nodesWriter, edgesWriter, true);
-
-		GraphHandler.reset();
-		GraphHandler.initGraphFromCsv(date1, date2, reader2);
-		GraphHandler.graphCreator(date1+"_"+date2, title2, fetchedTags, graphWriter, nodesWriter, edgesWriter, false);
+		for (String n : newspaperTitles) {
+			//read appropriate files
+			String filePath = "src/main/resources/csv/" + n + "(days)_edges.csv";
+			FileReader fileReader;
+			try {
+				fileReader = new FileReader(filePath);
+			} catch (FileNotFoundException e) {
+				System.out.println("Necessary data hasn't been created yet. To do it, choose analysis by newspaper " +
+						"and date. After it is finished, please try again.");
+				return "foo";
+			}
+			CSVReader reader = new CSVReader(fileReader, '\t');
+			GraphHandler.reset();
+			GraphHandler.initGraphFromCsv(date1, date2, reader);
+			GraphHandler.graphCreator(date1 + "_" + date2, n, fetchedTags, graphWriter, nodesWriter, edgesWriter, true);
+		}
 
 		graphWriter.close();
 		nodesWriter.close();
 		edgesWriter.close();
-
-		System.out.println("Shall I create pdf with charts? (t/n)");
-		if (br.readLine().startsWith("t")){
-			Document report= reportCreator.createReportBase(title1+"_"+title2+"("+date1+"_"+date2+")");
-			reportCreator.showChart(daysFileName, report, title1+"_"+title2+"("+date1+"_"+date2+") - day by day");
-			reportCreator.showChart(graphFileName, report, title1+"_"+title2+"("+date1+"_"+date2+")");
-			report.close();
-		}
 		return "foo";
 	}
 

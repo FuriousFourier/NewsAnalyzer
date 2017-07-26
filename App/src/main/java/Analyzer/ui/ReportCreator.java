@@ -33,6 +33,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 	private Map<String, List<Number>> values;
 	private boolean isNodeAnalysis;
 	private String xAxis;
+	private int nrOfSerieses;
 
 	public void extractRelevantInputs(CSVReader reader,  CSVWriter writer, String date1, String date2, boolean initColumns) throws IOException {
 		System.out.println("ExtractRelevantInputs");
@@ -81,20 +82,26 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 	}
 
 	//ponizsze dziala tylko dla parametrow grafu z dwiema (ew. jedna) seriami danych
-	public void showChart(String dataPath, Document report, String chartName) throws IOException, ParseException {
+	public synchronized void showChart(String dataPath, int nrOfSerieses, Document report, String chartName) throws IOException, ParseException {
+		//below analysis is for the params of the whole graph
+		//to perform analysis for nodes, showChart need new boolean (if it's about nodes) and appropriate dataPath during invocation
+		//moreover, currently there is no output for node analysis here
+		//output would be rather a text, not dozen of charts
 		File inputFile = new File(dataPath);
 		CSVReader reader = new CSVReader(new FileReader(inputFile), '\t');
 		String[] nextLine;
 		HashMap<String, HashMap<String, List<DataContainer>>> data = new HashMap<>();
 		String[] columnNames = null;
 		while ((nextLine = reader.readNext()) != null) {
-			if (columnNames == null){
+			if (columnNames == null && nextLine[0].equals("Date")){
 				columnNames = nextLine;
 				for (int j = 2; j < columnNames.length; j++)
 					data.put(columnNames[j], new HashMap<>());
 				continue;
 			}
 			for (int j = 2; j < columnNames.length; j++){
+				if (nextLine[0].equals("Date"))
+					continue;
 				data.get(columnNames[j]).putIfAbsent(nextLine[1], new ArrayList<>());
 				DataContainer container = new DataContainer(nextLine[0], NumberFormat.getInstance().parse(nextLine[j]));
 				data.get(columnNames[j]).get(nextLine[1]).add(container);
@@ -111,39 +118,9 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 
 		xAxis = chartName;
 
-		//node params - currently not drawing
-        /*isNodeAnalysis = true;
-            for (String p: ReportInput.nodesParams) {
-                paramValues = new ArrayList<>();
-                values = new ArrayList<>();
-                currentParam = p;
-                CategoryChart chart = this.getChart();
-                if (chart == null) {
-                    System.out.println("No chart to display for " + input.get(0).paramValue + ", param: " + p);
-                    continue;
-                }
-                try { //zmieniona sciezka ponizej!!!
-                    BitmapEncoder.saveBitmap(chart, "target/classes/charts/"+fileName+"_"+p, BitmapEncoder.BitmapFormat.PNG);
-                    URI uri;
-                    for (int i = 0; i < 100; i++) {
-                        if (ClassLoader.getSystemResource(fileName + "_" + p + ".png") != null) {
-                            uri = ClassLoader.getSystemResource(fileName+"_"+p+".png").toURI();
-                            Path path = Paths.get(uri);
-                            Image img = Image.getInstance(path.toAbsolutePath().toString());
-                            img.scaleToFit(rect.getWidth()-margin, rect.getHeight());
-                            report.add(img);
-                            break;
-                        }
-                    }
-                }catch (Exception e){
-                    e.printStackTrace();
-                    return;
-                }
-            }
-*/
 		//graph params
-		isNodeAnalysis = false;
-		for (String p: columnNames) {
+		isNodeAnalysis = false; //for nodes it would be true
+		for (String p: columnNames) { //for nodes it would be ReportInput.nodesParams
 			if (p.equals("Date") || p.equals("Newspaper"))
 				continue;
 			currentParam = p;
@@ -160,7 +137,9 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 				sort(dateData);
 				for (DataContainer d : dateData){
 					paramValuesSet.add(d.date);
-					values.putIfAbsent(d.date, new ArrayList<>(2)); //TODO: umozliwic wyswietlanie dla roznej liczby serii danych
+					values.putIfAbsent(d.date, new ArrayList<>(nrOfSerieses));
+					System.out.println("Nr of serieses; " + nrOfSerieses);
+					System.out.println("list size: " + values.get(d.date).size());
 					values.get(d.date).add(i, d.value);
 					System.out.println(d.value + " added to series  " + i + " for " + d.date);
 				}
@@ -174,11 +153,10 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 				System.out.println("No chart to display for " + series.get(0) + " etc. " + paramValues.get(0) + " etc., param: " + p);
 				continue;
 			}
-			try {
+			try {//cos nie jest dobrze inicjalizowane dla a>r>m, trzeba sprawdzic, co!
 				BitmapEncoder.saveBitmap(chart, "target/classes/charts/"+chartName+"_"+p, BitmapEncoder.BitmapFormat.PNG);
 				URI uri;
 				System.out.println(ClassLoader.getSystemResource(""));
-				//przerobic na pozyskiwanie charts bezposrednio z resources, a nie dopiero z target!
 					if (ClassLoader.getSystemResource("charts/"+chartName + "_" + p + ".png") != null) {
 						uri = ClassLoader.getSystemResource("charts/"+chartName+"_"+p+".png").toURI();
 						Path path = Paths.get(uri);
@@ -194,7 +172,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 	}
 
 	@Override
-	public CategoryChart getChart() {
+	public synchronized CategoryChart getChart() {
 		//iteracja po parametrach grafu/wezlow/itp.
 		//iteracja po podgrafach
 		System.out.println("================================getChart===============");
@@ -209,7 +187,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 
 		// Series
 
-		for (int i = 0; i < series.size(); i++){
+		for (int i = 0; i < nrOfSerieses; i++){
 			List<Number> currentValues = new ArrayList<>();
 			for (String date: paramValues){
 				if (i >= values.get(date).size() || values.get(date).get(i) == null)

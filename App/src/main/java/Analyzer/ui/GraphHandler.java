@@ -322,7 +322,8 @@ public class GraphHandler {
 			}
 			nodesWriter.writeNext(textForNodes);
 		}
-		textForNodes[2] = "Nr of occurences"; //TODO: dolozyc kolumne do grafu - wtedy wychwyci go tez ReportInput
+		textForNodes[2] = "Occurences"; //TODO: dolozyc kolumne do grafu - wtedy wychwyci go tez ReportInput
+		graphModel.getNodeTable().addColumn("Occurences", Integer.class);
 		j = 3;
 		for (Tag t : tags) {
 			Integer currentCount = nrOfTagOccurences.get(t.getName());
@@ -330,8 +331,12 @@ public class GraphHandler {
 				textForNodes[j] = String.valueOf(0);
 			else
 				textForNodes[j] = currentCount.toString();
+			Node n = graphModel.getGraph().getNode(t.getName());
+			if (n !=  null)
+				n.setAttribute("Occurences", Integer.parseInt(textForNodes[j]));
 			j++;
 		}
+		nodesWriter.writeNext(textForNodes);
 
 		input.initNodeMaxValues(graphModel);
 		input.setGraphValue("Nr of nodes", directedGraph.getNodeCount());
