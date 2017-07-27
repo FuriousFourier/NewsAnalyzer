@@ -21,7 +21,7 @@ public class AnalysisHandler {
         this.br = br;
     }
 
-    public void startHandling() throws IOException, ParseException, DocumentException {
+    public synchronized void startHandling() throws IOException, ParseException, DocumentException {
         String field = "", value = "", fieldName = "";
 
         System.out.println("Enter the field you'd like to focus on: \n" +

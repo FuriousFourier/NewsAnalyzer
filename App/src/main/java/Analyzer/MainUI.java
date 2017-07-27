@@ -24,10 +24,14 @@ import static org.springframework.http.HttpHeaders.USER_AGENT;
 @SpringBootApplication
 public class MainUI {
     public static Long securityNumber;
+    public MainUI(){
+
+    }
 
     public static void main (String args[]){
         Random random = new Random(System.currentTimeMillis());
         securityNumber = random.nextLong();
+        MainUI mainUI = new MainUI();
         SpringApplication.run(MainUI.class, args);
         final BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         final AnalysisHandler handler = new AnalysisHandler(br);
@@ -55,31 +59,37 @@ public class MainUI {
                     myPrint("Tagging finished successfully");
                 }
                 else if (line.startsWith("u")) {
-                    myPrint("Database will be updated with new data");
-                    URL url = new URL("http://localhost:8080/addThingsToDB?secNum=" + securityNumber);
-                    HttpURLConnection connection = (HttpURLConnection)url.openConnection();
-                    connection.setRequestProperty("User-Agent", USER_AGENT);
-                    int responseCode = connection.getResponseCode();
-                    System.out.println("*************");
-                    System.out.println("Response Code: " + responseCode);
-                    System.out.println("*************");
-                    myPrint("Database updated successfully");
+                    synchronized(mainUI) {
+                        myPrint("Database will be updated with new data");
+                        URL url = new URL("http://localhost:8080/addThingsToDB?secNum=" + securityNumber);
+                        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                        connection.setRequestProperty("User-Agent", USER_AGENT);
+                        int responseCode = connection.getResponseCode();
+                        System.out.println("*************");
+                        System.out.println("Response Code: " + responseCode);
+                        System.out.println("*************");
+                        myPrint("Database updated successfully");
+                    }
                 }
                 else if (line.startsWith("p")) {
-                    myPrint("Tags will be fetched soon...");
-                    URL url = new URL("http://localhost:8080/getTags");
-                    HttpURLConnection connection = (HttpURLConnection)url.openConnection();
-                    connection.setRequestProperty("User-Agent", USER_AGENT);
-                    int responseCode = connection.getResponseCode();
-                    System.out.println("*************");
-                    System.out.println("Response Code: " + responseCode);
-                    System.out.println("*************");
-                    myPrint("All  tags have been printed out");
+                    synchronized (mainUI) {
+                        myPrint("Tags will be fetched soon...");
+                        URL url = new URL("http://localhost:8080/getTags");
+                        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                        connection.setRequestProperty("User-Agent", USER_AGENT);
+                        int responseCode = connection.getResponseCode();
+                        System.out.println("*************");
+                        System.out.println("Response Code: " + responseCode);
+                        System.out.println("*************");
+                        myPrint("All  tags have been printed out");
+                    }
                 }
                 else if (line.startsWith("a")) {
-                    myPrint("Analysis will start  soon...");
-                    handler.startHandling();
-                    myPrint("Analysis finished successfully");
+                    synchronized (mainUI) {
+                        myPrint("Analysis will start  soon...");
+                        handler.startHandling();
+                        myPrint("Analysis finished successfully");
+                    }
                 }
                 else if (line.startsWith("?"))
                     listCommands();

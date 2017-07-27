@@ -61,7 +61,7 @@ public class GraphHandler {
 	/*public static ReportInput getInput(){
 		return input;
 	}*/
-	public static void reset() {
+	public synchronized static void reset() {
 		nrOfTagOccurences = new HashMap<>();
 		input = new ReportInput();
 	}
@@ -97,7 +97,7 @@ public class GraphHandler {
 		}
 	}
 
-	private static void addEdge(GraphModel graphModel, Node n1, Node n2){
+	private synchronized static void addEdge(GraphModel graphModel, Node n1, Node n2){
 		DirectedGraph directedGraph = graphModel.getDirectedGraph();
 		Edge e1 = directedGraph.getEdge(n1, n2);
 		if(e1 == null){
@@ -110,7 +110,7 @@ public class GraphHandler {
 		}
 	}
 
-	public static void initGraphFromPressReleases(Set<PressRelease> newNotes) throws DocumentException {
+	public synchronized static void initGraphFromPressReleases(Set<PressRelease> newNotes) throws DocumentException {
 		notes = newNotes;
 		if (notes == null || notes.isEmpty()){
 			System.out.println("Empty result");
@@ -127,8 +127,8 @@ public class GraphHandler {
 			List<Tag> noteTagsList = new ArrayList<>(noteTags);
 			for (int i = 0; i < noteTags.size(); i++) {//tu juz dodaje wezel
 				Tag tag1 = noteTagsList.get(i);
-				Node n1 = directedGraph.getNode(tag1.getName());
 				Integer currentCount = nrOfTagOccurences.get(tag1.getName());
+				Node n1 = directedGraph.getNode(tag1.getName());
 				if (currentCount == null)
 					nrOfTagOccurences.put(tag1.getName(), 1);
 				else
@@ -154,7 +154,7 @@ public class GraphHandler {
 		}
 	}
 
-	private static void addCsv(String date1, String date2, CSVReader reader, DirectedGraph directedGraph) throws IOException {
+	private synchronized static void addCsv(String date1, String date2, CSVReader reader, DirectedGraph directedGraph) throws IOException {
 		String[] nextLine;
 		while ((nextLine = reader.readNext()) != null){
 			if(nextLine[0].compareTo(date1)< 0 || nextLine[0].compareTo(date2)>0)
@@ -165,6 +165,12 @@ public class GraphHandler {
 			}
 			if (nextLine[0].startsWith("Date"))
 				continue;
+
+			Integer currentCount = nrOfTagOccurences.get(nextLine[2]);
+			if (currentCount == null)
+				nrOfTagOccurences.put(nextLine[2], 1);
+			else
+				nrOfTagOccurences.put(nextLine[2], currentCount+1);
 			Node n1 = directedGraph.getNode(nextLine[2]);
 			if (n1 == null){
 				n1 = graphModel.factory().newNode(nextLine[2]);
@@ -172,8 +178,13 @@ public class GraphHandler {
 				directedGraph.addNode(n1);
 			}
 			for (int k = 3; ; k++){
+
 				if (nextLine[k].equals(""))
 					break;
+				if (nextLine[k].compareTo(nextLine[2]) < 0){
+					System.out.println(nextLine[k] + " skipped for " + nextLine[2]);
+					continue;
+				}
 				Node n2 = directedGraph.getNode(nextLine[k]);
 				if (n2 == null) {
 					n2 = graphModel.factory().newNode(nextLine[k]);
@@ -185,7 +196,7 @@ public class GraphHandler {
 			}
 		}
 	}
-	public static void initGraphFromCsv(String date1, String date2, CSVReader reader1) throws IOException {
+	public synchronized static void initGraphFromCsv(String date1, String date2, CSVReader reader1) throws IOException {
 		ProjectController pc = Lookup.getDefault().lookup(ProjectController.class);
 		pc.newProject();
 		Workspace workspace = pc.getCurrentWorkspace();
@@ -197,7 +208,7 @@ public class GraphHandler {
 	}
 
 
-	public static void graphCreator(String date, String newspaper, SortedSet<Tag> tags,
+	public synchronized static void graphCreator(String date, String newspaper, SortedSet<Tag> tags,
 									CSVWriter graphWriter, CSVWriter nodesWriter, CSVWriter edgesWriter,
 									boolean initColumns) throws DocumentException {
         /*//Iterate over nodes
@@ -355,28 +366,22 @@ public class GraphHandler {
 		SortedSet<String> graphParams = new TreeSet<>(input.getGraphParams());
 		String[] textForGraph = new String[graphParams.size()+2];
 
-		j = 2;
 		if (initColumns) {
 			textForGraph[0] = "Date";
 			textForGraph[1] = "Newspaper";
-			for (String param : graphParams) {
-				textForGraph[j] = param;
-				j++;
-			}
+			textForGraph[2] = "Param name";
+			textForGraph[3] = "Param value";
+			graphWriter.writeNext(textForGraph);
+		}
+		textForGraph[0] = date;
+		textForGraph[1] = newspaper;
+		for (String s: graphParams){
+			System.out.println(s + ": "+  input.getGraphValue(s));
+			textForGraph[2] = s;
+			textForGraph[3] = input.getGraphValue(s).toString();
 			graphWriter.writeNext(textForGraph);
 		}
 
-		textForGraph[0] = date;
-		textForGraph[1] = newspaper;
-
-		j =2;
-		for (String s: graphParams){
-			System.out.println(s + ": "+  input.getGraphValue(s));
-			textForGraph[j] = input.getGraphValue(s).toString();
-			j++;
-
-		}
-		graphWriter.writeNext(textForGraph);
 
         /*PreviewController previewController = Lookup.getDefault().lookup(PreviewController.class);
         PreviewModel previewModel = previewController.getModel();

@@ -55,15 +55,15 @@ public class AnalysisController {
 
     ReportCreator reportCreator = new ReportCreator();
 
-    public static void setIsAskingForValue(boolean val){
+    public synchronized static void setIsAskingForValue(boolean val){
         isAskingForValue = val;
     }
-    public static void setIsIteratingOverDates(boolean val) { isIteratingOverDates = val; }
-	public static void setIsIteratingOverDays(boolean val) { isIteratingOverDays = val; }
+    public synchronized static void setIsIteratingOverDates(boolean val) { isIteratingOverDates = val; }
+	public synchronized static void setIsIteratingOverDays(boolean val) { isIteratingOverDays = val; }
 
 
 	@GetMapping("/results")
-	public String printResults(){
+	public synchronized String printResults(){
         System.out.println("Result: ");
         for (PressRelease pr : fetchedNotes) {
             System.out.print("ID: " + pr.getId() + "; Tags:");
@@ -75,7 +75,7 @@ public class AnalysisController {
         return "foo";
     }
 	@GetMapping("/news")
-    public String getAllNewspapers(){
+    public synchronized String getAllNewspapers(){
         System.out.println("Newspapers");
         if (newspaperRepository== null){
             System.out.println("Repository not initialised");
@@ -89,7 +89,7 @@ public class AnalysisController {
         return "foo";
     }
 	@GetMapping("/dates")
-    public String getPressReleasesSortedByDate(){
+    public synchronized String getPressReleasesSortedByDate(){
         if (pressReleaseRepository == null){
             System.out.println("repository not initialised");
             return "foo";
@@ -104,7 +104,7 @@ public class AnalysisController {
       return "foo";
     }
 	@GetMapping("/notesDate")
-    public String getPressReleasesByDate(){
+    public synchronized  String getPressReleasesByDate(){
 
         if (pressReleaseRepository == null){
             System.out.println("repository not initialised");
@@ -137,7 +137,7 @@ public class AnalysisController {
         return "foo";
     }
 	@GetMapping("/notesNews")
-    public String getPressReleasesByNews(){
+    public synchronized String getPressReleasesByNews(){
         if (pressReleaseRepository == null){
             System.out.println("repository not initialised");
             return "foo";
@@ -168,7 +168,7 @@ public class AnalysisController {
         return "foo";
     }
 	@GetMapping("/notesForOneNewspaper")
-	public String getNotesForOneNewspaper(){
+	public synchronized String getNotesForOneNewspaper(){
 		Set<Feed> feeds = currentNewspaper.getFeeds();//get feeds
 		Set<PressRelease> result;
 		for (Feed f : feeds) {//find notes for feed
@@ -179,7 +179,7 @@ public class AnalysisController {
 		return "foo";
 	}
 	@GetMapping("/analyseDate")
-	public String analyseByDate() throws IOException, DocumentException {
+	public synchronized String analyseByDate() throws IOException, DocumentException {
 		if (pressReleaseRepository == null){
 			System.out.println("repository not initialised");
 			return "foo";
@@ -238,7 +238,7 @@ public class AnalysisController {
 		return "foo";
 	}
 	@GetMapping("/analyseNewspaper")
-	public String analyseByNewspaper() throws IOException, DocumentException {
+	public synchronized String analyseByNewspaper() throws IOException, DocumentException {
 		if (pressReleaseRepository == null){
 			System.out.println("repository not initialised");
 			return "foo";
@@ -282,10 +282,10 @@ public class AnalysisController {
 			edgesGlobalWriter = new CSVWriter(new FileWriter(edgesGlobalFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
 		}
 		String[] newspaperList = { "Interia", "Fakt", "Newsweek", "RMF24", "Today", "China Daily"};
-		for (Newspaper n : fetchedNewspapers) {
-			value = n.getName();
-		//for (String s: newspaperList) {
-			//value = s;
+		//for (Newspaper n : fetchedNewspapers) {
+			//value = n.getName();
+		for (String s: newspaperList) {
+			value = s;
 			setIsAskingForValue(false);
 			if ((getPressReleasesByNews().equals("foo")) && (fetchedNotes != null) && (!fetchedNotes.isEmpty())){
 				System.out.println("******************* *Newspaper: "+value + " ************************");
@@ -365,7 +365,7 @@ public class AnalysisController {
 		return "foo";
 	}
 	@GetMapping("/broadAnalysis")
-	public String chooseParams() throws IOException, DocumentException, ParseException {
+	public synchronized String chooseParams() throws IOException, DocumentException, ParseException {
 		fetchedTags = new TreeSet<>((List<Tag>) tagRepository.findAll());
 
 		System.out.println("Choose option" +
@@ -374,7 +374,7 @@ public class AnalysisController {
 				"\tm -> manually type newspapers' titles to compare together\n");
 		String option = br.readLine();
 
-		System.out.print("Enter date range");
+		System.out.println("Enter date range");
 		System.out.print("Date 1: ");
 		date1 = br.readLine();
 		System.out.print("Date 2: ");
@@ -390,6 +390,7 @@ public class AnalysisController {
 			nrOfNewspapers = Integer.parseInt(br.readLine());
 			System.out.println("Enter one title per line:");
 			reportTitle = "";
+			newspaperTitles = new ArrayList<>();
 			for (int i = 0; i < nrOfNewspapers; i++) {
 				titleToCompare = br.readLine();
 				newspaperTitles.add(titleToCompare);
@@ -411,20 +412,30 @@ public class AnalysisController {
 
 		System.out.println("Shall I create pdf with charts? (t/n)");
 		if (br.readLine().startsWith("t")){
-			String daysFileName = "src/main/resources/csv/"+reportTitle+"("+date1+"_"+date2+")_days.csv";
-			String graphFileName = "src/main/resources/csv/"+reportTitle+"("+date1+"_"+date2+").csv";
-			Document report= reportCreator.createReportBase(reportTitle+"("+date1+"_"+date2+")");
-			System.out.println("Nr of newspaper titles: " + newspaperTitles.size());
-			reportCreator.showChart(daysFileName, newspaperTitles.size(), report, reportTitle+"("+date1+"_"+date2+") - day by day");
-			reportCreator.showChart(graphFileName, newspaperTitles.size(), report, reportTitle+"("+date1+"_"+date2+")");
-			report.close();
+			Document report = null;
+			try {
+				String daysFileName = "src/main/resources/csv/" + reportTitle + "(" + date1 + "_" + date2 + ")_days.csv";
+				String graphFileName = "src/main/resources/csv/" + reportTitle + "(" + date1 + "_" + date2 + ").csv";
+				String nodesFileName = "src/main/resources/csv/"+reportTitle+"("+date1+"_"+date2+")_nodes.csv";
+				report = reportCreator.createReportBase(reportTitle + "(" + date1 + "_" + date2 + ")");
+				System.out.println("Nr of newspaper titles: " + newspaperTitles.size());
+				reportCreator.showChart(daysFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ") - day by day", false);
+				reportCreator.showChart(graphFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ")", false);
+				reportCreator.showChart(nodesFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ")", true);
+			} catch (Exception e) {
+				System.out.println("EXCEPTION IN chooseParams()!!!");
+				e.printStackTrace();
+			} finally {
+				if (report != null)
+					report.close();
+			}
 		}
 
 		return "foo";
 	}
 
 	@GetMapping("/broadAnalysis2")
-	public String compare() throws IOException, DocumentException, ParseException {
+	public synchronized String compare() throws IOException, DocumentException, ParseException {
 		String daysFileName = "src/main/resources/csv/"+reportTitle+"("+date1+"_"+date2+")_days.csv";
 		File graphFile = new File(daysFileName);
 		graphFile.delete();
@@ -486,7 +497,7 @@ public class AnalysisController {
 	}
 
 	@GetMapping("/getTags")
-	public String getAllTags(){
+	public synchronized String getAllTags(){
 		if (tagRepository == null){
 			System.out.println("Kiepsko");
 			return  "foo";

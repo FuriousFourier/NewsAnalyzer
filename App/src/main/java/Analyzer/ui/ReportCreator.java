@@ -13,6 +13,7 @@ import org.knowm.xchart.demo.charts.ExampleChart;
 import org.knowm.xchart.style.Styler;
 
 import java.io.*;
+import java.math.BigDecimal;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -28,14 +29,14 @@ import static java.util.Collections.sort;
  */
 public class ReportCreator implements ExampleChart<CategoryChart> {
 	private String currentParam;
-	private List<String> paramValues;
+	private List<String> labelValues;
 	private List<String> series;
 	private Map<String, List<Number>> values;
 	private boolean isNodeAnalysis;
 	private String xAxis;
 	private int nrOfSerieses;
 
-	public void extractRelevantInputs(CSVReader reader,  CSVWriter writer, String date1, String date2, boolean initColumns) throws IOException {
+	public synchronized void extractRelevantInputs(CSVReader reader,  CSVWriter writer, String date1, String date2, boolean initColumns) throws IOException {
 		System.out.println("ExtractRelevantInputs");
 		String[] nextLine;
 		while ((nextLine = reader.readNext()) != null) {
@@ -55,7 +56,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 		}
 	}
 
-	public Document createReportBase(String chartName) throws FileNotFoundException, DocumentException {
+	public synchronized  Document createReportBase(String chartName) throws FileNotFoundException, DocumentException {
 		Document report = new Document();
 		PdfWriter.getInstance(report, new FileOutputStream("src/main/resources/reports/"+chartName+".pdf"));
 		report.open();
@@ -65,110 +66,183 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 		return report;
 	}
 
-	public class DataContainer implements Comparable{
+	public class LabelComparator implements Comparator<DataContainer>{
+		@Override
+		public synchronized int compare(DataContainer t0, DataContainer t1) {
+			return t0.date.compareTo( t1.date );
+		}
+	}
+	public class ValueComparator implements Comparator<DataContainer>{
+
+		@Override
+		public synchronized  int compare(DataContainer t0, DataContainer t1) {
+			return new BigDecimal(t0.toString()).compareTo(new BigDecimal(t1.value.toString()));
+		}
+	}
+	public class DataContainer{
 		private String date;
 		private Number value;
 		private DataContainer(){
 		}
 		private DataContainer(String date, Number value){
-			this.date = date;
+			this.date = date; //nie 'date', tylko 'label' - bo labelem moze tez byc tag
 			this.value = value;
-		}
-
-		@Override
-		public int compareTo(Object o) {
-			return date.compareTo( ((DataContainer)o).date );
 		}
 	}
 
+
 	//ponizsze dziala tylko dla parametrow grafu z dwiema (ew. jedna) seriami danych
-	public synchronized void showChart(String dataPath, int nrOfSerieses, Document report, String chartName) throws IOException, ParseException {
+	public synchronized void showChart(String dataPath, int nrOfSerieses, Document report, String chartName, boolean isNodeAnalysis) {
 		//below analysis is for the params of the whole graph
 		//to perform analysis for nodes, showChart need new boolean (if it's about nodes) and appropriate dataPath during invocation
 		//moreover, currently there is no output for node analysis here
 		//output would be rather a text, not dozen of charts
-		File inputFile = new File(dataPath);
-		CSVReader reader = new CSVReader(new FileReader(inputFile), '\t');
-		String[] nextLine;
-		HashMap<String, HashMap<String, List<DataContainer>>> data = new HashMap<>();
-		String[] columnNames = null;
-		while ((nextLine = reader.readNext()) != null) {
-			if (columnNames == null && nextLine[0].equals("Date")){
-				columnNames = nextLine;
-				for (int j = 2; j < columnNames.length; j++)
-					data.put(columnNames[j], new HashMap<>());
-				continue;
-			}
-			for (int j = 2; j < columnNames.length; j++){
-				if (nextLine[0].equals("Date"))
-					continue;
-				data.get(columnNames[j]).putIfAbsent(nextLine[1], new ArrayList<>());
-				DataContainer container = new DataContainer(nextLine[0], NumberFormat.getInstance().parse(nextLine[j]));
-				data.get(columnNames[j]).get(nextLine[1]).add(container);
-			}
+		try {
+			LabelComparator labelComparator = new LabelComparator();
+			ValueComparator valueComparator = new ValueComparator();
 
-		}
-
-		com.itextpdf.text.Rectangle rect = report.getPageSize();
-		float margin = report.rightMargin() + report.leftMargin();
-		if (data.isEmpty()){
-			System.out.println("Input is empty - returning...");
-			return;
-		}
-
-		xAxis = chartName;
-
-		//graph params
-		isNodeAnalysis = false; //for nodes it would be true
-		for (String p: columnNames) { //for nodes it would be ReportInput.nodesParams
-			if (p.equals("Date") || p.equals("Newspaper"))
-				continue;
-			currentParam = p;
-			Set <String> paramValuesSet = new HashSet<>();
-			values = new HashMap<>();
-			series = new ArrayList<>();
-			Map<String, List<DataContainer>> newspaperData = data.get(p);
-			System.out.println("Param: " + p);
-			int i = 0; //liczba gazet
-			for(String n: newspaperData.keySet()){
-				series.add(n);
-				System.out.println("Newspaper: " + n);
-				List<DataContainer> dateData = newspaperData.get(n);
-				sort(dateData);
-				for (DataContainer d : dateData){
-					paramValuesSet.add(d.date);
-					values.putIfAbsent(d.date, new ArrayList<>(nrOfSerieses));
-					System.out.println("Nr of serieses; " + nrOfSerieses);
-					System.out.println("list size: " + values.get(d.date).size());
-					values.get(d.date).add(i, d.value);
-					System.out.println(d.value + " added to series  " + i + " for " + d.date);
-				}
-				i++;
-			}
-
-			paramValues = new ArrayList<>(paramValuesSet);
-			sort(paramValues);
-			CategoryChart chart = this.getChart();
-			if (chart == null) {
-				System.out.println("No chart to display for " + series.get(0) + " etc. " + paramValues.get(0) + " etc., param: " + p);
-				continue;
-			}
-			try {//cos nie jest dobrze inicjalizowane dla a>r>m, trzeba sprawdzic, co!
-				BitmapEncoder.saveBitmap(chart, "target/classes/charts/"+chartName+"_"+p, BitmapEncoder.BitmapFormat.PNG);
-				URI uri;
-				System.out.println(ClassLoader.getSystemResource(""));
-					if (ClassLoader.getSystemResource("charts/"+chartName + "_" + p + ".png") != null) {
-						uri = ClassLoader.getSystemResource("charts/"+chartName+"_"+p+".png").toURI();
-						Path path = Paths.get(uri);
-						Image img = Image.getInstance(path.toAbsolutePath().toString());
-						img.scaleToFit(rect.getWidth()-margin, rect.getHeight());
-						report.add(img);
-					}
-			}catch (Exception e){
+			this.nrOfSerieses = nrOfSerieses;
+			File inputFile = new File(dataPath);
+			CSVReader reader = null;
+			try {
+				reader = new CSVReader(new FileReader(inputFile), '\t');
+			} catch (FileNotFoundException e) {
+				System.out.println("EXCEPTION in showChart!!");
 				e.printStackTrace();
+			}
+			String[] nextLine;
+			Map<String, Map<String, List<DataContainer>>> data = new HashMap<>(); //do analizy grafu
+			String[] columnNames = null;
+			try {
+				while ((nextLine = reader.readNext()) != null) {
+					if (nextLine[0].equals("Date")) {
+						if (columnNames == null) { //dla analizy wezlow - musze sprawic, aby najpierw wazniejsza gazeta byla uwzgledniona!
+							columnNames = nextLine;
+						}
+						continue;
+					}
+					data.putIfAbsent(nextLine[2], new HashMap<>()); //zapisuje parametr
+					data.get(nextLine[2]).putIfAbsent(nextLine[1], new ArrayList<>()); //tu moge juz dodac gazete, bo znam parametr
+					//dla grafow - dodaje parametr i basta
+					if (!isNodeAnalysis) {
+						DataContainer container;
+						if (nextLine[3].equals("NaN"))
+							container = new DataContainer(nextLine[0], -1);
+						else
+							container = new DataContainer(nextLine[0], NumberFormat.getInstance().parse(nextLine[3]));
+						data.get(nextLine[2]).get(nextLine[1]).add(container);
+					} else {
+						for (int j = 3; j < columnNames.length; j++) {
+							DataContainer container = new DataContainer(columnNames[j], NumberFormat.getInstance().parse(nextLine[j]));
+							data.get(nextLine[2]).get(nextLine[1]).add(container);
+						}
+					}
+				}
+			} catch (IOException e) {
+				System.out.println("EXCEPTION IN showChart!!!");
+				e.printStackTrace();
+			} catch (ParseException e) {
+				e.printStackTrace();
+			}
+
+			com.itextpdf.text.Rectangle rect = report.getPageSize();
+			float margin = report.rightMargin() + report.leftMargin();
+			if (data.isEmpty()) {
+				System.out.println("Input is empty - returning...");
 				return;
 			}
+
+			xAxis = chartName;
+
+			//graph params
+			//isNodeAnalysis = false; //for nodes it would be true
+			List<DataContainer> importantTags = new ArrayList<>();
+			List<DataContainer> currentTags = new ArrayList<>();
+			for (String p : data.keySet()) { //for nodes it would be ReportInput.nodesParams
+			/*if (p.equals("Date") || p.equals("Newspaper"))
+				continue;*/
+				currentParam = p;
+				Set<String> LabelsSet = new HashSet<>();
+				values = new HashMap<>();
+				series = new ArrayList<>();
+				Map<String, List<DataContainer>> newspaperData = data.get(p);
+				System.out.println("Param: " + p);
+				int i = 0; //liczba gazet
+				System.out.println("Nr of serieses; " + nrOfSerieses);
+				for (String n : newspaperData.keySet()) {
+					series.add(n);
+					System.out.println("Newspaper: " + n);
+					List<DataContainer> dateData = newspaperData.get(n);
+					//jezeli jest wykres dla parametrow grafu, to tylko labelCOmparator
+					//jezeli wykres dla parametrow wezlow, to za pierwszym razem valueCOmparator, a dla kolejnych trzeba sciagac reczenie (pomocnicza HashMap?)
+					//ew. recznie inicjalizuje importantTags i wtedy tu wyciagam je dla kazdej gazety
+					if (!isNodeAnalysis) {
+						sort(dateData, labelComparator);
+						currentTags = dateData;
+					} else {
+						if (i == 0 && importantTags.isEmpty()) {
+							sort(dateData, valueComparator);
+							for (int k = 0; k < 10; k++) { //sparametryzowac po liczbie tagow, w wywolaniu funkcji
+								importantTags.add(dateData.get(k));
+							}
+							currentTags = dateData;
+						} else {
+							for (DataContainer d : importantTags) {
+								int index = getTagIndex(dateData, d.date);
+								if (index != -1)
+									currentTags.add(dateData.get(index));
+								else
+									System.out.println("Tag " + d.date + " hasn't been found in dateData!!!");
+							}
+						}
+					}
+					for (DataContainer d : currentTags) {
+						LabelsSet.add(d.date);
+						values.putIfAbsent(d.date, new ArrayList<>(nrOfSerieses));
+						System.out.println("list size: " + values.get(d.date).size());
+						while (values.get(d.date).size() < i)
+							values.get(d.date).add(0); //naprawienie IndexOutOfBoundsException
+						values.get(d.date).add(i, d.value);
+						System.out.println(d.value + " added to series  " + i + " for " + d.date);
+					}
+					i++;
+				}
+
+				labelValues = new ArrayList<>(LabelsSet);
+				sort(labelValues);
+				CategoryChart chart = this.getChart();
+				if (chart == null) {
+					System.out.println("No chart to display for " + series.get(0) + " etc. " + labelValues.get(0) + " etc., param: " + p);
+					continue;
+				}
+				try {//cos nie jest dobrze inicjalizowane dla a>r>m, trzeba sprawdzic, co!
+					BitmapEncoder.saveBitmap(chart, "target/classes/charts/" + chartName + "_" + p, BitmapEncoder.BitmapFormat.PNG);
+					URI uri;
+					System.out.println(ClassLoader.getSystemResource(""));
+					if (ClassLoader.getSystemResource("charts/" + chartName + "_" + p + ".png") != null) {
+						uri = ClassLoader.getSystemResource("charts/" + chartName + "_" + p + ".png").toURI();
+						Path path = Paths.get(uri);
+						Image img = Image.getInstance(path.toAbsolutePath().toString());
+						img.scaleToFit(rect.getWidth() - margin, rect.getHeight());
+						report.add(img);
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+					return;
+				}
+			}
+		}catch (Exception E){
+			System.out.println("DZIWNY EXCEPTION!");
+			E.printStackTrace();
 		}
+	}
+
+	private synchronized int getTagIndex(List<DataContainer> list, String tag){
+		for (int i = 0; i < list.size(); i++) {
+			if (list.get(i).date.equals(tag))
+				return i;
+		}
+		return -1;
 	}
 
 	@Override
@@ -189,13 +263,23 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 
 		for (int i = 0; i < nrOfSerieses; i++){
 			List<Number> currentValues = new ArrayList<>();
-			for (String date: paramValues){
+			for (String date: labelValues){
 				if (i >= values.get(date).size() || values.get(date).get(i) == null)
-					currentValues.add(0);
+					currentValues.add(-1);
+				/*else if (values.get(date).get(i).toString().equals("NaN"))
+					currentValues.add(-1);*/
 				else
 					currentValues.add(values.get(date).get(i));
 			}
-			chart.addSeries(series.get(i), paramValues, currentValues);
+			chart.addSeries(series.get(i), labelValues, currentValues);
+			System.out.println("Series name: " + series.get(i));
+			System.out.println("currentValues size: " + currentValues.size());
+			for (Number n: currentValues)
+				System.out.print(n+"\t");
+			System.out.println();
+			for (String date: labelValues)
+				System.out.print(date + "\t");
+			System.out.println();
 		}
 
 		return chart;
