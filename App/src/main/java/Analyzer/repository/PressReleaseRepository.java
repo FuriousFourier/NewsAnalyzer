@@ -4,6 +4,7 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 import Analyzer.model.Feed;
 import Analyzer.model.PressRelease;
 
+import java.util.Date;
 import java.util.Set;
 
 /**
@@ -14,4 +15,6 @@ public interface PressReleaseRepository extends PagingAndSortingRepository<Press
     Set<PressRelease> findByFeed(Feed feed);
 
 	Set<PressRelease> findByTitle(String name);
+
+	PressRelease findByTitleAndDateAndFeed(String title, Date date, Feed feed);
 }

@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ReaderCsvFiles {
 
@@ -37,9 +38,6 @@ public class ReaderCsvFiles {
 		List<String> result = null;
 
 		char separator = getSeparator(filepath);
-		if (separator == 0) {
-			throw new InvalidDataException();
-		}
 
 		try (FileReader fileReader = new FileReader(filepath)) {
 			CSVReader reader = new CSVReader(fileReader, separator);
@@ -65,6 +63,9 @@ public class ReaderCsvFiles {
 			FileReader tmpFileReader = new FileReader(filepath);
 			CSVReader reader = new CSVReader(tmpFileReader, tmpSeparator);
 			String[] tmpLine = reader.readNext();
+			if (tmpLine == null) {
+				throw new InvalidDataException();
+			}
 			if (tmpLine.length > 1) {
 				//ok
 				separator = tmpSeparator;
@@ -85,10 +86,9 @@ public class ReaderCsvFiles {
 		Map<String, String> result = null;
 		char separator = getSeparator(filePath);
 		if (separator == 0) {
-			System.out.println("Kapa");
+			System.out.println("No separator found");
 			System.exit(33);
 		}
-		System.out.println("Separator: " + separator);
 		FileReader fileReader = new FileReader(filePath);
 		try {
 			CSVReader reader = new CSVReader(fileReader, separator);
@@ -125,14 +125,14 @@ public class ReaderCsvFiles {
 		return null;
 	}
 
-	public static Set<ComplexTag> getComplexTags(String pathToTagFile, int tagPosition, int keyWordPosition) throws IOException {
+	public static Set<ComplexTag> getComplexTags(String pathToTagFile, int tagPosition, int keyWordPosition, boolean shouldGoToLowercase) throws IOException {
 
 		char separator = getSeparator(pathToTagFile);
 		Set<ComplexTag> result = null;
 
 		try (FileReader fileReader = new FileReader(pathToTagFile)) {
 			CSVReader reader = new CSVReader(fileReader, separator);
-			result = new HashSet<>();
+			result = Collections.newSetFromMap(new ConcurrentHashMap<>());
 			String[] nextLine = reader.readNext();
 			while (nextLine != null && nextLine.length <= tagPosition) {
 				nextLine = reader.readNext();
@@ -147,7 +147,10 @@ public class ReaderCsvFiles {
 						result.add(complexTag);
 						complexTag = new ComplexTag(nextLine[tagPosition]);
 					}
-					complexTag.getKeyWords().add(nextLine[keyWordPosition].toLowerCase());
+					if (shouldGoToLowercase)
+						complexTag.getKeyWords().add(nextLine[keyWordPosition].toLowerCase());
+					else
+						complexTag.getKeyWords().add(nextLine[keyWordPosition]);
 				} catch (ArrayIndexOutOfBoundsException e) {
 					System.err.println("Index out of bound: " + e.getMessage());
 				}

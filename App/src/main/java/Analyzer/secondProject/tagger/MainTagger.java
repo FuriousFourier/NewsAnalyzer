@@ -74,10 +74,11 @@ public class MainTagger {
 		currencyTaggers[1] = new EnglishCurrencyTagger("English");
 		normalTaggers[0] = new CountryTagger();
 		normalTaggers[1] = new OrganizationTagger();
-		normalTaggers[2] = normalTaggers[1];
+		normalTaggers[2] = new ShortOrganizationTagger();
 
 		// recursively deleting folder with tagged feeds, code copied from
 		// https://stackoverflow.com/questions/779519/delete-directories-recursively-in-java
+		deleteFolder(InfoContainer.DESTINATION_TAGS_FOLDER_PATHS);
 	}
 
 	public static void deleteFolder(String folderPath) throws IOException {
@@ -97,28 +98,80 @@ public class MainTagger {
 				}
 			});
 		} catch (NoSuchFileException e) {
-			System.out.println("Directory for tagged feeds didn't exist");
+			System.out.println("Directory " + folderPath + " not found");
 		}
 	}
 
 	public static void tagNewFeeds(int workId) throws IOException {
 		long startTime = System.nanoTime();
+		Thread[] workers = new Thread[tagFiles.length];
+
 		for (int i=0; i<tagFiles.length; ++i) {
-			System.out.println("Work " + workId + "." + i);
-			normalTaggers[i].work(tagFiles[i], InfoContainer.NEW_FEEDS_PATH, InfoContainer.DESTINATION_TAGS_FOLDER_PATHS + "/" + destinationSuffixes[i]);
+
+			final BasicTagger tagger = normalTaggers[i];
+			final String tagFile = tagFiles[i];
+			final String destinationSuffix = destinationSuffixes[i];
+
+			initWorkersAndStart(workId, workers, i, tagger, tagFile, destinationSuffix, InfoContainer.NEW_FEEDS_PATH, false);
 		}
+		waitForWorkers(workers);
 		long finishTime = System.nanoTime();
-		System.out.println("Finished, time: " + ((finishTime-startTime)/ NewsAnalyzerMain.DENOMINATOR));
+		System.out.println("Finished doFirstStageOfWork " + workId + ", time: " + ((finishTime-startTime)/ NewsAnalyzerMain.DENOMINATOR));
+	}
+
+	public static void initWorkersAndStart(int workId, Thread[] workers, int i, BasicTagger tagger, String tagFile, String destinationSuffix, String sourcePath, boolean isGeomedia) {
+		workers[i] = new Thread(() -> {
+			try {
+				System.out.println("Work " + workId + "." + i + ", dest: " + destinationSuffix);
+				tagger.work(tagFile, sourcePath, InfoContainer.DESTINATION_TAGS_FOLDER_PATHS + "/" + destinationSuffix, isGeomedia);
+			} catch (IOException e) {
+				System.err.println("Error in one of workers :/");
+				e.printStackTrace();
+			}
+		});
+		workers[i].start();
 	}
 
 	public static void tagGeomedia(int workId) throws IOException {
+
+		if (InfoContainer.currencyTagFiles.length != currencyTaggers.length) {
+			System.err.println("Error in start of currency, lengths: " + InfoContainer.currencyTagFiles.length + ", " + currencyTaggers.length);
+			return;
+		}
+
 		long startTime = System.nanoTime();
+		Thread[] notCurrencyWorkers = new Thread[tagFiles.length];
+		Thread[] currencyWorkers = new Thread[currencyTaggers.length-1];
 		for (int i=0; i<tagFiles.length; ++i) {
-            System.out.println("Work " + workId + "." + i);
-			normalTaggers[i].work(tagFiles[i], InfoContainer.oldFeedsFolderPaths, InfoContainer.DESTINATION_TAGS_FOLDER_PATHS + "/" + destinationSuffixes[i]);
-        }
+			final BasicTagger tagger = normalTaggers[i];
+			final String tagFile = tagFiles[i];
+			final String suffix = destinationSuffixes[i];
+
+			initWorkersAndStart(workId, notCurrencyWorkers, i, tagger, tagFile, suffix, InfoContainer.oldFeedsFolderPaths, true);
+		}
+
+		for (int i=1; i<currencyTaggers.length; ++i) {
+			final BasicTagger tagger = currencyTaggers[i];
+			final String tagFile = InfoContainer.currencyTagFiles[i];
+			initWorkersAndStart(workId+1, currencyWorkers, i-1, tagger, tagFile, destinationCurrencyTagSuffix, InfoContainer.oldFeedsFolderPaths, true);
+		}
+
+		waitForWorkers(notCurrencyWorkers);
+		waitForWorkers(currencyWorkers);
+
 		long finishTime = System.nanoTime();
-		System.out.println("Finished, time: " + ((finishTime-startTime)/ NewsAnalyzerMain.DENOMINATOR));
+		System.out.println("Finished doFirstStageOfWork " + workId + ", time: " + ((finishTime-startTime)/ NewsAnalyzerMain.DENOMINATOR));
+	}
+
+	public static void waitForWorkers(Thread[] workers) {
+		for (Thread thread : workers) {
+			try {
+				thread.join();
+			} catch (InterruptedException e) {
+				System.err.println("Error in tagger :/");
+				e.printStackTrace();
+			}
+		}
 	}
 
 	public static void tagNewFeedsCurrency(int workId) throws InvalidDataException {
@@ -126,35 +179,22 @@ public class MainTagger {
 			System.err.println("Error in start of currency, lengths: " + InfoContainer.currencyTagFiles.length + ", " + currencyTaggers.length);
 			throw new InvalidDataException();
 		}
-		long startTime = System.nanoTime();
-		for (int i=0; i<currencyTaggers.length; ++i) {
-			try {
-				System.out.println("Work " + workId + "." + i);
-				currencyTaggers[i].work(InfoContainer.currencyTagFiles[i], InfoContainer.NEW_FEEDS_PATH, InfoContainer.DESTINATION_TAGS_FOLDER_PATHS + "/" + destinationCurrencyTagSuffix);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-		long finishTime = System.nanoTime();
-		System.out.println("Finished, time: " + ((finishTime-startTime)/ NewsAnalyzerMain.DENOMINATOR));
-	}
 
-	public static void tagGeomediaCurrency(int workId) {
-		if (InfoContainer.currencyTagFiles.length != currencyTaggers.length) {
-			System.err.println("Error in start of currency, lengths: " + InfoContainer.currencyTagFiles.length + ", " + currencyTaggers.length);
-			return;
-		}
+		Thread[] workers = new Thread[currencyTaggers.length];
+
 		long startTime = System.nanoTime();
 		for (int i=0; i<currencyTaggers.length; ++i) {
-			try {
-				System.out.println("Work " + workId + "." + i);
-				currencyTaggers[i].work(InfoContainer.currencyTagFiles[i], InfoContainer.oldFeedsFolderPaths, InfoContainer.DESTINATION_TAGS_FOLDER_PATHS + "/" + destinationCurrencyTagSuffix);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+
+			final BasicTagger tagger = currencyTaggers[i];
+			final String tagFile = InfoContainer.currencyTagFiles[i];
+
+			initWorkersAndStart(workId, workers, i, tagger, tagFile, destinationCurrencyTagSuffix, InfoContainer.NEW_FEEDS_PATH, false);
 		}
+
+		waitForWorkers(workers);
+
 		long finishTime = System.nanoTime();
-		System.out.println("Finished, time: " + ((finishTime-startTime)/ NewsAnalyzerMain.DENOMINATOR));
+		System.out.println("Finished doFirstStageOfWork " + workId + ", time: " + ((finishTime-startTime)/ NewsAnalyzerMain.DENOMINATOR));
 	}
 
 	private static void createTagsAndCountriesFile() throws IOException {
@@ -163,14 +203,14 @@ public class MainTagger {
 		WriterCsvFiles.writeTagsAndCountries(resultFilePath, tagsAndCountries);
 	}
 
-	public static int[] getDataPositions(String sourceFilePath, String tagsFilePath) throws IOException {
-		int[] toReturn = new int[6];
+	public static int[] getSourceDataPositions(String sourceFilePath) throws IOException {
+		int[] toReturn = new int[4];
 		char[] readBytes = new char[4];
 		String readBytesString;
 
 		FileReader tmpFileReader = new FileReader(sourceFilePath);
 		if (tmpFileReader.read(readBytes, 0, 4) != 4) {
-			System.out.println("Something strange is happening");
+			System.out.println("Something strange is happening, file: " + sourceFilePath);
 			tmpFileReader.close();
 			throw new InvalidDataException();
 		}
@@ -188,8 +228,15 @@ public class MainTagger {
 			toReturn[3] = 3;
 		}
 
-		readBytes = new char[2];
-		tmpFileReader = new FileReader(tagsFilePath);
+		return toReturn;
+	}
+
+	public static int[] getTagsDataPositions(String tagsFilePath) throws IOException {
+		int[] toReturn = new int[2];
+		String readBytesString;
+		char [] readBytes = new char[2];
+
+		FileReader tmpFileReader = new FileReader(tagsFilePath);
 		if (tmpFileReader.read(readBytes, 0, 2) != 2) {
 			System.out.println("Something strange is happening");
 			tmpFileReader.close();
@@ -198,11 +245,11 @@ public class MainTagger {
 		tmpFileReader.close();
 		readBytesString = new String(readBytes);
 		if (readBytesString.equals("ID")) {
-			toReturn[4] = 1;
-			toReturn[5] = 2;
+			toReturn[0] = 1;
+			toReturn[1] = 2;
 		} else {
-			toReturn[4] = 0;
-			toReturn[5] = 1;
+			toReturn[0] = 0;
+			toReturn[1] = 1;
 		}
 		return toReturn;
 	}

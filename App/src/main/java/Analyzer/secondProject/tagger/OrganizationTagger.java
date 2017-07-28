@@ -1,15 +1,8 @@
 package Analyzer.secondProject.tagger;
 
-import Analyzer.secondProject.csv.reader.ReaderCsvFiles;
 import Analyzer.secondProject.csv.writer.WriterCsvFiles;
 
-import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.List;
-import java.util.Set;
-
-import static Analyzer.secondProject.tagger.MainTagger.getDataPositions;
 
 public class OrganizationTagger extends BasicTagger {
 
@@ -19,6 +12,7 @@ public class OrganizationTagger extends BasicTagger {
 
 	@Override
 	protected void tagFile(TagDataContainer tagDataContainer) throws IOException {
+		long tagCount = 0;
 		for (int i = 0; i < tagDataContainer.getTitles().size(); ++i) {
 			String title = tagDataContainer.getTitles().get(i).toLowerCase();
 			String description = tagDataContainer.getDescriptions().get(i).toLowerCase();
@@ -28,6 +22,7 @@ public class OrganizationTagger extends BasicTagger {
 					try {
 						if ((title.contains(keyword)) || (description.contains(keyword))) {
 							WriterCsvFiles.write(tagDataContainer.getDestinationFilePath(), tagDataContainer.getFeeds().get(i), tagDataContainer.getTimes().get(i), tagDataContainer.getTitles().get(i), tagDataContainer.getDescriptions().get(i), complexTag.getName());
+							++tagCount;
 							break;
 						}
 					} catch (IndexOutOfBoundsException e) {
@@ -36,10 +31,14 @@ public class OrganizationTagger extends BasicTagger {
 				}
 			}
 		}
+		if (tagCount > 0) {
+			System.err.println(tagDataContainer.getDestinationFilePath() + "; " + tagCount);
+			globalTagCount += tagCount;
+		}
 	}
 
-	@Override
-	public void work(String tagsFilePath, String sourceFolderPath, String destinationFolderPath) throws IOException {
+	/*@Override
+	public void doFirstStageOfWork(String tagsFilePath, String sourceFolderPath, String destinationFolderPath, boolean isGeomedia) throws IOException {
 		File file = new File(sourceFolderPath);
 		String[] directories = file.list(new FilenameFilter() {
 			public boolean accept(File dir, String name) {
@@ -72,5 +71,5 @@ public class OrganizationTagger extends BasicTagger {
 			tagFile(tagDataContainer);
 		}
 
-	}
+	}*/
 }

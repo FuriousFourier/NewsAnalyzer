@@ -6,6 +6,7 @@ import Analyzer.secondProject.csv.reader.ReaderCsvFiles;
 import Analyzer.secondProject.csv.writer.WriterCsvFiles;
 import au.com.bytecode.opencsv.CSVReader;
 import com.sun.media.sound.InvalidDataException;
+import org.codehaus.groovy.transform.SourceURIASTTransformation;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -13,7 +14,20 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 
+import static Analyzer.secondProject.tagger.MainTagger.getSourceDataPositions;
+import static Analyzer.secondProject.tagger.MainTagger.getTagsDataPositions;
+
 public class PolishCurrencyTagger extends BasicTagger {
+
+	@Override
+	public void work(String tagsFilePath, String sourceFolderPath, String destinationFolderPath, boolean isGeomedia) throws IOException {
+		globalTagCount = 0;
+		complexTags = PolishCurrencyTagger.getComplexTags(tagsFilePath);
+		this.doFirstStageOfWork(tagsFilePath, sourceFolderPath, destinationFolderPath, isGeomedia);
+		complexTags.clear();
+		complexTags = null;
+		System.err.println("FINISHED: " + sourceFolderPath + "; " + destinationFolderPath + "; " + globalTagCount + " tags");
+	}
 
 	@Override
 	public void tagFile(TagDataContainer tagDataContainer) throws IOException {
@@ -31,6 +45,10 @@ public class PolishCurrencyTagger extends BasicTagger {
 			words.addAll(Arrays.asList(title.split(REGEX)));
 			words.addAll(Arrays.asList(description.split(REGEX)));
 
+			if (tagDataContainer.getComplexTags() == null) {
+				System.out.println("AAAAAAAA");
+				System.exit(33);
+			}
 			tagLoop:
 			for (ComplexTag complexTag: tagDataContainer.getComplexTags()){
 				CurrencyTag currencyTag = ((CurrencyTag) complexTag);
@@ -69,13 +87,14 @@ public class PolishCurrencyTagger extends BasicTagger {
 				WriterCsvFiles.write(tagDataContainer.getDestinationFilePath(), tagDataContainer.getFeeds().get(i), tagDataContainer.getTimes().get(i), tagDataContainer.getTitles().get(i), tagDataContainer.getDescriptions().get(i), currencyTag.getName());
 			}
 		}
-		if (tagCount > 0)
+		if (tagCount > 0) {
 			System.err.println(tagDataContainer.getDestinationFilePath() + "; " + tagCount);
+			globalTagCount += tagCount;
+		}
 	}
 
 	@Override
-	public void work(String tagsFilePath, String sourceFolderPath, String destinationFolderPath) throws IOException {
-		Set<ComplexTag> complexTags = PolishCurrencyTagger.getComplexTags(tagsFilePath);
+	protected void doFirstStageOfWork(String tagsFilePath, String sourceFolderPath, String destinationFolderPath, boolean isGeomedia) throws IOException {
 
 		File file = new File(sourceFolderPath);
 		File[] files = file.listFiles();
@@ -96,12 +115,18 @@ public class PolishCurrencyTagger extends BasicTagger {
 				try {
 					String sourceFilePath = f.getAbsolutePath();
 					String destinationFilePath = destinationFolderPath + "/" + f.getName();
-					int[] dataPositions = MainTagger.getDataPositions(sourceFilePath, tagsFilePath);
-
+					int [] dataPositions;
+					try {
+						dataPositions = getSourceDataPositions(sourceFilePath);
+					} catch (InvalidDataException e) {
+						System.err.println("Handling " + f.getName() + " is impossible, skipping");
+						continue;
+					}
 					List<String> feeds = ReaderCsvFiles.readAtPosition(sourceFilePath, dataPositions[0]);
-					Feed feed = feedRepository.findByName(feeds.get(0));
+					String feedName = feeds.get(1);
+					Feed feed = feedRepository.findByName(feedName);
 					if (feed == null) {
-						System.err.println("Feed " + feeds.get(0) + " not found in DB");
+						System.err.println("Feed " + feedName + " not found in DB");
 						continue;
 					}
 
@@ -150,6 +175,10 @@ public class PolishCurrencyTagger extends BasicTagger {
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+		if (result == null) {
+			System.out.println("LOOOOOOOOOOL");
+			System.exit(44);
 		}
 		return result;
 	}

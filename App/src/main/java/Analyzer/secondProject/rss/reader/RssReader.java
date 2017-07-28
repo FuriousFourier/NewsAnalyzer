@@ -29,7 +29,10 @@ public class RssReader extends FeedWriter {
                 System.err.println("Error while handling " + downloadedFeed.getName() + "; " + downloadedFeed.getRssUrl());
                 e.printStackTrace();
             } catch (IOException e) {
-                e.printStackTrace();
+                if (e.getMessage().contains("response code: 403"))
+					System.err.println("Handling " + downloadedFeed.getName() + " forbidden");
+                else
+					e.printStackTrace();
             }
         }
     }

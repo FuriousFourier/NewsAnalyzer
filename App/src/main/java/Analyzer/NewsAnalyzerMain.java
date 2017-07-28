@@ -47,7 +47,7 @@ public class NewsAnalyzerMain {
 					String answer = scanner.nextLine();
 					if (answer.toLowerCase().equals("y") || answer.toLowerCase().equals("yes")) {
 						try {
-							if (!dbUtil.addSomething()) {
+							if (!dbUtil.initDb()) {
 								System.out.println("Something went wrong.");
 								System.exit(2);
 							}
@@ -78,12 +78,19 @@ public class NewsAnalyzerMain {
             line = scanner.nextLine();
 			try {
 				if (line.equals("p")) {
-					dbUtil.getNewFeeds();
+					if (!dbUtil.getNewFeeds()){
+						System.out.println("Something went wrong");
+					}
 				} else if (line.equals("d")) {
-					dbUtil.addSomething();
+					if (!dbUtil.addNewData()){
+						System.out.println("Something went wrong");
+					}
 				} else if (line.equals("q")) {
 					System.out.println("Bye");
 					System.exit(0);
+				} else if(line.equals("tl")){
+					MainTagger.tagNewFeeds(1);
+					MainTagger.tagNewFeedsCurrency(2);
 				} else {
 					System.out.println("Unknown command");
 				}
@@ -99,7 +106,6 @@ public class NewsAnalyzerMain {
 		MainTagger.tagNewFeeds(1);
 		MainTagger.tagNewFeedsCurrency(2);
 		MainTagger.tagGeomedia(3);
-		MainTagger.tagGeomediaCurrency(4);
 	}
 
     public static ConfigurableApplicationContext getConfigurableApplicationContext() {
