@@ -4,8 +4,10 @@ import Analyzer.info.InfoContainer;
 import Analyzer.secondProject.csv.reader.ReaderCsvFiles;
 
 import static Analyzer.NewsAnalyzerMain.DENOMINATOR;
+import static Analyzer.NewsAnalyzerMain.getSecurityNumber;
 import static Analyzer.info.InfoContainer.*;
 
+import Analyzer.secondProject.csv.writer.WriterCsvFiles;
 import Analyzer.secondProject.tagger.MainTagger;
 import com.sun.media.sound.InvalidDataException;
 import org.hibernate.Hibernate;
@@ -28,6 +30,7 @@ import java.util.*;
 
 import static Analyzer.info.InfoContainer.languages;
 import static Analyzer.secondProject.tagger.MainTagger.deleteFolder;
+import static Analyzer.secondProject.tagger.MainTagger.getSourceDataPositions;
 
 /**
  * Created by pawel on 12.07.17.
@@ -91,7 +94,7 @@ public class DbController {
 		pressReleaseMap.clear();
 
 		System.out.println("Im getting collections from DB");
-		getThingsFromDb(false);
+		getThingsFromDb(true);
 		System.out.println("Press releases");
 		//pressReleases
 		addPressReleasesToDBNewWay(NEW_FEEDS_PATH, true);
@@ -117,14 +120,17 @@ public class DbController {
 		return true;
 	}
 
-	private void getThingsFromDb(boolean shouldTakePressreleases) {
+	private void getThingsFromDb(boolean shouldTakePressReleases) {
 		Iterable<Language> languagesFromDb = languageRepository.findAll();
 		Iterable<Country> countriesFromDb = countryRepository.findAll();
 		Iterable<Newspaper> newspapersFromDb = newspaperRepository.findAll();
 		Iterable<Feed> feedsFromDb = feedRepository.findAll();
 		Iterable<Tag> tagsFromDb = tagRepository.findAll();
-		Iterable<PressRelease> pressReleasesFromDb = pressReleaseRepository.findAll();
+		Iterable<PressRelease> pressReleasesFromDb = null;
 
+		if (shouldTakePressReleases) {
+			pressReleasesFromDb = pressReleaseRepository.findAll();
+		}
 
 		System.out.println("Im gonna put them into my data structures");
 		for (Language language : languagesFromDb) {
@@ -142,7 +148,7 @@ public class DbController {
 		for (Tag tag : tagsFromDb) {
 			tagMap.put(tag.getName(), tag);
 		}
-		if (shouldTakePressreleases) {
+		if (shouldTakePressReleases) {
 			for (PressRelease pressRelease : pressReleasesFromDb) {
 				pressReleaseMap.put(new PressReleaseId(pressRelease.getTitle(), pressRelease.getDate(), pressRelease.getFeed()), pressRelease);
 			}
@@ -185,7 +191,6 @@ public class DbController {
 						System.err.println("Impossible to handle " + filePath);
 						continue;
 					}
-					System.out.println("File: "+  f.getName() +"; " + titles.size() + " positions");
 
                     for (int i = 0; i < feedsNames.size(); i++) {
                         Feed feed = feedMap.get(feedsNames.get(i));
@@ -197,11 +202,7 @@ public class DbController {
                             Date date = convertStringToDate(dates.get(i));
                             PressReleaseId pressReleaseId = new PressReleaseId(titles.get(i), date, feed);
 							PressRelease pressRelease;
-							if (!newFeeds) {
-								pressRelease = pressReleaseMap.get(pressReleaseId);
-							} else {
-								pressRelease = pressReleaseRepository.findByTitleAndDateAndFeed(titles.get(i), date, feed);
-							}
+							pressRelease = pressReleaseMap.get(pressReleaseId);
 							if (pressRelease == null){
                                 pressRelease = new PressRelease();
                                 pressRelease.setFeed(feed);
@@ -211,8 +212,6 @@ public class DbController {
                                 feed.getPressReleases().add(pressRelease);
                                 pressRelease.setTags(new HashSet<>());
                                 pressReleaseMap.put(pressReleaseId, pressRelease);
-							} else if (newFeeds) {
-								pressReleaseMap.put(pressReleaseId, pressRelease);
 							}
 						} catch (DataException e) {
                             e.printStackTrace();
@@ -247,10 +246,7 @@ public class DbController {
         }
         for (File f : files) {
             if (f.isFile()) {
-                if ((f.getName().contains(".csv") && !f.getName().equals(GEOMEDIA_RSS_FILE_NAME)
-                        && !f.getName().equals(EBOLA_TAG_FILE_NAME)
-                        && !f.getName().equals(COUNTRY_TAG_FILE_NAME)
-                        && !f.getName().equals(GEOMEDIA_UNIQUE_FILE_NAME)) || (f.getName().equals(ORG_TAGGED_FILE_NAME))) {
+                if (f.getName().endsWith(".csv")) {
                     String filePath = f.getAbsolutePath();
                     List<String> titles = ReaderCsvFiles.readAtPosition(filePath, titlesPosition);
                     List<String> tags = ReaderCsvFiles.readAtPosition(filePath, 4);
@@ -264,7 +260,7 @@ public class DbController {
                         continue;
                     }
                     for (int i = 0; i < titles.size(); i++) {
-                        if (tags.get(i).equals("") || titles.get(i).contains("\'")) {
+                        if (tags.get(i).equals("")) {
                             continue;
                         }
                         Date date = convertStringToDate(dates.get(i));
@@ -617,4 +613,27 @@ public class DbController {
 		}
 	}
 
+	@GetMapping("/createTagStats")
+	@ResponseBody
+	public boolean createCurrencyTagStats(@RequestParam("secNum") Long securityNumber){
+		if (!securityNumber.equals(NewsAnalyzerMain.getSecurityNumber())) {
+			return false;
+		}
+		System.out.println("Im gonna find tags");
+		List<Tag> tags = ((List<Tag>) tagRepository.findAll());
+		if (tags.isEmpty()) {
+			System.out.println("No currency tags found");
+			return false;
+		}
+		File destinationFile = new File("tagsStats.csv");
+		destinationFile.delete();
+		for (Tag tag : tags) {
+			try {
+				WriterCsvFiles.write(destinationFile.getAbsolutePath(), tag.getName(), Integer.toString(tag.getPressReleases().size()));
+			} catch (IOException e) {
+				System.err.println("Error while handling tag: " + tag.getName());
+			}
+		}
+		return true;
+	}
 }

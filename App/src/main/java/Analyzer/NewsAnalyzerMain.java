@@ -74,7 +74,7 @@ public class NewsAnalyzerMain {
 		new Thread(feedDownloaderWorker).start();
 
         while (true) {
-            System.out.println("Type \"p\" and I will do it. (You can type \"d\" too)");
+            System.out.println("Type \"p\" and I will do it. (You can type \"d\" or tl or cs too)");
             line = scanner.nextLine();
 			try {
 				if (line.equals("p")) {
@@ -91,10 +91,14 @@ public class NewsAnalyzerMain {
 				} else if(line.equals("tl")){
 					MainTagger.tagNewFeeds(1);
 					MainTagger.tagNewFeedsCurrency(2);
+				} else if (line.equals("cs")) {
+					if (!dbUtil.createCurrencyTagStats()) {
+						System.out.println("Something went wrong");
+					}
 				} else {
 					System.out.println("Unknown command");
 				}
-			} catch (IOException e) {
+			} catch (Exception e) {
 				System.err.println("Something went wrong :/");
 				e.printStackTrace();
 			}
