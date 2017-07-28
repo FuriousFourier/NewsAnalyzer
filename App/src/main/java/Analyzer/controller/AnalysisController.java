@@ -154,10 +154,10 @@ public class AnalysisController {
         else
             title = value;
         System.out.println("Title: " + title);
-        Newspaper newspaper = newspaperRepository.findByName(title); //find newspaper
+		Newspaper newspaper = newspaperRepository.findByName(title); //find newspaper
 		fetchedNotes = new HashSet<>();
         if (newspaper != null) {
-        	currentNewspaper = newspaper;
+			currentNewspaper = newspaper;
         	getNotesForOneNewspaper();
         }
         if (fetchedNotes.size() < 1) {
@@ -283,10 +283,10 @@ public class AnalysisController {
 			edgesGlobalWriter = new CSVWriter(new FileWriter(edgesGlobalFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
 		}
 		String[] newspaperList = { "Interia", "Fakt", "Newsweek", "RMF24", "Today", "China Daily"};
-		for (Newspaper n : fetchedNewspapers) {
-			value = n.getName();
-		//for (String s: newspaperList) {
-			//value = s;
+		/*for (Newspaper n : fetchedNewspapers) {
+			value = n.getName();*/
+		for (String s: newspaperList) {
+			value = s;
 			setIsAskingForValue(false);
 			if ((getPressReleasesByNews().equals("foo")) && (fetchedNotes != null) && (!fetchedNotes.isEmpty())){
 				System.out.println("******************* *Newspaper: "+value + " ************************");
@@ -326,8 +326,8 @@ public class AnalysisController {
 					File edgesFile = new File(edgesFileName);
 					graphFile.delete();
 					nodesFile.delete();
-					edgesFile.delete();
-					graphFile.createNewFile();
+					System.out.println("JEDEN " + edgesFile.delete());
+					System.out.println("DWA " + graphFile.createNewFile());
 					nodesFile.createNewFile();
 					edgesFile.createNewFile();
 					CSVWriter graphWriter = new CSVWriter(new FileWriter(graphFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);

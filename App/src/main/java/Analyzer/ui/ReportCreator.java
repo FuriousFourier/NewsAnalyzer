@@ -213,21 +213,36 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 					System.out.println("No chart to display for " + series.get(0) + " etc. " + labelValues.get(0) + " etc., param: " + p);
 					continue;
 				}
-				try {
-					BitmapEncoder.saveBitmap(chart, "target/classes/charts/" + chartName + "_" + p, BitmapEncoder.BitmapFormat.PNG);
-					URI uri;
-					System.out.println(ClassLoader.getSystemResource(""));
-					if (ClassLoader.getSystemResource("charts/" + chartName + "_" + p + ".png") != null) {
-						uri = ClassLoader.getSystemResource("charts/" + chartName + "_" + p + ".png").toURI();
-						Path path = Paths.get(uri);
-						Image img = Image.getInstance(path.toAbsolutePath().toString());
-						img.scaleToFit(rect.getWidth() - margin, rect.getHeight());
-						report.add(img);
+				final Set<Integer> set = new HashSet<>();
+				Thread thread = new Thread(() -> {
+					try {
+						BitmapEncoder.saveBitmap(chart, "target/classes/charts/" + chartName + "_" + p, BitmapEncoder.BitmapFormat.PNG);
+						URI uri;
+						System.out.println(ClassLoader.getSystemResource(""));
+						if (ClassLoader.getSystemResource("charts/" + chartName + "_" + p + ".png") != null) {
+							uri = ClassLoader.getSystemResource("charts/" + chartName + "_" + p + ".png").toURI();
+							Path path = Paths.get(uri);
+							Image img = Image.getInstance(path.toAbsolutePath().toString());
+							img.scaleToFit(rect.getWidth() - margin, rect.getHeight());
+							System.err.println("AAA");
+							report.add(img);
+							System.err.println("BBB");
+						}
+						set.add(1);
+					} catch (Exception e) {
+						System.err.println("BŁĄD w wątku");
+						e.printStackTrace();
 					}
-				} catch (Exception e) {
-					e.printStackTrace();
-					return;
+				});
+				thread.start();
+				thread.join();
+				if (set.isEmpty()) {
+					System.err.println("NIE PRZESZŁO");
+				} else {
+					System.err.println("PRZESZŁO");
 				}
+				set.remove(1);
+
 			}
 		}catch (Exception E){
 			System.out.println("DZIWNY EXCEPTION!");
