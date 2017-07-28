@@ -375,12 +375,13 @@ public class AnalysisController {
 				"\to -> compare one newspaper with all others +\n" +
 				"\tm -> manually type newspapers' titles to compare together\n");
 		String option = br.readLine();
-
+		date1 = "2017-07-04";
+		date2 = "2017-07-28";
 		System.out.println("Enter date range");
-		System.out.print("Date 1: ");
-		date1 = br.readLine();
-		System.out.print("Date 2: ");
-		date2 = br.readLine();
+		System.out.print("Date 1: " + date1 +"\n");
+		//date1 = br.readLine();
+		System.out.print("Date 2: " + date2 + "\n");
+		//date2 = br.readLine();
 		if (option.startsWith("o")) {
 			System.out.print("Newspaper to compare with others: ");
 			titleToCompare = br.readLine();

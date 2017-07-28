@@ -96,6 +96,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 		//to perform analysis for nodes, showChart need new boolean (if it's about nodes) and appropriate dataPath during invocation
 		//moreover, currently there is no output for node analysis here
 		//output would be rather a text, not dozen of charts
+		CSVWriter topWriter = null;
 		try {
 			LabelComparator labelComparator = new LabelComparator();
 			ValueComparator valueComparator = new ValueComparator();
@@ -103,16 +104,16 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 			this.nrOfSerieses = nrOfSerieses;
 			File inputFile = new File(dataPath);
 			CSVReader reader = null;
-			try {
+			//try {
 				reader = new CSVReader(new FileReader(inputFile), '\t');
-			} catch (FileNotFoundException e) {
+			/*} catch (FileNotFoundException e) {
 				System.out.println("EXCEPTION in showChart!!");
 				e.printStackTrace();
-			}
+			}*/
 			String[] nextLine;
 			Map<String, Map<String, List<DataContainer>>> data = new HashMap<>(); //do analizy grafu
 			String[] columnNames = null;
-			try {
+			//try {
 				while ((nextLine = reader.readNext()) != null) {
 					if (nextLine[0].equals("Date")) {
 						if (columnNames == null) { //dla analizy wezlow - musze sprawic, aby najpierw wazniejsza gazeta byla uwzgledniona!
@@ -120,29 +121,32 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 						}
 						continue;
 					}
-					data.putIfAbsent(nextLine[2], new HashMap<>()); //zapisuje parametr
+					try {
+						data.putIfAbsent(nextLine[2], new HashMap<>()); //zapisuje parametr
+					}catch (Exception e){
+						System.out.println("Wypis felernej linijki (rozmiar: " + nextLine.length);
+						for (String s: nextLine)
+							System.out.print(s);
+						System.out.println();
+					}
+
 					data.get(nextLine[2]).putIfAbsent(nextLine[1], new ArrayList<>()); //tu moge juz dodac gazete, bo znam parametr
 					//dla grafow - dodaje parametr i basta
 					if (!isNodeAnalysis) {
-						DataContainer container;
 						if (nextLine[3].equals("NaN"))
-							container = new DataContainer(nextLine[0], -0.1);
-						else
-							container = new DataContainer(nextLine[0], NumberFormat.getInstance().parse(nextLine[3]));
+							nextLine[3] = "-0.1";
+						//else
+						//System.out.println(nextLine[3] + " -> " + NumberFormat.getInstance(Locale.ENGLISH).parse(nextLine[3]).doubleValue());
+						DataContainer container = new DataContainer(nextLine[0], NumberFormat.getInstance(Locale.ENGLISH).parse(nextLine[3]));
 						data.get(nextLine[2]).get(nextLine[1]).add(container);
 					} else {
 						for (int j = 3; j < columnNames.length; j++) {
-							DataContainer container = new DataContainer(columnNames[j], NumberFormat.getInstance().parse(nextLine[j]));
+							//System.out.println(nextLine[j] + " -> " + NumberFormat.getInstance(Locale.ENGLISH).parse(nextLine[j]).doubleValue());
+							DataContainer container = new DataContainer(columnNames[j], NumberFormat.getInstance(Locale.ENGLISH).parse(nextLine[j]));
 							data.get(nextLine[2]).get(nextLine[1]).add(container);
 						}
 					}
 				}
-			} catch (IOException e) {
-				System.out.println("EXCEPTION IN showChart!!!");
-				e.printStackTrace();
-			} catch (ParseException e) {
-				e.printStackTrace();
-			}
 
 			com.itextpdf.text.Rectangle rect = report.getPageSize();
 			float margin = report.rightMargin() + report.leftMargin();
@@ -158,7 +162,25 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 			List<DataContainer> importantTags = new ArrayList<>();
 			List<DataContainer> currentTags = new ArrayList<>();
 			SortedSet<String> labelsSet = new TreeSet<>(data.keySet());
+			//give TOP 10 to output .csv files
+			String topFileName = "src/main/resources/csv/"+chartName+"_TOP.csv";
+			File topFile = new File(topFileName);
+			topFile.delete();
+			topFile.createNewFile();
+			topWriter = new CSVWriter(new FileWriter(topFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
+			String[] textForTop = new String[23];
+			textForTop[0] = "Date";
+			textForTop[1] = "Newspaper";
+			textForTop[2] = "Param name";
+			for (int i =0 ; i < 10; i+=2){
+				textForTop[2+i] = i+"-tag";
+				textForTop[2+i+1] = "Tag rank";
+			}
+			topWriter.writeNext(textForTop);
+
+			textForTop[0] = chartName;
 			for (String p : labelsSet) { //for nodes it would be ReportInput.nodesParams
+				textForTop[2] = p;
 				currentParam = p;
 				Set<String> LabelsSet = new HashSet<>();
 				values = new HashMap<>();
@@ -168,6 +190,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 				int i = 0; //liczba gazet
 				System.out.println("Nr of serieses; " + nrOfSerieses);
 				for (String n : newspaperData.keySet()) {
+					textForTop[1] = n;
 					series.add(n);
 					System.out.println("Newspaper: " + n);
 					List<DataContainer> dateData = newspaperData.get(n);
@@ -180,29 +203,36 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 					} else {
 						if (i == 0 && importantTags.isEmpty()) {
 							sort(dateData, valueComparator);
+							System.out.println("Important tags:");
 							for (int k = 0; k < 10; k++) { //sparametryzowac po liczbie tagow, w wywolaniu funkcji
 								importantTags.add(dateData.get(k));
+								System.out.println(dateData.get(k).date+"\t");
+								textForTop[2+k] = dateData.get(k).date;
+								textForTop[2+k+1] = dateData.get(k).value.toString();
 							}
 							currentTags = dateData;
 						} else {
 							for (DataContainer d : importantTags) {
 								int index = getTagIndex(dateData, d.date);
-								if (index != -1)
+								if (index != -1) {
 									currentTags.add(dateData.get(index));
+								}
 								else
 									System.out.println("Tag " + d.date + " hasn't been found in dateData!!!");
 							}
 						}
 					}
+					System.out.println("currentTags.size(): " + currentTags.size());
 					for (DataContainer d : currentTags) {
 						LabelsSet.add(d.date);
 						values.putIfAbsent(d.date, new ArrayList<>(nrOfSerieses));
-						System.out.println("list size: " + values.get(d.date).size());
+						//System.out.println("list size: " + values.get(d.date).size());
 						while (values.get(d.date).size() < i)
 							values.get(d.date).add(0); //naprawienie IndexOutOfBoundsException
 						values.get(d.date).add(i, d.value);
-						System.out.println(d.value + " added to series  " + i + " for " + d.date);
+						//System.out.println(d.value + " added to series  " + i + " for " + d.date);
 					}
+					topWriter.writeNext(textForTop);
 					i++;
 				}
 
@@ -244,6 +274,8 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 				set.remove(1);
 
 			}
+			if (topWriter != null)
+				topWriter.close();
 		}catch (Exception E){
 			System.out.println("DZIWNY EXCEPTION!");
 			E.printStackTrace();
@@ -271,6 +303,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 		chart.getStyler().setLegendPosition(Styler.LegendPosition.InsideSE);
 		chart.getStyler().setHasAnnotations(true);
 		chart.getStyler().setXAxisLabelRotation(80);
+		chart.getStyler().setYAxisDecimalPattern("#0.000");
 
 		// Series
 
