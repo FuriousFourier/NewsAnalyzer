@@ -102,23 +102,6 @@ public class MainTagger {
 		}
 	}
 
-	public static void tagNewFeeds(int workId) throws IOException {
-		long startTime = System.nanoTime();
-		Thread[] workers = new Thread[tagFiles.length];
-
-		for (int i=0; i<tagFiles.length; ++i) {
-
-			final BasicTagger tagger = normalTaggers[i];
-			final String tagFile = tagFiles[i];
-			final String destinationSuffix = destinationSuffixes[i];
-
-			initWorkersAndStart(workId, workers, i, tagger, tagFile, destinationSuffix, InfoContainer.NEW_FEEDS_PATH, false);
-		}
-		waitForWorkers(workers);
-		long finishTime = System.nanoTime();
-		System.out.println("Finished work " + workId + ", time: " + ((finishTime-startTime)/ NewsAnalyzerMain.DENOMINATOR));
-	}
-
 	public static void initWorkersAndStart(int workId, Thread[] workers, int i, BasicTagger tagger, String tagFile, String destinationSuffix, String sourcePath, boolean isGeomedia) {
 		workers[i] = new Thread(() -> {
 			try {
@@ -174,25 +157,31 @@ public class MainTagger {
 		}
 	}
 
-	public static void tagNewFeedsCurrency(int workId) throws InvalidDataException {
-		if (InfoContainer.currencyTagFiles.length != currencyTaggers.length) {
-			System.err.println("Error in start of currency, lengths: " + InfoContainer.currencyTagFiles.length + ", " + currencyTaggers.length);
-			throw new InvalidDataException();
+	public static void tagNewFeeds(int workId) throws IOException {
+		long startTime = System.nanoTime();
+		Thread[] nonCurrencyWorkers = new Thread[tagFiles.length];
+		Thread[] currencyWorkers = new Thread[currencyTaggers.length];
+
+
+		for (int i=0; i<tagFiles.length; ++i) {
+
+			final BasicTagger tagger = normalTaggers[i];
+			final String tagFile = tagFiles[i];
+			final String destinationSuffix = destinationSuffixes[i];
+
+			initWorkersAndStart(workId, nonCurrencyWorkers, i, tagger, tagFile, destinationSuffix, InfoContainer.NEW_FEEDS_PATH, false);
 		}
 
-		Thread[] workers = new Thread[currencyTaggers.length];
-
-		long startTime = System.nanoTime();
 		for (int i=0; i<currencyTaggers.length; ++i) {
 
 			final BasicTagger tagger = currencyTaggers[i];
 			final String tagFile = InfoContainer.currencyTagFiles[i];
 
-			initWorkersAndStart(workId, workers, i, tagger, tagFile, destinationCurrencyTagSuffix, InfoContainer.NEW_FEEDS_PATH, false);
+			initWorkersAndStart(workId + 1, currencyWorkers, i, tagger, tagFile, destinationCurrencyTagSuffix, InfoContainer.NEW_FEEDS_PATH, false);
 		}
 
-		waitForWorkers(workers);
-
+		waitForWorkers(nonCurrencyWorkers);
+		waitForWorkers(currencyWorkers);
 		long finishTime = System.nanoTime();
 		System.out.println("Finished work " + workId + ", time: " + ((finishTime-startTime)/ NewsAnalyzerMain.DENOMINATOR));
 	}

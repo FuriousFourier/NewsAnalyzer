@@ -37,7 +37,8 @@ public class DbUtil {
 	}
 
 	public boolean getNewFeeds() throws IOException {
-		URL url = new URL("http://localhost:8080/getNewFeeds?secNum=" + NewsAnalyzerMain.getSecurityNumber());
+		URL url = new URL("http://localhost:8080/getNewFeeds?secNum=" + NewsAnalyzerMain.getSecurityNumber()
+		+ "&shouldDelete=" + true);
 		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 		connection.setRequestProperty("User-Agent", USER_AGENT);
 		int responseCode = connection.getResponseCode();
@@ -61,6 +62,18 @@ public class DbUtil {
 	}
 
 	public boolean createCurrencyTagStats() throws IOException {
+		URL url = new URL("http://localhost:8080/createCurrencyTagStats?secNum=" + NewsAnalyzerMain.getSecurityNumber());
+		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+		connection.setRequestProperty("User-Agent", USER_AGENT);
+		int responseCode = connection.getResponseCode();
+		if (responseCode != 200) {
+			throw new HTTPException(responseCode);
+		}
+		Scanner scanner = new Scanner(connection.getInputStream());
+		return scanner.nextBoolean();
+	}
+
+	public boolean createTagStats() throws IOException {
 		URL url = new URL("http://localhost:8080/createTagStats?secNum=" + NewsAnalyzerMain.getSecurityNumber());
 		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 		connection.setRequestProperty("User-Agent", USER_AGENT);

@@ -90,9 +90,12 @@ public class NewsAnalyzerMain {
 					System.exit(0);
 				} else if(line.equals("tl")){
 					MainTagger.tagNewFeeds(1);
-					MainTagger.tagNewFeedsCurrency(2);
 				} else if (line.equals("cs")) {
 					if (!dbUtil.createCurrencyTagStats()) {
+						System.out.println("Something went wrong");
+					}
+				} else if (line.equals("ts")) {
+					if (!dbUtil.createTagStats()) {
 						System.out.println("Something went wrong");
 					}
 				} else if (line.equals("to")){
@@ -110,7 +113,6 @@ public class NewsAnalyzerMain {
 
     private static void tagAllFeeds() throws IOException {
 		MainTagger.tagNewFeeds(1);
-		MainTagger.tagNewFeedsCurrency(2);
 		MainTagger.tagGeomedia(3);
 	}
 

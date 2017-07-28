@@ -56,7 +56,12 @@ public class EnglishCurrencyTagger extends BasicTagger {
 						System.out.println("Empty file: " + sourceFilePath);
 						continue;
 					}
-					String feedName = feeds.get(0);
+					String feedName;
+					if (feeds.size() > 1) {
+						feedName = feeds.get(1);
+					} else {
+						feedName = feeds.get(0);
+					}
 
 					Feed feed = feedRepository.findByName(feedName);
 					if (feed == null) {
