@@ -16,5 +16,7 @@ public interface PressReleaseRepository extends PagingAndSortingRepository<Press
 
 	Set<PressRelease> findByTitle(String name);
 
+/*
 	PressRelease findByTitleAndDateAndFeed(String title, Date date, Feed feed);
+*/
 }

@@ -52,7 +52,11 @@ public class EnglishCurrencyTagger extends BasicTagger {
 					}
 
 					List<String> feeds = ReaderCsvFiles.readAtPosition(sourceFilePath, dataPositions[0]);
-					String feedName = feeds.get(1);
+					if (feeds.isEmpty()) {
+						System.out.println("Empty file: " + sourceFilePath);
+						continue;
+					}
+					String feedName = feeds.get(0);
 
 					Feed feed = feedRepository.findByName(feedName);
 					if (feed == null) {

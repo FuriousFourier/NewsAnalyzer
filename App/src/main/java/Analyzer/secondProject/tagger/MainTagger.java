@@ -116,7 +116,7 @@ public class MainTagger {
 		}
 		waitForWorkers(workers);
 		long finishTime = System.nanoTime();
-		System.out.println("Finished doFirstStageOfWork " + workId + ", time: " + ((finishTime-startTime)/ NewsAnalyzerMain.DENOMINATOR));
+		System.out.println("Finished work " + workId + ", time: " + ((finishTime-startTime)/ NewsAnalyzerMain.DENOMINATOR));
 	}
 
 	public static void initWorkersAndStart(int workId, Thread[] workers, int i, BasicTagger tagger, String tagFile, String destinationSuffix, String sourcePath, boolean isGeomedia) {
@@ -160,7 +160,7 @@ public class MainTagger {
 		waitForWorkers(currencyWorkers);
 
 		long finishTime = System.nanoTime();
-		System.out.println("Finished doFirstStageOfWork " + workId + ", time: " + ((finishTime-startTime)/ NewsAnalyzerMain.DENOMINATOR));
+		System.out.println("Finished work " + workId + ", time: " + ((finishTime-startTime)/ NewsAnalyzerMain.DENOMINATOR));
 	}
 
 	public static void waitForWorkers(Thread[] workers) {
@@ -194,7 +194,7 @@ public class MainTagger {
 		waitForWorkers(workers);
 
 		long finishTime = System.nanoTime();
-		System.out.println("Finished doFirstStageOfWork " + workId + ", time: " + ((finishTime-startTime)/ NewsAnalyzerMain.DENOMINATOR));
+		System.out.println("Finished work " + workId + ", time: " + ((finishTime-startTime)/ NewsAnalyzerMain.DENOMINATOR));
 	}
 
 	private static void createTagsAndCountriesFile() throws IOException {

@@ -4,7 +4,6 @@ import Analyzer.info.InfoContainer;
 import Analyzer.secondProject.csv.reader.ReaderCsvFiles;
 
 import static Analyzer.NewsAnalyzerMain.DENOMINATOR;
-import static Analyzer.NewsAnalyzerMain.getSecurityNumber;
 import static Analyzer.info.InfoContainer.*;
 
 import Analyzer.secondProject.csv.writer.WriterCsvFiles;
@@ -30,7 +29,6 @@ import java.util.*;
 
 import static Analyzer.info.InfoContainer.languages;
 import static Analyzer.secondProject.tagger.MainTagger.deleteFolder;
-import static Analyzer.secondProject.tagger.MainTagger.getSourceDataPositions;
 
 /**
  * Created by pawel on 12.07.17.
@@ -163,7 +161,6 @@ public class DbController {
             System.out.println("Null for " + file.getAbsolutePath());
             return;
         }
-		System.out.println(files.length + " files");
 		for (File f : files) {
             if (f.isFile()) {
                 if (f.getName().contains(".csv") && !f.getName().equals(GEOMEDIA_RSS_FILE_NAME) && !f.getName().equals(GEOMEDIA_EBOLA_TAGGED_FILE_NAME)
@@ -171,10 +168,10 @@ public class DbController {
                         && !f.getName().equals(COUNTRY_TAG_FILE_NAME)) {
 
                     String filePath = f.getAbsolutePath();
-                    List<String> feedsNames = null;
-                    List<String> dates = null;
-                    List<String> titles = null;
-                    List<String> contents = null;
+                    List<String> feedsNames;
+                    List<String> dates;
+                    List<String> titles;
+                    List<String> contents;
 					try {
 						if (newFeeds) {
 							feedsNames = ReaderCsvFiles.readAtPosition(filePath, 0);
@@ -234,11 +231,11 @@ public class DbController {
 
     private static void addPressReleasesTagsDataNewWay(String path, int titlesPosition, int datePosition) throws IOException {
         File file = new File(path);
-        extractTaggedFeedsFilesAndSaveNewWay(file, titlesPosition, datePosition);
+        extractTaggedFeedsFilesAndSaveNewWay(file);
 
     }
 
-    private static void extractTaggedFeedsFilesAndSaveNewWay(File file, int titlesPosition, int datePosition) throws IOException {
+    private static void extractTaggedFeedsFilesAndSaveNewWay(File file) throws IOException {
         File[] files = file.listFiles();
         if (files == null) {
             System.out.println("There is null here, file: " + file.getAbsolutePath());
@@ -248,13 +245,17 @@ public class DbController {
             if (f.isFile()) {
                 if (f.getName().endsWith(".csv")) {
                     String filePath = f.getAbsolutePath();
-                    List<String> titles = ReaderCsvFiles.readAtPosition(filePath, titlesPosition);
+					List<String> feeds = ReaderCsvFiles.readAtPosition(filePath, 0);
+					List<String> titles = ReaderCsvFiles.readAtPosition(filePath, 2);
                     List<String> tags = ReaderCsvFiles.readAtPosition(filePath, 4);
-                    List<String> dates = ReaderCsvFiles.readAtPosition(filePath, datePosition);
+                    List<String> dates = ReaderCsvFiles.readAtPosition(filePath, 1);
 
-                    //ATTENTION - PARSING FILE SHOULD BE NAMED LIKE FEED NAME !!!
-                    String feedName = f.getName().split("\\.")[0];
-                    Feed feed = feedMap.get(feedName);
+					if (feeds.isEmpty()) {
+						System.out.println("Empty file: " + filePath);
+						continue;
+					}
+					String feedName = feeds.get(0);
+					Feed feed = feedMap.get(feedName);
                     if (feed == null) {
                         System.out.println("There is no feed called \"" + feedName + "\"");
                         continue;
@@ -276,7 +277,7 @@ public class DbController {
                 }
 
             } else if (f.isDirectory()) {
-                extractTaggedFeedsFilesAndSaveNewWay(f, titlesPosition, datePosition);
+                extractTaggedFeedsFilesAndSaveNewWay(f);
             }
         }
     }

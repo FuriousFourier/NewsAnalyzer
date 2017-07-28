@@ -123,7 +123,11 @@ public class PolishCurrencyTagger extends BasicTagger {
 						continue;
 					}
 					List<String> feeds = ReaderCsvFiles.readAtPosition(sourceFilePath, dataPositions[0]);
-					String feedName = feeds.get(1);
+					if (feeds.isEmpty()) {
+						System.out.println("Empty file: " + sourceFilePath);
+						continue;
+					}
+					String feedName = feeds.get(0);
 					Feed feed = feedRepository.findByName(feedName);
 					if (feed == null) {
 						System.err.println("Feed " + feedName + " not found in DB");

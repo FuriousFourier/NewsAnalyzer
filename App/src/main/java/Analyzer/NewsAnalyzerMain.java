@@ -95,6 +95,8 @@ public class NewsAnalyzerMain {
 					if (!dbUtil.createCurrencyTagStats()) {
 						System.out.println("Something went wrong");
 					}
+				} else if (line.equals("to")){
+					MainTagger.tagGeomedia(1);
 				} else {
 					System.out.println("Unknown command");
 				}
