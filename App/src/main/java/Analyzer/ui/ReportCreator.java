@@ -47,11 +47,11 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 			}
 
 			if (nextLine[0].compareTo(date1) < 0 || nextLine[0].compareTo(date2) > 0){
-				System.out.println(nextLine[0] + " - skipping...");
+				//System.out.println(nextLine[0] + " - skipping...");
 				continue;
 			}
 
-			System.out.println(nextLine[0] + nextLine[1]);
+			//System.out.println(nextLine[0] + nextLine[1]);
 			writer.writeNext(nextLine);
 		}
 	}
@@ -73,10 +73,9 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 		}
 	}
 	public class ValueComparator implements Comparator<DataContainer>{
-
 		@Override
 		public synchronized  int compare(DataContainer t0, DataContainer t1) {
-			return new BigDecimal(t0.toString()).compareTo(new BigDecimal(t1.value.toString()));
+			return new BigDecimal(t0.value.toString()).compareTo(new BigDecimal(t1.value.toString()));
 		}
 	}
 	public class DataContainer{
@@ -127,7 +126,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 					if (!isNodeAnalysis) {
 						DataContainer container;
 						if (nextLine[3].equals("NaN"))
-							container = new DataContainer(nextLine[0], -1);
+							container = new DataContainer(nextLine[0], -0.1);
 						else
 							container = new DataContainer(nextLine[0], NumberFormat.getInstance().parse(nextLine[3]));
 						data.get(nextLine[2]).get(nextLine[1]).add(container);
@@ -158,9 +157,8 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 			//isNodeAnalysis = false; //for nodes it would be true
 			List<DataContainer> importantTags = new ArrayList<>();
 			List<DataContainer> currentTags = new ArrayList<>();
-			for (String p : data.keySet()) { //for nodes it would be ReportInput.nodesParams
-			/*if (p.equals("Date") || p.equals("Newspaper"))
-				continue;*/
+			SortedSet<String> labelsSet = new TreeSet<>(data.keySet());
+			for (String p : labelsSet) { //for nodes it would be ReportInput.nodesParams
 				currentParam = p;
 				Set<String> LabelsSet = new HashSet<>();
 				values = new HashMap<>();
@@ -215,7 +213,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 					System.out.println("No chart to display for " + series.get(0) + " etc. " + labelValues.get(0) + " etc., param: " + p);
 					continue;
 				}
-				try {//cos nie jest dobrze inicjalizowane dla a>r>m, trzeba sprawdzic, co!
+				try {
 					BitmapEncoder.saveBitmap(chart, "target/classes/charts/" + chartName + "_" + p, BitmapEncoder.BitmapFormat.PNG);
 					URI uri;
 					System.out.println(ClassLoader.getSystemResource(""));
@@ -265,9 +263,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 			List<Number> currentValues = new ArrayList<>();
 			for (String date: labelValues){
 				if (i >= values.get(date).size() || values.get(date).get(i) == null)
-					currentValues.add(-1);
-				/*else if (values.get(date).get(i).toString().equals("NaN"))
-					currentValues.add(-1);*/
+					currentValues.add(-0.1);
 				else
 					currentValues.add(values.get(date).get(i));
 			}

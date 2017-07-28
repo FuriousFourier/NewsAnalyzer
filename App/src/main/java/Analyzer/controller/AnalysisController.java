@@ -52,6 +52,7 @@ public class AnalysisController {
 	private int nrOfNewspapers;
 	private String date1, date2;
 	private String reportTitle;
+	private boolean isChosenToCompare;
 
     ReportCreator reportCreator = new ReportCreator();
 
@@ -282,10 +283,10 @@ public class AnalysisController {
 			edgesGlobalWriter = new CSVWriter(new FileWriter(edgesGlobalFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
 		}
 		String[] newspaperList = { "Interia", "Fakt", "Newsweek", "RMF24", "Today", "China Daily"};
-		//for (Newspaper n : fetchedNewspapers) {
-			//value = n.getName();
-		for (String s: newspaperList) {
-			value = s;
+		for (Newspaper n : fetchedNewspapers) {
+			value = n.getName();
+		//for (String s: newspaperList) {
+			//value = s;
 			setIsAskingForValue(false);
 			if ((getPressReleasesByNews().equals("foo")) && (fetchedNotes != null) && (!fetchedNotes.isEmpty())){
 				System.out.println("******************* *Newspaper: "+value + " ************************");
@@ -339,6 +340,7 @@ public class AnalysisController {
 						GraphHandler.reset();
 						GraphHandler.initGraphFromPressReleases(newspaperNotes.get(d));
 						GraphHandler.graphCreator(d, value, fetchedTags, graphWriter, nodesWriter, edgesWriter, initColumns);
+						//System.out.println("initColumns: " + initColumns);
 						initColumns = false;
 					}
 					graphWriter.close();
@@ -398,15 +400,20 @@ public class AnalysisController {
 			}
 		}
 		if (option.startsWith("o")) {
+			isChosenToCompare = true;
 			for (Newspaper n : fetchedNewspapers) {
 				if (n.getName().equals(titleToCompare))
 					continue;
 				newspaperTitles = new ArrayList<>();
 				newspaperTitles.add(titleToCompare);
 				newspaperTitles.add(n.getName());
+				/*System.out.println("Compated newspapers:");
+				for (String s : newspaperTitles)
+					System.out.print(s + " ");*/
 				compare();
 			}
 		} else if (option.startsWith("m")) {
+			isChosenToCompare = false;
 			compare();
 		}
 
@@ -438,11 +445,15 @@ public class AnalysisController {
 	public synchronized String compare() throws IOException, DocumentException, ParseException {
 		String daysFileName = "src/main/resources/csv/"+reportTitle+"("+date1+"_"+date2+")_days.csv";
 		File graphFile = new File(daysFileName);
-		graphFile.delete();
+		if (!isChosenToCompare) {
+			graphFile.delete();
+		}
 		graphFile.createNewFile();
+
 		CSVWriter graphWriter = new CSVWriter(new FileWriter(daysFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
 
 		for (String n : newspaperTitles){
+			System.out.println("Newspaper (in compare()): "+ n);
 			String filePath = "src/main/resources/csv/"+n+"(days).csv";
 			FileReader fileReader;
 			try {
@@ -463,9 +474,11 @@ public class AnalysisController {
 		graphFile = new File(graphFileName);
 		File nodesFile = new File(nodesFileName);
 		File edgesFile = new File(edgesFileName);
-		graphFile.delete();
-		nodesFile.delete();
-		edgesFile.delete();
+		if (!isChosenToCompare) {
+			graphFile.delete();
+			nodesFile.delete();
+			edgesFile.delete();
+		}
 		graphFile.createNewFile();
 		nodesFile.createNewFile();
 		edgesFile.createNewFile();

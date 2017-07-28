@@ -159,10 +159,10 @@ public class GraphHandler {
 		while ((nextLine = reader.readNext()) != null){
 			if(nextLine[0].compareTo(date1)< 0 || nextLine[0].compareTo(date2)>0)
 				continue;
-			System.out.print("Line: ");
+			/*System.out.print("Line: ");
 			for (String s : nextLine){
 				System.out.print(s + "\t");
-			}
+			}*/
 			if (nextLine[0].startsWith("Date"))
 				continue;
 
@@ -182,7 +182,7 @@ public class GraphHandler {
 				if (nextLine[k].equals(""))
 					break;
 				if (nextLine[k].compareTo(nextLine[2]) < 0){
-					System.out.println(nextLine[k] + " skipped for " + nextLine[2]);
+					//System.out.println(nextLine[k] + " skipped for " + nextLine[2]);
 					continue;
 				}
 				Node n2 = directedGraph.getNode(nextLine[k]);
@@ -220,6 +220,48 @@ public class GraphHandler {
         for (Edge e : directedGraph.getEdges()) {
             System.out.println(e.getSource().getId() + " -> " + e.getTarget().getId());
         }*/
+		//System.out.println("initColumns in graphHandler: " +initColumns);
+
+		//inicjalizacja nazw kolumn w plikach csv
+		String[] textForEdges = new String[tags.size()+3];
+		int j=3;
+		if (initColumns) {
+			System.out.println("INIT EDGE COLUMNS");
+			textForEdges[0] = "Date";
+			textForEdges[1] = "Newspaper";
+			textForEdges[2] = "Source";
+			for (;j<tags.size()+3; j++){
+				textForEdges[j] = "N" + (j-2);
+			}
+			edgesWriter.writeNext(textForEdges);
+		}
+
+		String[] textForNodes = new String[tags.size()+3];
+		j=3;
+		if (initColumns) {
+			System.out.println("INIT NODES COLUMNS");
+			textForNodes[0] = "Date";
+			textForNodes[1] = "Newspaper";
+			textForNodes[2] = "Param name";
+			for (Tag t : tags) {
+				textForNodes[j] = t.getName();
+				j++;
+			}
+			nodesWriter.writeNext(textForNodes);
+		}
+
+
+		String[] textForGraph = new String[4];
+		if (initColumns) {
+			System.out.println("INIT GRAPH COLUMNS");
+			textForGraph[0] = "Date";
+			textForGraph[1] = "Newspaper";
+			textForGraph[2] = "Param name";
+			textForGraph[3] = "Param value";
+			graphWriter.writeNext(textForGraph);
+		}
+
+		//dalsza czesc algorytmu - wykona sie, jesli sa jakiekolwiek sensowne dane
 
 		DirectedGraph directedGraph= graphModel.getDirectedGraph();
 		if (directedGraph.getNodeCount() == 0){
@@ -268,19 +310,6 @@ public class GraphHandler {
 		prestigeStatistics.setCalculateRank(true);
 		prestigeStatistics.execute(graphModel);
 
-
-		String[] textForEdges = new String[tags.size()+3];
-		int j=3;
-		if (initColumns) {
-			textForEdges[0] = "Date";
-			textForEdges[1] = "Newspaper";
-			textForEdges[2] = "Source";
-			for (;j<tags.size()+3; j++){
-				textForEdges[j] = "N" + j;
-			}
-			edgesWriter.writeNext(textForEdges);
-		}
-
 		textForEdges[0] = date;
 		textForEdges[1] = newspaper;
 		for (Tag t : tags) {
@@ -299,32 +328,19 @@ public class GraphHandler {
 			}
 		}
 
-
-		String[] textForNodes = new String[tags.size()+3];
-		j=3;
-		if (initColumns) {
-			textForNodes[0] = "Date";
-			textForNodes[1] = "Newspaper";
-			textForNodes[2] = "Param name";
-			for (Tag t : tags) {
-				textForNodes[j] = t.getName();
-				j++;
-			}
-			nodesWriter.writeNext(textForNodes);
-		}
 		textForNodes[0] = date;
 		textForNodes[1] = newspaper;
 		Table attributes = graphModel.getNodeTable();
 		for (String col: columnsToSee){
 			textForNodes[2] = col;
 			Column current = attributes.getColumn(col);
-			System.out.println(col+ ":");
+			//System.out.println(col+ ":");
 
 			j = 3;
 			for (Tag t : tags) {
 				Node n = graphModel.getGraph().getNode(t.getName());
 				if (n != null){
-					System.out.println(n.getLabel() + ": " + n.getAttribute(current));
+					//System.out.println(n.getLabel() + ": " + n.getAttribute(current));
 					textForNodes[j] = n.getAttribute(current).toString();
 				}
 				else
@@ -364,19 +380,10 @@ public class GraphHandler {
 		input.newspaper = newspaper;
 
 		SortedSet<String> graphParams = new TreeSet<>(input.getGraphParams());
-		String[] textForGraph = new String[graphParams.size()+2];
-
-		if (initColumns) {
-			textForGraph[0] = "Date";
-			textForGraph[1] = "Newspaper";
-			textForGraph[2] = "Param name";
-			textForGraph[3] = "Param value";
-			graphWriter.writeNext(textForGraph);
-		}
 		textForGraph[0] = date;
 		textForGraph[1] = newspaper;
 		for (String s: graphParams){
-			System.out.println(s + ": "+  input.getGraphValue(s));
+			//System.out.println(s + ": "+  input.getGraphValue(s));
 			textForGraph[2] = s;
 			textForGraph[3] = input.getGraphValue(s).toString();
 			graphWriter.writeNext(textForGraph);
