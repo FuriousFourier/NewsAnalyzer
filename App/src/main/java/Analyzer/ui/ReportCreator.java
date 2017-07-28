@@ -173,7 +173,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 			textForTop[1] = "Newspaper";
 			textForTop[2] = "Param name";
 			for (int i =0 ; i < 10; i+=2){
-				textForTop[2+i] = i+"-tag";
+				textForTop[2+i] = (i/2+1)+"-tag";
 				textForTop[2+i+1] = "Tag rank";
 			}
 			topWriter.writeNext(textForTop);
@@ -204,13 +204,13 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 						if (i == 0 && importantTags.isEmpty()) {
 							sort(dateData, valueComparator);
 							System.out.println("Important tags:");
-							for (int k = 0; k < 10; k++) { //sparametryzowac po liczbie tagow, w wywolaniu funkcji
+							for (int k = 0; k < 10; k+=2) { //sparametryzowac po liczbie tagow, w wywolaniu funkcji
 								importantTags.add(dateData.get(k));
 								System.out.println(dateData.get(k).date+"\t");
 								textForTop[2+k] = dateData.get(k).date;
 								textForTop[2+k+1] = dateData.get(k).value.toString();
 							}
-							currentTags = dateData;
+							currentTags = importantTags;
 						} else {
 							for (DataContainer d : importantTags) {
 								int index = getTagIndex(dateData, d.date);
@@ -243,39 +243,32 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 					System.out.println("No chart to display for " + series.get(0) + " etc. " + labelValues.get(0) + " etc., param: " + p);
 					continue;
 				}
-				final Set<Integer> set = new HashSet<>();
-				Thread thread = new Thread(() -> {
+
 					try {
-						BitmapEncoder.saveBitmap(chart, "target/classes/charts/" + chartName + "_" + p, BitmapEncoder.BitmapFormat.PNG);
-						URI uri;
-						System.out.println(ClassLoader.getSystemResource(""));
-						if (ClassLoader.getSystemResource("charts/" + chartName + "_" + p + ".png") != null) {
-							uri = ClassLoader.getSystemResource("charts/" + chartName + "_" + p + ".png").toURI();
-							Path path = Paths.get(uri);
+						System.err.println("PRZED Bitma");
+						BitmapEncoder.saveBitmap(chart, "src/main/resources/charts/" + chartName + "_" + p, BitmapEncoder.BitmapFormat.PNG);
+						System.err.println("Po Bitmap");
+						//URI uri;
+						//System.out.println(ClassLoader.getSystemResource(""));
+						System.err.println("PRZED IFem");
+						/*if (ClassLoader.getSystemResource("charts/" + chartName + "_" + p + ".png") != null) {
+							System.err.println("W IFie");
+							uri = ClassLoader.getSystemResource("charts/" + chartName + "_" + p + ".png").toURI();*/
+							Path path = Paths.get("src/main/resources/charts/"+ chartName + "_" + p+".png");
 							Image img = Image.getInstance(path.toAbsolutePath().toString());
 							img.scaleToFit(rect.getWidth() - margin, rect.getHeight());
 							System.err.println("AAA");
 							report.add(img);
 							System.err.println("BBB");
-						}
-						set.add(1);
+						//}
 					} catch (Exception e) {
-						System.err.println("BŁĄD w wątku");
-						e.printStackTrace();
+						System.err.println("BŁĄD");
+						continue;
 					}
-				});
-				thread.start();
-				thread.join();
-				if (set.isEmpty()) {
-					System.err.println("NIE PRZESZŁO");
-				} else {
-					System.err.println("PRZESZŁO");
-				}
-				set.remove(1);
 
 			}
-			if (topWriter != null)
-				topWriter.close();
+
+			topWriter.close();
 		}catch (Exception E){
 			System.out.println("DZIWNY EXCEPTION!");
 			E.printStackTrace();

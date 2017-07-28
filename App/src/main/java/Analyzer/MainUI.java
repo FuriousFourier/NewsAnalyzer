@@ -28,7 +28,7 @@ public class MainUI {
 
     }
 
-    public static void main (String args[]){
+    public static void main (String args[]) {
         Random random = new Random(System.currentTimeMillis());
         securityNumber = random.nextLong();
         MainUI mainUI = new MainUI();
@@ -96,6 +96,11 @@ public class MainUI {
             }
             myPrint("Goodbye!");
         } catch (Exception e){
+            e.printStackTrace();
+        }
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
         System.exit(0);

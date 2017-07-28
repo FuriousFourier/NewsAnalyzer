@@ -340,7 +340,6 @@ public class AnalysisController {
 						GraphHandler.reset();
 						GraphHandler.initGraphFromPressReleases(newspaperNotes.get(d));
 						GraphHandler.graphCreator(d, value, fetchedTags, graphWriter, nodesWriter, edgesWriter, initColumns);
-						//System.out.println("initColumns: " + initColumns);
 						initColumns = false;
 					}
 					graphWriter.close();
@@ -367,79 +366,81 @@ public class AnalysisController {
 		return "foo";
 	}
 	@GetMapping("/broadAnalysis")
-	public synchronized String chooseParams() throws IOException, DocumentException, ParseException {
-		fetchedTags = new TreeSet<>((List<Tag>) tagRepository.findAll());
+	public synchronized String chooseParams(){
+		try {
+			fetchedTags = new TreeSet<>((List<Tag>) tagRepository.findAll());
 
-		System.out.println("Choose option" +
-				"\ta -> compare all newspapers together\n" +
-				"\to -> compare one newspaper with all others +\n" +
-				"\tm -> manually type newspapers' titles to compare together\n");
-		String option = br.readLine();
-		date1 = "2017-07-04";
-		date2 = "2017-07-28";
-		System.out.println("Enter date range");
-		System.out.print("Date 1: " + date1 +"\n");
-		//date1 = br.readLine();
-		System.out.print("Date 2: " + date2 + "\n");
-		//date2 = br.readLine();
-		if (option.startsWith("o")) {
-			System.out.print("Newspaper to compare with others: ");
-			titleToCompare = br.readLine();
-			reportTitle = titleToCompare+"_with_others_";
-			getAllNewspapers();
-
-		} else if (option.startsWith("m")) {
-			System.out.print("Nr of newspapers to compare: ");
-			nrOfNewspapers = Integer.parseInt(br.readLine());
-			System.out.println("Enter one title per line:");
-			reportTitle = "";
-			newspaperTitles = new ArrayList<>();
-			for (int i = 0; i < nrOfNewspapers; i++) {
+			System.out.println("Choose option" +
+					"\ta -> compare all newspapers together\n" +
+					"\to -> compare one newspaper with all others +\n" +
+					"\tm -> manually type newspapers' titles to compare together\n");
+			String option = br.readLine();
+			date1 = "2017-07-04";
+			date2 = "2017-07-28";
+			System.out.println("Enter date range");
+			System.out.print("Date 1: " + date1 + "\n");
+			//date1 = br.readLine();
+			System.out.print("Date 2: " + date2 + "\n");
+			//date2 = br.readLine();
+			if (option.startsWith("o")) {
+				System.out.print("Newspaper to compare with others: ");
 				titleToCompare = br.readLine();
-				newspaperTitles.add(titleToCompare);
-				reportTitle +=  titleToCompare+"_";
-			}
-		}
-		if (option.startsWith("o")) {
-			isChosenToCompare = true;
-			for (Newspaper n : fetchedNewspapers) {
-				if (n.getName().equals(titleToCompare))
-					continue;
+				reportTitle = titleToCompare + "_with_others_";
+				getAllNewspapers();
+
+			} else if (option.startsWith("m")) {
+				System.out.print("Nr of newspapers to compare: ");
+				nrOfNewspapers = Integer.parseInt(br.readLine());
+				System.out.println("Enter one title per line:");
+				reportTitle = "";
 				newspaperTitles = new ArrayList<>();
-				newspaperTitles.add(titleToCompare);
-				newspaperTitles.add(n.getName());
-				/*System.out.println("Compated newspapers:");
-				for (String s : newspaperTitles)
-					System.out.print(s + " ");*/
+				for (int i = 0; i < nrOfNewspapers; i++) {
+					titleToCompare = br.readLine();
+					newspaperTitles.add(titleToCompare);
+					reportTitle += titleToCompare + "_";
+				}
+			}
+			if (option.startsWith("o")) {
+				isChosenToCompare = true;
+				for (Newspaper n : fetchedNewspapers) {
+					if (n.getName().equals(titleToCompare))
+						continue;
+					newspaperTitles = new ArrayList<>();
+					newspaperTitles.add(titleToCompare);
+					newspaperTitles.add(n.getName());
+					compare();
+				}
+			} else if (option.startsWith("m")) {
+				isChosenToCompare = false;
 				compare();
 			}
-		} else if (option.startsWith("m")) {
-			isChosenToCompare = false;
-			compare();
-		}
 
-		System.out.println("Shall I create pdf with charts? (t/n)");
-		if (br.readLine().startsWith("t")){
-			Document report = null;
-			try {
-				String daysFileName = "src/main/resources/csv/" + reportTitle + "(" + date1 + "_" + date2 + ")_days.csv";
-				String graphFileName = "src/main/resources/csv/" + reportTitle + "(" + date1 + "_" + date2 + ").csv";
-				String nodesFileName = "src/main/resources/csv/"+reportTitle+"("+date1+"_"+date2+")_nodes.csv";
-				report = reportCreator.createReportBase(reportTitle + "(" + date1 + "_" + date2 + ")");
-				System.out.println("Nr of newspaper titles: " + newspaperTitles.size());
-				reportCreator.showChart(daysFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ") - day by day", false);
-				reportCreator.showChart(graphFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ")", false);
-				reportCreator.showChart(nodesFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ")", true);
-			} catch (Exception e) {
-				System.out.println("EXCEPTION IN chooseParams()!!!");
-				e.printStackTrace();
-			} finally {
-				if (report != null)
-					report.close();
+			System.out.println("Shall I create pdf with charts? (t/n)");
+			if (br.readLine().startsWith("t")) {
+				Document report = null;
+				try {
+					String daysFileName = "src/main/resources/csv/" + reportTitle + "(" + date1 + "_" + date2 + ")_days.csv";
+					String graphFileName = "src/main/resources/csv/" + reportTitle + "(" + date1 + "_" + date2 + ").csv";
+					String nodesFileName = "src/main/resources/csv/" + reportTitle + "(" + date1 + "_" + date2 + ")_nodes.csv";
+					report = reportCreator.createReportBase(reportTitle + "(" + date1 + "_" + date2 + ")");
+					System.out.println("Nr of newspaper titles: " + newspaperTitles.size());
+					reportCreator.showChart(daysFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ") - day by day", false);
+					reportCreator.showChart(graphFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ")", false);
+					reportCreator.showChart(nodesFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ")", true);
+				} catch (Exception e) {
+					System.out.println("EXCEPTION IN chooseParams()");
+					e.printStackTrace();
+				} finally {
+					if (report != null)
+						report.close();
+				}
 			}
-		}
+		}catch (Exception e){
+			System.out.println("EXCEPTION IN chooseParams()!!! (out try)");
+		}finally {
 
-		return "foo";
+			return "foo";
+		}
 	}
 
 	@GetMapping("/broadAnalysis2")
