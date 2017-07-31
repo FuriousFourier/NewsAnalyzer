@@ -394,7 +394,7 @@ public class DbController {
 			try {
 				deleteFolder(InfoContainer.NEW_FEEDS_PATH);
 			} catch (IOException e) {
-				System.err.println("I cant delete feed folder, it probably didnt exist");
+				System.err.println("I cant delete feed folder, it probably didn't exist");
 			}
 		}
 		System.out.println("Im gonna download feeds");
