@@ -264,5 +264,5 @@ public class InfoContainer {
 	public static final String oldFeedsFolderPaths = "./data/Geomedia_extract_AGENDA";
 	public static final String countryTagFile = "./data/datafiles/Dico_Country_Free.csv";
 	public static final String[] currencyTagFiles = {"./data/datafiles/currencies_Polish.csv",
-			"./data/datafiles/currencies_English.csv"};
+			"./data/datafiles/currencies_English.csv", "./data/datafiles/currencies_French.csv", "./data/datafiles/currencies_Spanish.csv"};
 }

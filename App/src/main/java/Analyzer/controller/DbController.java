@@ -665,7 +665,7 @@ public class DbController {
 			try {
 				long currentTagCount = tag.getPressReleases().size();
 				tagCount += currentTagCount;
-				WriterCsvFiles.write(destinationFile.getAbsolutePath(), tag.getName(), Long.toString(currentTagCount));
+				WriterCsvFiles.write(destinationFile.getAbsolutePath(), tag.getName(), Long.toString(currentTagCount), tag.getCountry().getName());
 			} catch (IOException e) {
 				System.err.println("Error while handling tag: " + tag.getName());
 			}
@@ -694,12 +694,55 @@ public class DbController {
 			try {
 				long currentTagCount = tag.getPressReleases().size();
 				tagCount += currentTagCount;
-				WriterCsvFiles.write(destinationFile.getAbsolutePath(), tag.getName(), Long.toString(currentTagCount));
+				WriterCsvFiles.write(destinationFile.getAbsolutePath(), tag.getName(), Long.toString(currentTagCount), tag.getCountry().getName());
 			} catch (IOException e) {
 				System.err.println("Error while handling tag: " + tag.getName());
 			}
 		}
 		System.out.println("There are " + tagCount + " tags in PressReleases");
+		return true;
+	}
+
+	@GetMapping("/createCurrencyTagStatsForNewspapers")
+	@ResponseBody
+	public boolean createCurrencyTagStatsForNewspapers(@RequestParam("secNum") Long securityNumber) {
+		if (!securityNumber.equals(NewsAnalyzerMain.getSecurityNumber())) {
+			return false;
+		}
+
+		System.out.println("Lets start");
+		final String destinationFilePath = "currencyTagStatsForNewspapers.csv";
+		File destinationFile = new File(destinationFilePath);
+		destinationFile.delete();
+		List<Newspaper> newspapers = ((List<Newspaper>) newspaperRepository.findAll());
+		if (newspapers.isEmpty()) {
+			System.out.println("Something strange has happened");
+			return false;
+		}
+		System.out.println("It may take some time");
+		for (Newspaper newspaper : newspapers) {
+			long currencyTagCount = 0;
+			Set<Feed> feeds = newspaper.getFeeds();
+			for (Feed feed : feeds) {
+				Set<PressRelease> pressReleases = feed.getPressReleases();
+				for (PressRelease pressRelease : pressReleases) {
+					Set<Tag> tags = pressRelease.getTags();
+					for (Tag tag : tags) {
+						if (tag.getCategory().equals("Currency")) {
+							++currencyTagCount;
+						}
+					}
+
+				}
+			}
+			System.out.println("Newspaper: " + newspaper.getName() + "; tagCount: " + currencyTagCount);
+			try {
+				WriterCsvFiles.write(destinationFilePath, newspaper.getName(), Long.toString(currencyTagCount));
+			} catch (IOException e) {
+				System.err.println("Its impossible to write into " + destinationFilePath + ", newspaper's name: " + newspaper.getName());
+				return false;
+			}
+		}
 		return true;
 	}
 }

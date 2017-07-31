@@ -74,7 +74,7 @@ public class NewsAnalyzerMain {
 		new Thread(feedDownloaderWorker).start();
 
         while (true) {
-            System.out.println("Type \"p\" and I will do it. (You can type \"d\" or tl or cs too)");
+            System.out.println("Type \"p\" and I will do it. (You can type other things too)");
             line = scanner.nextLine();
 			try {
 				if (line.equals("p")) {
@@ -98,7 +98,11 @@ public class NewsAnalyzerMain {
 					if (!dbUtil.createTagStats()) {
 						System.out.println("Something went wrong");
 					}
-				} else if (line.equals("to")){
+				} else if (line.equals("csfn")) {
+					if (!dbUtil.createCurrencyTagStatsForNewspapers()) {
+						System.out.println("Something went wrong");
+					}
+				}else if (line.equals("to")){
 					MainTagger.tagGeomedia(1);
 				} else {
 					System.out.println("Unknown command");

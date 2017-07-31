@@ -21,7 +21,8 @@ public class WriterCsvFiles {
     public static void write(String filename, String... args ) throws IOException {
         File file = new File(filename);
         File parentDir = file.getParentFile();
-        parentDir.mkdirs();
+        if (parentDir != null)
+        	parentDir.mkdirs();
         file.createNewFile();
         CSVWriter writer = new CSVWriter(new FileWriter(filename, true), '\t', CSVWriter.DEFAULT_QUOTE_CHARACTER);
         try {

@@ -27,7 +27,7 @@ public class MainTagger {
 	private static final String[] destinationSuffixes = {"taggedForCountry", "taggedForOrg", "taggedForOrg/SHORT"};
 
 	private static final String destinationCurrencyTagSuffix = "taggedForCurrency";
-	private static BasicTagger[] currencyTaggers = new BasicTagger[2];
+	private static CurrencyTagger[] currencyTaggers = new CurrencyTagger[4];
 	private static BasicTagger[] normalTaggers = new BasicTagger[3];
 
 	/*public static void main(String[] args) throws IOException {
@@ -70,8 +70,10 @@ public class MainTagger {
 	}*/
 
 	public static void initializeMainTagger() throws IOException {
-		currencyTaggers[0] = new PolishCurrencyTagger("Polish");
-		currencyTaggers[1] = new EnglishCurrencyTagger("English");
+		currencyTaggers[0] = new PolishCurrencyTagger();
+		currencyTaggers[1] = new EnglishCurrencyTagger();
+		currencyTaggers[2] = new FrenchCurrencyTagger();
+		currencyTaggers[3] = new SpanishCurrencyTagger();
 		normalTaggers[0] = new CountryTagger();
 		normalTaggers[1] = new OrganizationTagger();
 		normalTaggers[2] = new ShortOrganizationTagger();
