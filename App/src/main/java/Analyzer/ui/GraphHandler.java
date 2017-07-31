@@ -159,10 +159,7 @@ public class GraphHandler {
 		while ((nextLine = reader.readNext()) != null){
 			if(nextLine[0].compareTo(date1)< 0 || nextLine[0].compareTo(date2)>0)
 				continue;
-			/*System.out.print("Line: ");
-			for (String s : nextLine){
-				System.out.print(s + "\t");
-			}*/
+
 			if (nextLine[0].startsWith("Date"))
 				continue;
 
@@ -226,7 +223,6 @@ public class GraphHandler {
 		String[] textForEdges = new String[tags.size()+3];
 		int j=3;
 		if (initColumns) {
-			System.out.println("INIT EDGE COLUMNS");
 			textForEdges[0] = "Date";
 			textForEdges[1] = "Newspaper";
 			textForEdges[2] = "Source";
@@ -239,7 +235,6 @@ public class GraphHandler {
 		String[] textForNodes = new String[tags.size()+3];
 		j=3;
 		if (initColumns) {
-			System.out.println("INIT NODES COLUMNS");
 			textForNodes[0] = "Date";
 			textForNodes[1] = "Newspaper";
 			textForNodes[2] = "Param name";
@@ -253,7 +248,6 @@ public class GraphHandler {
 
 		String[] textForGraph = new String[4];
 		if (initColumns) {
-			System.out.println("INIT GRAPH COLUMNS");
 			textForGraph[0] = "Date";
 			textForGraph[1] = "Newspaper";
 			textForGraph[2] = "Param name";

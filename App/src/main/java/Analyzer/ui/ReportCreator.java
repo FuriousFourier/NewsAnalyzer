@@ -35,24 +35,73 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 	private boolean isNodeAnalysis;
 	private String xAxis;
 	private int nrOfSerieses;
+	private Map<String, List<Integer>> importantTagsList;//liczby wskazuja, ktory to tag jest z kolei
 
-	public synchronized void extractRelevantInputs(CSVReader reader,  CSVWriter writer, String date1, String date2, boolean initColumns) throws IOException {
+	public synchronized void extractRelevantInputs(CSVReader reader,  CSVWriter writer, String date1, String date2, boolean initColumns, boolean useImportantTags) throws IOException {
 		System.out.println("ExtractRelevantInputs");
 		String[] nextLine;
+		String[] nextTopLine = new String[23];
+		String[] columnLine = null;
 		while ((nextLine = reader.readNext()) != null) {
 			if (nextLine[0].startsWith("Date") && initColumns) {
-				writer.writeNext(nextLine);
-				System.out.println(nextLine[0] + " - write...");
-				continue;
+				columnLine = nextLine;
+				if (useImportantTags){
+					/*nextTopLine[0] = nextLine[0];
+					nextTopLine[1] = nextLine[1];
+					nextTopLine[2] = nextLine[2];
+					//List<Integer> tagsNums = importantTagsList.get(nextTopLine[2]);
+					System.out.println(nextTopLine[0] + " " + nextTopLine[1] + " " +nextTopLine[2]);
+					//tu musze wyjatkowo przeczytac jedna linijke extra, bo inaczej nie mam jak znalezc nazwy tagow
+
+					String[] extraLine = reader.readNext();
+					if (extraLine == null)
+						break;
+					List<Integer> tagsNums = importantTagsList.get(extraLine[2]);
+
+					for (int i = 0; i < 10; i++){
+						nextTopLine[3+i] = nextLine[3+tagsNums.get(i)];
+					}
+
+					nextLine = extraLine;
+					writer.writeNext(nextTopLine);*/
+				}
+				else {
+					writer.writeNext(nextLine);
+					System.out.println(nextLine[0] + " - write...");
+					continue;
+				}
 			}
 
-			if (nextLine[0].compareTo(date1) < 0 || nextLine[0].compareTo(date2) > 0){
+			if (!nextLine[0].equals("Date") &&(nextLine[0].compareTo(date1) < 0 || nextLine[0].compareTo(date2) > 0)){
 				//System.out.println(nextLine[0] + " - skipping...");
 				continue;
 			}
 
 			//System.out.println(nextLine[0] + nextLine[1]);
-			writer.writeNext(nextLine);
+			//jesli useImportantTags==true, utworz nowa tablice o dlugosci rownej liczbie tagow + 3 (chyba)
+			//iteruj po nextLine i wyekstrahuj, co trzeba
+			if (useImportantTags){
+				//napierw pisze wiersz z kolumnami
+				nextTopLine[0] = columnLine[0];
+				nextTopLine[1] = columnLine[1];
+				nextTopLine[2] = columnLine[2];
+				List<Integer> tagsNums = importantTagsList.get(nextLine[2]);
+				for (int i = 0; i < tagsNums.size(); i++){
+					nextTopLine[3+i] = columnLine[3+ tagsNums.get(i)];
+				}
+				writer.writeNext(nextTopLine);
+
+				nextTopLine[0] = nextLine[0];
+				nextTopLine[1] = nextLine[1];
+				nextTopLine[2] = nextLine[2];
+				for (int i = 0; i < tagsNums.size(); i++){
+					nextTopLine[3+i] = nextLine[3+ tagsNums.get(i)];
+				}
+				writer.writeNext(nextTopLine);
+			}
+			else {
+				writer.writeNext(nextLine);
+			}
 		}
 	}
 
@@ -88,15 +137,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 			this.value = value;
 		}
 	}
-
-
-	//ponizsze dziala tylko dla parametrow grafu z dwiema (ew. jedna) seriami danych
-	public synchronized void showChart(String dataPath, int nrOfSerieses, Document report, String chartName, boolean isNodeAnalysis) {
-		//below analysis is for the params of the whole graph
-		//to perform analysis for nodes, showChart need new boolean (if it's about nodes) and appropriate dataPath during invocation
-		//moreover, currently there is no output for node analysis here
-		//output would be rather a text, not dozen of charts
-		CSVWriter topWriter = null;
+	public synchronized void showChart(String dataPath, int nrOfSerieses, Document report, String chartName, boolean isNodeAnalysis, boolean getTop) {
 		try {
 			LabelComparator labelComparator = new LabelComparator();
 			ValueComparator valueComparator = new ValueComparator();
@@ -104,16 +145,10 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 			this.nrOfSerieses = nrOfSerieses;
 			File inputFile = new File(dataPath);
 			CSVReader reader = null;
-			//try {
 				reader = new CSVReader(new FileReader(inputFile), '\t');
-			/*} catch (FileNotFoundException e) {
-				System.out.println("EXCEPTION in showChart!!");
-				e.printStackTrace();
-			}*/
 			String[] nextLine;
 			Map<String, Map<String, List<DataContainer>>> data = new HashMap<>(); //do analizy grafu
 			String[] columnNames = null;
-			//try {
 				while ((nextLine = reader.readNext()) != null) {
 					if (nextLine[0].equals("Date")) {
 						if (columnNames == null) { //dla analizy wezlow - musze sprawic, aby najpierw wazniejsza gazeta byla uwzgledniona!
@@ -135,13 +170,11 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 					if (!isNodeAnalysis) {
 						if (nextLine[3].equals("NaN"))
 							nextLine[3] = "-0.1";
-						//else
-						//System.out.println(nextLine[3] + " -> " + NumberFormat.getInstance(Locale.ENGLISH).parse(nextLine[3]).doubleValue());
-						DataContainer container = new DataContainer(nextLine[0], NumberFormat.getInstance(Locale.ENGLISH).parse(nextLine[3]));
+						DataContainer container;
+						container = new DataContainer(nextLine[0], NumberFormat.getInstance(Locale.ENGLISH).parse(nextLine[3]));
 						data.get(nextLine[2]).get(nextLine[1]).add(container);
 					} else {
 						for (int j = 3; j < columnNames.length; j++) {
-							//System.out.println(nextLine[j] + " -> " + NumberFormat.getInstance(Locale.ENGLISH).parse(nextLine[j]).doubleValue());
 							DataContainer container = new DataContainer(columnNames[j], NumberFormat.getInstance(Locale.ENGLISH).parse(nextLine[j]));
 							data.get(nextLine[2]).get(nextLine[1]).add(container);
 						}
@@ -154,34 +187,42 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 				System.out.println("Input is empty - returning...");
 				return;
 			}
-
 			xAxis = chartName;
-
 			//graph params
-			//isNodeAnalysis = false; //for nodes it would be true
-			List<DataContainer> importantTags = new ArrayList<>();
-			List<DataContainer> currentTags = new ArrayList<>();
+			List<String> importantTagsNames;
 			SortedSet<String> labelsSet = new TreeSet<>(data.keySet());
 			//give TOP 10 to output .csv files
-			String topFileName = "src/main/resources/csv/"+chartName+"_TOP.csv";
-			File topFile = new File(topFileName);
-			topFile.delete();
-			topFile.createNewFile();
-			topWriter = new CSVWriter(new FileWriter(topFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
-			String[] textForTop = new String[23];
-			textForTop[0] = "Date";
-			textForTop[1] = "Newspaper";
-			textForTop[2] = "Param name";
-			for (int i =0 ; i < 10; i+=2){
-				textForTop[2+i] = (i/2+1)+"-tag";
-				textForTop[2+i+1] = "Tag rank";
-			}
-			topWriter.writeNext(textForTop);
 
-			textForTop[0] = chartName;
+			String topFileName = "src/main/resources/csv/"+chartName+"_TOP.csv";
+			File topFile;
+			CSVWriter topWriter = null;
+			if (getTop){
+				topFile = new File(topFileName);
+				topFile.delete();
+				topFile.createNewFile();
+				topWriter = new CSVWriter(new FileWriter(topFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
+			}
+
+			String[] textForTop = new String[23];
+			if (getTop) {
+				textForTop[0] = "Date";
+				textForTop[1] = "Newspaper";
+				textForTop[2] = "Param name";
+				for (int i = 0; i < 10; i += 2) {
+					textForTop[3 + i] = (i / 2 + 1) + "-tag";
+					textForTop[3 + i + 1] = "Tag rank";
+				}
+				if (topWriter != null)
+					topWriter.writeNext(textForTop);
+
+				textForTop[0] = chartName;
+			}
+			importantTagsList = new HashMap<>();
 			for (String p : labelsSet) { //for nodes it would be ReportInput.nodesParams
+				importantTagsNames = new ArrayList<>();
+				importantTagsList.put(p, new ArrayList<>());
 				textForTop[2] = p;
-				currentParam = p;
+				currentParam = p; //dla korelacji dla wartosci wezlow  - bedzie tu jescze nazwa tagu
 				Set<String> LabelsSet = new HashSet<>();
 				values = new HashMap<>();
 				series = new ArrayList<>();
@@ -190,54 +231,78 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 				int i = 0; //liczba gazet
 				System.out.println("Nr of serieses; " + nrOfSerieses);
 				for (String n : newspaperData.keySet()) {
+					//currentTags = new ArrayList<>();
+
 					textForTop[1] = n;
 					series.add(n);
 					System.out.println("Newspaper: " + n);
-					List<DataContainer> dateData = newspaperData.get(n);
+					List<DataContainer> dateDataCopy = newspaperData.get(n);
+					List<DataContainer>  dateData = new ArrayList<>(newspaperData.get(n));
 					//jezeli jest wykres dla parametrow grafu, to tylko labelCOmparator
 					//jezeli wykres dla parametrow wezlow, to za pierwszym razem valueCOmparator, a dla kolejnych trzeba sciagac reczenie (pomocnicza HashMap?)
 					//ew. recznie inicjalizuje importantTags i wtedy tu wyciagam je dla kazdej gazety
-					if (!isNodeAnalysis) {
-						sort(dateData, labelComparator);
-						currentTags = dateData;
+					if (!getTop) {
+						//ponizsze byc moze zbedne, bo chyba dodaje we wlasciwej kolejnosci
+						//dateData.sort(labelComparator);
+						//currentTags = dateData;
 					} else {
-						if (i == 0 && importantTags.isEmpty()) {
-							sort(dateData, valueComparator);
-							System.out.println("Important tags:");
-							for (int k = 0; k < 10; k+=2) { //sparametryzowac po liczbie tagow, w wywolaniu funkcji
-								importantTags.add(dateData.get(k));
-								System.out.println(dateData.get(k).date+"\t");
-								textForTop[2+k] = dateData.get(k).date;
-								textForTop[2+k+1] = dateData.get(k).value.toString();
+						if (i == 0 && importantTagsNames.isEmpty()) {
+							dateDataCopy.sort(valueComparator);
+						//	System.out.println("Important tags:");
+							//tu musze zapamietac nazwy tagow
+							//za chwile zapametam indeksy w zaleznosci od kolejnosci alfabetycznej
+							for (int k = 0; k < 10; k++) { //sparametryzowac po liczbie tagow, w wywolaniu funkcji
+								int index = dateData.size()-1-k;
+								importantTagsNames.add(dateDataCopy.get(index).date);//importantTags.add(dateData.get(index));
+								textForTop[3+2*k] = dateDataCopy.get(index).date;
+								textForTop[3+2*k+1] = dateDataCopy.get(index).value.toString();
 							}
-							currentTags = importantTags;
+							topWriter.writeNext(textForTop);
+							for (String t: importantTagsNames){
+								importantTagsList.get(p).add(getTagIndex(dateData, t));
+								//System.out.println(t+"\t"+getTagIndex(dateDataCopy, t));
+							}
+							//System.out.println("Important tags list size for "+ p+": " + importantTagsList.get(p).size());
 						} else {
-							for (DataContainer d : importantTags) {
-								int index = getTagIndex(dateData, d.date);
-								if (index != -1) {
-									currentTags.add(dateData.get(index));
-								}
-								else
-									System.out.println("Tag " + d.date + " hasn't been found in dateData!!!");
+							for(int k = 0; k < importantTagsList.get(p).size(); k++){
+								int index = importantTagsList.get(p).get(k);
+								textForTop[3+2*k] = dateData.get(index).date;
+								textForTop[3+2*k+1] = dateData.get(index).value.toString();
 							}
+							topWriter.writeNext(textForTop);
 						}
 					}
-					System.out.println("currentTags.size(): " + currentTags.size());
-					for (DataContainer d : currentTags) {
-						LabelsSet.add(d.date);
-						values.putIfAbsent(d.date, new ArrayList<>(nrOfSerieses));
-						//System.out.println("list size: " + values.get(d.date).size());
-						while (values.get(d.date).size() < i)
-							values.get(d.date).add(0); //naprawienie IndexOutOfBoundsException
-						values.get(d.date).add(i, d.value);
-						//System.out.println(d.value + " added to series  " + i + " for " + d.date);
+					//System.out.println("currentTags.size(): " + currentTags.size());
+					if (!getTop) {
+						for (DataContainer d : dateData) {
+							LabelsSet.add(d.date);
+							values.putIfAbsent(d.date, new ArrayList<>(nrOfSerieses));
+							//System.out.println("list size: " + values.get(d.date).size());
+							while (values.get(d.date).size() < i)
+								values.get(d.date).add(0);
+							values.get(d.date).add(i, d.value);
+							//System.out.println(d.value + " added to series  " + i + " for " + d.date);
+						}
 					}
-					topWriter.writeNext(textForTop);
+					else {
+						System.out.println("Important tags list size for "+ p+": " + importantTagsList.get(p).size());
+						for (Integer m : importantTagsList.get(p)) {
+							DataContainer d = dateData.get(m);
+							LabelsSet.add(d.date);
+							values.putIfAbsent(d.date, new ArrayList<>(nrOfSerieses));
+							System.out.println("list size: " + values.get(d.date).size());
+							while (values.get(d.date).size() < i)
+								values.get(d.date).add(0);
+							values.get(d.date).add(i, d.value);
+							System.out.println(d.value + " added to series  " + i + " for " + d.date);
+						}
+					}
 					i++;
 				}
 
 				labelValues = new ArrayList<>(LabelsSet);
-				sort(labelValues);
+				if (!getTop)
+					sort(labelValues);
 				CategoryChart chart = this.getChart();
 				if (chart == null) {
 					System.out.println("No chart to display for " + series.get(0) + " etc. " + labelValues.get(0) + " etc., param: " + p);
@@ -245,22 +310,13 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 				}
 
 					try {
-						System.err.println("PRZED Bitma");
+						System.err.println("PRZED Bitmap");
 						BitmapEncoder.saveBitmap(chart, "src/main/resources/charts/" + chartName + "_" + p, BitmapEncoder.BitmapFormat.PNG);
 						System.err.println("Po Bitmap");
-						//URI uri;
-						//System.out.println(ClassLoader.getSystemResource(""));
-						System.err.println("PRZED IFem");
-						/*if (ClassLoader.getSystemResource("charts/" + chartName + "_" + p + ".png") != null) {
-							System.err.println("W IFie");
-							uri = ClassLoader.getSystemResource("charts/" + chartName + "_" + p + ".png").toURI();*/
 							Path path = Paths.get("src/main/resources/charts/"+ chartName + "_" + p+".png");
 							Image img = Image.getInstance(path.toAbsolutePath().toString());
 							img.scaleToFit(rect.getWidth() - margin, rect.getHeight());
-							System.err.println("AAA");
 							report.add(img);
-							System.err.println("BBB");
-						//}
 					} catch (Exception e) {
 						System.err.println("BŁĄD");
 						continue;
@@ -268,7 +324,8 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 
 			}
 
-			topWriter.close();
+			if (topWriter != null)
+				topWriter.close();
 		}catch (Exception E){
 			System.out.println("DZIWNY EXCEPTION!");
 			E.printStackTrace();
@@ -291,6 +348,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 
 		// Create Chart
 		CategoryChart chart = new CategoryChartBuilder().width(800).height(600).title(currentParam).xAxisTitle(xAxis).yAxisTitle("Value").build();
+		System.out.println("Current param in getChart: " + currentParam);
 
 		// Customize Chart
 		chart.getStyler().setLegendPosition(Styler.LegendPosition.InsideSE);
@@ -299,14 +357,27 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 		chart.getStyler().setYAxisDecimalPattern("#0.000");
 
 		// Series
-
+		List<CoefficientData> coefficientData = new ArrayList<>(labelValues.size());
 		for (int i = 0; i < nrOfSerieses; i++){
 			List<Number> currentValues = new ArrayList<>();
 			for (String date: labelValues){
 				if (i >= values.get(date).size() || values.get(date).get(i) == null)
-					currentValues.add(-0.1);
+					currentValues.add(0);
 				else
 					currentValues.add(values.get(date).get(i));
+			}
+			if (i == 0){
+				for(int k = 0; k < labelValues.size();k++){
+					if (coefficientData.size() <= k)
+						coefficientData.add(new CoefficientData());
+					coefficientData.get(k).X = currentValues.get(k);
+				}
+			} else if (i == 1){
+				for(int k = 0; k < labelValues.size();k++){
+					if (coefficientData.size() <= k)
+						coefficientData.add(new CoefficientData());
+					coefficientData.get(k).Y = currentValues.get(k);
+				}
 			}
 			chart.addSeries(series.get(i), labelValues, currentValues);
 			System.out.println("Series name: " + series.get(i));
@@ -319,7 +390,46 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 			System.out.println();
 		}
 
+		if (nrOfSerieses == 2 && labelValues.size() > 1) {
+			coefficientData.sort(new xComparator());
+			for (int k  = 0; k < labelValues.size(); k++)
+				coefficientData.get(k).xRank = k+1;
+
+			coefficientData.sort(new yComparator());
+			for (int k  = 0; k < labelValues.size(); k++)
+				coefficientData.get(k).yRank = k+1;
+
+			double sum = 0;
+			for (CoefficientData d : coefficientData){
+				double diff = d.xRank - d.yRank;
+				sum+= diff * diff;
+			}
+			double n = labelValues.size();
+			double correlation = 1 - (6*sum)/(n * (n*n -1));
+			chart.setTitle(currentParam + "(correlation: " + correlation+")");
+		}
 		return chart;
+	}
+
+	private class CoefficientData{ //algorytm w getChart dziala  tylko dla niepowtarzajacych sie wartosci w X i w Y
+		private Number X, Y;
+		private double xRank, yRank;
+	}
+	private class xComparator implements Comparator<CoefficientData>{
+		@Override
+		public int compare(CoefficientData t0, CoefficientData t1) {
+			Double d0 = t0.X.doubleValue();
+			Double d1 = t1.X.doubleValue();
+			return d0.compareTo(d1);
+		}
+	}
+	private class yComparator implements Comparator<CoefficientData>{
+		@Override
+		public int compare(CoefficientData t0, CoefficientData t1) {
+			Double d0 = t0.Y.doubleValue();
+			Double d1 = t1.Y.doubleValue();
+			return d0.compareTo(d1);
+		}
 	}
 
 }

@@ -424,9 +424,33 @@ public class AnalysisController {
 					String nodesFileName = "src/main/resources/csv/" + reportTitle + "(" + date1 + "_" + date2 + ")_nodes.csv";
 					report = reportCreator.createReportBase(reportTitle + "(" + date1 + "_" + date2 + ")");
 					System.out.println("Nr of newspaper titles: " + newspaperTitles.size());
-					reportCreator.showChart(daysFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ") - day by day", false);
-					reportCreator.showChart(graphFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ")", false);
-					reportCreator.showChart(nodesFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ")", true);
+					reportCreator.showChart(daysFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ") - day by day", false, false);
+					reportCreator.showChart(graphFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ")", false, false);
+					reportCreator.showChart(nodesFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ")", true, true);
+
+					String daysNodesFileName = "src/main/resources/csv/"+reportTitle+"("+date1+"_"+date2+")_days_TOP.csv";
+					File nodeFile = new File(daysNodesFileName);
+
+					nodeFile.delete();
+					nodeFile.createNewFile();
+
+					CSVWriter graphWriter = new CSVWriter(new FileWriter(daysNodesFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
+
+					for (String n : newspaperTitles){
+						System.out.println("Newspaper (in compare()): "+ n);
+						String filePath = "src/main/resources/csv/"+n+"(days)_nodes.csv";
+						FileReader fileReader;
+						try {
+							fileReader = new FileReader(filePath);
+						} catch(FileNotFoundException e){
+							System.out.println("Necessary file ("+filePath+") hasn't been found - \""+n+"\" won't be taken into account");
+							continue;
+						}
+						CSVReader reader = new CSVReader(fileReader, '\t');
+						reportCreator.extractRelevantInputs(reader, graphWriter, date1, date2, true, true);
+					}
+					graphWriter.close();
+					reportCreator.showChart(daysNodesFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ")", true, false);
 				} catch (Exception e) {
 					System.out.println("EXCEPTION IN chooseParams()");
 					e.printStackTrace();
@@ -461,12 +485,11 @@ public class AnalysisController {
 			try {
 				fileReader = new FileReader(filePath);
 			} catch(FileNotFoundException e){
-				System.out.println("Necessary data hasn't been created yet. To do it, choose analysis by newspaper " +
-						"and date. After it is finished, please try again.");
-				return "foo";
+				System.out.println("Necessary file ("+filePath+") hasn't been found - \""+n+"\" won't be taken into account");
+				continue;
 			}
 			CSVReader reader = new CSVReader(fileReader, '\t');
-			reportCreator.extractRelevantInputs(reader, graphWriter, date1, date2, true);
+			reportCreator.extractRelevantInputs(reader, graphWriter, date1, date2, true, false);
 		}
 		graphWriter.close();
 		//utworzenie plikow zbiorczych
@@ -495,9 +518,8 @@ public class AnalysisController {
 			try {
 				fileReader = new FileReader(filePath);
 			} catch (FileNotFoundException e) {
-				System.out.println("Necessary data hasn't been created yet. To do it, choose analysis by newspaper " +
-						"and date. After it is finished, please try again.");
-				return "foo";
+				System.out.println("Necessary file ("+filePath+") hasn't been found - \""+n+"\" won't be taken into account");
+				continue;
 			}
 			CSVReader reader = new CSVReader(fileReader, '\t');
 			GraphHandler.reset();
