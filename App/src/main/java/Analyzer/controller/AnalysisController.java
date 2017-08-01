@@ -13,7 +13,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
 import java.io.*;
+import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
@@ -45,6 +47,7 @@ public class AnalysisController {
 	private Newspaper currentNewspaper;
     private static boolean isAskingForValue = false;
     private static boolean isIteratingOverDates = false;
+    private static boolean isIteratingOverWeeks = false;
     private static boolean isIteratingOverDays = false;
     private Calendar cal = Calendar.getInstance();
 	private List<String> newspaperTitles = new ArrayList<>();
@@ -53,6 +56,8 @@ public class AnalysisController {
 	private String date1, date2;
 	private String reportTitle;
 	private boolean isChosenToCompare;
+	private String descr;
+	private String dateToGet;
 
     ReportCreator reportCreator = new ReportCreator();
 
@@ -60,6 +65,7 @@ public class AnalysisController {
         isAskingForValue = val;
     }
     public synchronized static void setIsIteratingOverDates(boolean val) { isIteratingOverDates = val; }
+	public synchronized static void setIsIteratingOverWeeks(boolean val) { isIteratingOverWeeks = val; }
 	public synchronized static void setIsIteratingOverDays(boolean val) { isIteratingOverDays = val; }
 
 
@@ -262,6 +268,8 @@ public class AnalysisController {
 		String descr = "";
 		if (isIteratingOverDays)
 			descr = "days";
+		else if (isIteratingOverWeeks)
+			descr ="weeks";
 		else if (isIteratingOverDates)
 			descr = "months";
 		if (!isIteratingOverDates) {
@@ -282,11 +290,11 @@ public class AnalysisController {
 			nodesGlobalWriter = new CSVWriter(new FileWriter(nodesGlobalFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
 			edgesGlobalWriter = new CSVWriter(new FileWriter(edgesGlobalFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
 		}
-		String[] newspaperList = { "Interia", "Fakt", "Newsweek", "RMF24", "Today", "China Daily"};
-		for (Newspaper n : fetchedNewspapers) {
-			value = n.getName();
-		/*for (String s: newspaperList) {
-			value = s;*/
+		String[] newspaperList = { "Interia", "Fakt", "Newsweek", "Today"};
+		/*for (Newspaper n : fetchedNewspapers) {
+			value = n.getName();*/
+		for (String s: newspaperList) {
+			value = s;
 			setIsAskingForValue(false);
 			if ((getPressReleasesByNews().equals("foo")) && (fetchedNotes != null) && (!fetchedNotes.isEmpty())){
 				System.out.println("******************* *Newspaper: "+value + " ************************");
@@ -299,21 +307,24 @@ public class AnalysisController {
 						int pMonth = cal.get(Calendar.MONTH)+1;
 						int pYear = cal.get(Calendar.YEAR);
 						int pDay = cal.get(Calendar.DAY_OF_MONTH);
+						int pWeek = cal.get(Calendar.DAY_OF_WEEK_IN_MONTH); //czy ok
 						String date;
 						if (isIteratingOverDays)
 							date = pYear + "-" + (pMonth<10 ? "0" : "") + pMonth + "-" + (pDay<10 ? "0" : "") + pDay;
+						else if (isIteratingOverWeeks)
+							date = pYear + "-" + (pMonth<10 ? "0" : "") + pMonth + "w" + pWeek;
 						else
 							date = pYear + "-" + (pMonth<10 ? "0" : "") + pMonth;
 						newspaperNotes.putIfAbsent(date, new HashSet<PressRelease>());
 						newspaperNotes.get(date).add(p);
 						Set<Tag> tags = p.getTags();
-						if (tags!=null && !tags.isEmpty()){
+						/*if (tags!=null && !tags.isEmpty()){
 							System.out.print("ID: " + p.getId() + "; Date: "+ date+"; Tags:");
 							for (Tag t: p.getTags()){
 								System.out.print(t.getName()+", ");
 							}
 							System.out.println();
-						}
+						}*/
 					}
 					fetchedNotes =null;
 					SortedSet<String> notesKeySet = new TreeSet<>(newspaperNotes.keySet());
@@ -326,8 +337,8 @@ public class AnalysisController {
 					File edgesFile = new File(edgesFileName);
 					graphFile.delete();
 					nodesFile.delete();
-					System.out.println("JEDEN " + edgesFile.delete());
-					System.out.println("DWA " + graphFile.createNewFile());
+					edgesFile.delete();
+					graphFile.createNewFile();
 					nodesFile.createNewFile();
 					edgesFile.createNewFile();
 					CSVWriter graphWriter = new CSVWriter(new FileWriter(graphFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
@@ -365,6 +376,25 @@ public class AnalysisController {
 		}
 		return "foo";
 	}
+
+	@GetMapping("/getDate")
+	public synchronized String getDate() throws ParseException {
+		String pattern = "yyyy-MM-dd";
+		SimpleDateFormat formatter = new SimpleDateFormat(pattern, Locale.GERMAN);
+		cal.setTime(formatter.parse(dateToGet));
+		int pMonth = cal.get(Calendar.MONTH)+1;
+		int pYear = cal.get(Calendar.YEAR);
+		int pDay = cal.get(Calendar.DAY_OF_MONTH);
+		int pWeek = cal.get(Calendar.DAY_OF_WEEK_IN_MONTH); //czy ok
+
+		if (isIteratingOverDays)
+			dateToGet = pYear + "-" + (pMonth<10 ? "0" : "") + pMonth + "-" + (pDay<10 ? "0" : "") + pDay;
+		else if (isIteratingOverWeeks)
+			dateToGet = pYear + "-" + (pMonth<10 ? "0" : "") + pMonth + "w" + pWeek;
+		else
+			dateToGet = pYear + "-" + (pMonth<10 ? "0" : "") + pMonth;
+		return "foo";
+	}
 	@GetMapping("/broadAnalysis")
 	public synchronized String chooseParams(){
 		try {
@@ -376,6 +406,25 @@ public class AnalysisController {
 					"\to -> compare one newspaper with all others +\n" +
 					"\tm -> manually type newspapers' titles to compare together\n");
 			String option = br.readLine();
+			System.out.print("Choose the shortest time range to consider:" +
+					"\t m -> month\n" +
+					"\t w -> week\n" +
+					"\t d -> day\n");
+			String timeRange = br.readLine();
+			descr = "";
+			if (timeRange.startsWith("m")) {
+				descr = "months";
+				setIsIteratingOverDates(true);
+			}
+			else if (timeRange.startsWith("w")) {
+				descr = "weeks";
+				setIsIteratingOverWeeks(true);
+			}
+			else {
+				descr = "days";
+				setIsIteratingOverDays(true);
+			}
+
 			date1 = "2017-07-04";
 			date2 = "2017-07-28";
 			System.out.println("Enter date range");
@@ -383,6 +432,45 @@ public class AnalysisController {
 			date1 = br.readLine();
 			System.out.print("Date 2: ");
 			date2 = br.readLine();
+			dateToGet = date1;
+			getDate();
+			date1 = dateToGet;
+
+			dateToGet = date2;
+			getDate();
+			date2 = dateToGet;
+
+			/*String pattern = "yyyy-MM-dd";
+			SimpleDateFormat formatter = new SimpleDateFormat(pattern, Locale.GERMAN);
+			cal.setTime(formatter.parse(date1));
+			int pMonth = cal.get(Calendar.MONTH)+1;
+			int pYear = cal.get(Calendar.YEAR);
+			int pDay = cal.get(Calendar.DAY_OF_MONTH);
+			int pWeek = cal.get(Calendar.DAY_OF_WEEK_IN_MONTH); //czy ok
+
+			if (timeRange.startsWith("d"))
+				date = pYear + "-" + (pMonth<10 ? "0" : "") + pMonth + "-" + (pDay<10 ? "0" : "") + pDay;
+			else if (timeRange.startsWith("w"))
+				date = pYear + "-" + (pMonth<10 ? "0" : "") + pMonth + "w" + pWeek;
+			else
+				date = pYear + "-" + (pMonth<10 ? "0" : "") + pMonth;
+			date1 = date;
+			System.out.println("Date1: " + date1);
+
+			cal.setTime(formatter.parse(date2));
+			pMonth = cal.get(Calendar.MONTH)+1;
+			pYear = cal.get(Calendar.YEAR);
+			pDay = cal.get(Calendar.DAY_OF_MONTH);
+			pWeek = cal.get(Calendar.DAY_OF_WEEK_IN_MONTH); //czy ok
+			if (timeRange.startsWith("d"))
+				date = pYear + "-" + (pMonth<10 ? "0" : "") + pMonth + "-" + (pDay<10 ? "0" : "") + pDay;
+			else if (timeRange.startsWith("w"))
+				date = pYear + "-" + (pMonth<10 ? "0" : "") + pMonth + "w" + pWeek;
+			else
+				date = pYear + "-" + (pMonth<10 ? "0" : "") + pMonth;
+			date2= date;
+			System.out.println("Date2: " + date2);*/
+
 			System.out.print("Nr of TOP tags to compare: ");
 			nrOfTopTags = Integer.parseInt(br.readLine());
 			if (option.startsWith("o")) {
@@ -424,17 +512,17 @@ public class AnalysisController {
 			//if (willCreateReport.startsWith("t")) {
 				Document report = null;
 				try {
-					String daysFileName = "src/main/resources/csv/" + reportTitle + "(" + date1 + "_" + date2 + ")_days.csv";
+					String daysFileName = "src/main/resources/csv/" + reportTitle + "(" + date1 + "_" + date2 + ")_"+descr+".csv";
 					String graphFileName = "src/main/resources/csv/" + reportTitle + "(" + date1 + "_" + date2 + ").csv";
 					String nodesFileName = "src/main/resources/csv/" + reportTitle + "(" + date1 + "_" + date2 + ")_nodes.csv";
 					if (willCreateReport)
 						report = reportCreator.createReportBase(reportTitle + "(" + date1 + "_" + date2 + ")");
 					System.out.println("Nr of newspaper titles: " + newspaperTitles.size());
-					reportCreator.showChart(daysFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ") - day by day", nrOfTopTags, 3,false, false, willCreateReport);
+					reportCreator.showChart(daysFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ") - " + descr + " and " + descr, nrOfTopTags, 3,false, false, willCreateReport);
 					reportCreator.showChart(graphFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ")", nrOfTopTags, 3,false,false, willCreateReport);
 					reportCreator.showChart(nodesFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ")", nrOfTopTags, -1, true, true, willCreateReport);
 
-					String daysNodesFileName = "src/main/resources/csv/"+reportTitle+"("+date1+"_"+date2+")_days_TOP.csv";
+					String daysNodesFileName = "src/main/resources/csv/"+reportTitle+"("+date1+"_"+date2+")_"+descr+"_TOP.csv";
 					File nodeFile = new File(daysNodesFileName);
 
 					nodeFile.delete();
@@ -444,7 +532,7 @@ public class AnalysisController {
 
 					for (String n : newspaperTitles){
 						System.out.println("Newspaper (in compare()): "+ n);
-						String filePath = "src/main/resources/csv/"+n+"(days)_nodes.csv";
+						String filePath = "src/main/resources/csv/"+n+"("+descr+")_nodes.csv";
 						FileReader fileReader;
 						try {
 							fileReader = new FileReader(filePath);
@@ -457,7 +545,7 @@ public class AnalysisController {
 					}
 					graphWriter.close();
 					for (int i = 0; i < nrOfTopTags; i++){
-						reportCreator.showChart(daysNodesFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ") - day by day", nrOfTopTags, i+3, true, false, willCreateReport);
+						reportCreator.showChart(daysNodesFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ") - " + descr + " and " + descr, nrOfTopTags, i+3, true, false, willCreateReport);
 					}
 
 				} catch (Exception e) {
@@ -479,7 +567,7 @@ public class AnalysisController {
 
 	@GetMapping("/broadAnalysis2")
 	public synchronized String compare() throws IOException, DocumentException, ParseException {
-		String daysFileName = "src/main/resources/csv/"+reportTitle+"("+date1+"_"+date2+")_days.csv";
+		String daysFileName = "src/main/resources/csv/"+reportTitle+"("+date1+"_"+date2+")_"+descr+".csv";
 		File graphFile = new File(daysFileName);
 		if (!isChosenToCompare) {
 			graphFile.delete();
@@ -490,7 +578,7 @@ public class AnalysisController {
 
 		for (String n : newspaperTitles){
 			System.out.println("Newspaper (in compare()): "+ n);
-			String filePath = "src/main/resources/csv/"+n+"(days).csv";
+			String filePath = "src/main/resources/csv/"+n+"("+descr+").csv";
 			FileReader fileReader;
 			try {
 				fileReader = new FileReader(filePath);
@@ -523,7 +611,7 @@ public class AnalysisController {
 
 		for (String n : newspaperTitles) {
 			//read appropriate files
-			String filePath = "src/main/resources/csv/" + n + "(days)_edges.csv";
+			String filePath = "src/main/resources/csv/" + n + "("+descr+")_edges.csv";
 			FileReader fileReader;
 			try {
 				fileReader = new FileReader(filePath);

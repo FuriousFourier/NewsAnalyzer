@@ -339,13 +339,13 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 		System.out.println("================================getChart===============");
 
 		// Create Chart
-		CategoryChart chart = new CategoryChartBuilder().width(800).height(600).title(currentParam).xAxisTitle(xAxis).yAxisTitle("Value").build();
+		CategoryChart chart = new CategoryChartBuilder().width(800).height(600).title(currentParam + " - " + colName).xAxisTitle(xAxis).yAxisTitle("Value").build();
 		System.out.println("Current param in getChart: " + currentParam);
 
 		// Customize Chart
 		chart.getStyler().setLegendPosition(Styler.LegendPosition.OutsideE);
 		chart.getStyler().setHasAnnotations(true);
-		chart.getStyler().setXAxisLabelRotation(70);
+		chart.getStyler().setXAxisLabelRotation(90);
 		chart.getStyler().setYAxisDecimalPattern("#0.000");
 
 		// Series

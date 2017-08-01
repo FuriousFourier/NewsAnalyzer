@@ -28,13 +28,14 @@ public class AnalysisHandler {
                 "\t d -> month and year\n" +
                 "\t n -> newspaper title\n" +
                 "\t nd -> newspaper and day\n" +
-        "\t nm -> newspaper and month\n" +
-        "\t r -> create new reports based on these existing\n");
+                "\t nw -> newspaper and week\n" +
+                "\t nm -> newspaper and month\n" +
+                "\t r -> create new reports based on these existing\n");
         field = br.readLine();
 
         if (field.startsWith("d")) {
             fieldName = "month and year (mm-yyyy)";
-        } else if (field.startsWith("nd") || field.startsWith("nm")){
+        } else if (field.startsWith("nd") || field.startsWith("nm") || field.startsWith("nw")){
             //nothing happens
         } else if (field.startsWith("n")) {
             fieldName = "newspaper title";
@@ -69,6 +70,10 @@ public class AnalysisHandler {
                 url = new URL("http://localhost:8080/analyseDate");
             } else if (field.startsWith("nm")) {
                 AnalysisController.setIsIteratingOverDates(true);
+                url = new URL("http://localhost:8080/analyseNewspaper");
+            } else if (field.startsWith("nw")) {
+                AnalysisController.setIsIteratingOverDates(true);
+                AnalysisController.setIsIteratingOverWeeks(true);
                 url = new URL("http://localhost:8080/analyseNewspaper");
             } else if (field.startsWith("nd")) {
                 AnalysisController.setIsIteratingOverDays(true);
