@@ -35,26 +35,25 @@ public class GraphHandler {
 			GraphDistance.CLOSENESS,
 			GraphDistance.ECCENTRICITY,
 			GraphDistance.HARMONIC_CLOSENESS,
-			Degree.INDEGREE,
-			Degree.OUTDEGREE,
+			Degree.DEGREE,
 			Hits.AUTHORITY,
 			Hits.HUB,
 			PageRank.PAGERANK,
-			Modularity.MODULARITY_CLASS,
+			//Modularity.MODULARITY_CLASS, //TEMPORARILY
 			EigenvectorCentrality.EIGENVECTOR,
 			ClusteringCoefficient.CLUSTERING_COEFF,
-			ConnectedComponents.STRONG,
-			ConnectedComponents.WEAKLY,
+			//ConnectedComponents.STRONG, //TEMPORARILY
+			//ConnectedComponents.WEAKLY, //TEMPORARILY
 			WeightedDegree.WINDEGREE,
-			WeightedDegree.WOUTDEGREE,
+			//WeightedDegree.WOUTDEGREE,
 
 			//Prestige
 			DomainCalculator.DOMAIN_KEY,
 			IndegreeCalculator.INDEGREE_KEY,
 			IndegreeCalculator.INDEGREE_NORMALIZED_KEY,
 			ProximityCalculator.PROXIMITY_KEY,
-			RankCalculator.RANK_KEY,
-			RankCalculator.NORMALIZED_RANK_KEY,
+			//RankCalculator.RANK_KEY,
+			//RankCalculator.NORMALIZED_RANK_KEY,
 
 	};
 
@@ -370,7 +369,7 @@ public class GraphHandler {
 		input.setGraphValue("Nr of connected components", connectedComponents.getConnectedComponentsCount());
 		input.setGraphValue("Average shortest path length", distance.getPathLength());
 		input.setGraphValue("Diameter", distance.getDiameter());
-		input.setGraphValue("Radius", distance.getRadius());
+		//input.setGraphValue("Radius", distance.getRadius());		//TEMPORARILY
 		input.setGraphValue("Average clustering coefficient", clusteringCoefficient.getAverageClusteringCoefficient());
 		input.setGraphValue("Average degree", degree.getAverageDegree());
 		input.setGraphValue("Modularity", modularity.getModularity());

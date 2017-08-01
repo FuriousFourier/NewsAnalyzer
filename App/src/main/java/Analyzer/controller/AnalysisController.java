@@ -283,10 +283,10 @@ public class AnalysisController {
 			edgesGlobalWriter = new CSVWriter(new FileWriter(edgesGlobalFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
 		}
 		String[] newspaperList = { "Interia", "Fakt", "Newsweek", "RMF24", "Today", "China Daily"};
-		/*for (Newspaper n : fetchedNewspapers) {
-			value = n.getName();*/
-		for (String s: newspaperList) {
-			value = s;
+		for (Newspaper n : fetchedNewspapers) {
+			value = n.getName();
+		/*for (String s: newspaperList) {
+			value = s;*/
 			setIsAskingForValue(false);
 			if ((getPressReleasesByNews().equals("foo")) && (fetchedNotes != null) && (!fetchedNotes.isEmpty())){
 				System.out.println("******************* *Newspaper: "+value + " ************************");
@@ -379,10 +379,10 @@ public class AnalysisController {
 			date1 = "2017-07-04";
 			date2 = "2017-07-28";
 			System.out.println("Enter date range");
-			System.out.print("Date 1: " + date1 + "\n");
-			//date1 = br.readLine();
-			System.out.print("Date 2: " + date2 + "\n");
-			//date2 = br.readLine();
+			System.out.print("Date 1: ");
+			date1 = br.readLine();
+			System.out.print("Date 2: ");
+			date2 = br.readLine();
 			System.out.print("Nr of TOP tags to compare: ");
 			nrOfTopTags = Integer.parseInt(br.readLine());
 			if (option.startsWith("o")) {

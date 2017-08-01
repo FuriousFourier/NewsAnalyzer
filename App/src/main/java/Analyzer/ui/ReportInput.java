@@ -23,22 +23,21 @@ public class ReportInput {
 			GraphDistance.CLOSENESS,
 			GraphDistance.ECCENTRICITY,
 			GraphDistance.HARMONIC_CLOSENESS,
-			Degree.INDEGREE,
-			Degree.OUTDEGREE,
+			Degree.DEGREE,
 			Hits.AUTHORITY,
 			Hits.HUB,
 			PageRank.PAGERANK,
 			EigenvectorCentrality.EIGENVECTOR,
 			ClusteringCoefficient.CLUSTERING_COEFF,
 			WeightedDegree.WINDEGREE,
-			WeightedDegree.WOUTDEGREE,
+			//WeightedDegree.WOUTDEGREE,
 			//Prestige
 			DomainCalculator.DOMAIN_KEY,
 			IndegreeCalculator.INDEGREE_KEY,
 			IndegreeCalculator.INDEGREE_NORMALIZED_KEY,
 			ProximityCalculator.PROXIMITY_KEY,
-			RankCalculator.RANK_KEY,
-			RankCalculator.NORMALIZED_RANK_KEY,
+			//RankCalculator.RANK_KEY,
+			//RankCalculator.NORMALIZED_RANK_KEY,
 	};
 
 	private Map<String, Node> nodeMaxValues = new HashMap<>();

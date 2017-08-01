@@ -343,10 +343,10 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 		System.out.println("Current param in getChart: " + currentParam);
 
 		// Customize Chart
-		chart.getStyler().setLegendPosition(Styler.LegendPosition.InsideSE);
+		chart.getStyler().setLegendPosition(Styler.LegendPosition.OutsideE);
 		chart.getStyler().setHasAnnotations(true);
 		chart.getStyler().setXAxisLabelRotation(70);
-	//	chart.getStyler().setYAxisDecimalPattern("#0.000");
+		chart.getStyler().setYAxisDecimalPattern("#0.000");
 
 		// Series
 		List<CoefficientData> coefficientData = new ArrayList<>(labelValues.size());
