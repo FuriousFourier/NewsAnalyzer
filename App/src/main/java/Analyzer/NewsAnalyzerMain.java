@@ -1,5 +1,6 @@
 package Analyzer;
 
+import Analyzer.info.InfoContainer;
 import Analyzer.util.DbUtil;
 import Analyzer.util.FeedDownloaderWorker;
 import org.springframework.boot.SpringApplication;
@@ -78,7 +79,7 @@ public class NewsAnalyzerMain {
             line = scanner.nextLine();
 			try {
 				if (line.equals("p")) {
-					if (!dbUtil.getNewFeeds()){
+					if (!dbUtil.getNewFeeds(true)){
 						System.out.println("Something went wrong");
 					}
 				} else if (line.equals("d")) {
@@ -89,7 +90,7 @@ public class NewsAnalyzerMain {
 					System.out.println("Bye");
 					System.exit(0);
 				} else if(line.equals("tl")){
-					MainTagger.tagNewFeeds(1);
+					MainTagger.tagNewFeeds(InfoContainer.NEW_FEEDS_PATH, 1);
 				} else if (line.equals("cs")) {
 					if (!dbUtil.createCurrencyTagStats()) {
 						System.out.println("Something went wrong");
@@ -102,8 +103,20 @@ public class NewsAnalyzerMain {
 					if (!dbUtil.createCurrencyTagStatsForNewspapers()) {
 						System.out.println("Something went wrong");
 					}
-				}else if (line.equals("to")){
+				} else if (line.equals("to")){
 					MainTagger.tagGeomedia(1);
+				} else if (line.equals("fbn")) {
+					if (!dbUtil.findBiggerNewspaper()) {
+						System.out.println("Something went wrong");
+					}
+				} else if (line.equals("aef")) {
+					if (!dbUtil.addExistingFeeds(false)) {
+						System.out.println("Something went wrong");
+					}
+				} else if (line.equals("cps")) {
+					if (!dbUtil.createPairStats()) {
+						System.out.println("Something went wrong");
+					}
 				} else {
 					System.out.println("Unknown command");
 				}
@@ -116,7 +129,7 @@ public class NewsAnalyzerMain {
     }
 
     private static void tagAllFeeds() throws IOException {
-		MainTagger.tagNewFeeds(1);
+		MainTagger.tagNewFeeds(InfoContainer.NEW_FEEDS_PATH, 1);
 		MainTagger.tagGeomedia(3);
 	}
 

@@ -248,6 +248,7 @@ public class InfoContainer {
 	};
 
 	public static final String DESTINATION_TAGS_FOLDER_PATHS = "./data/TaggedFeeds";
+	public static final String EXISTING_FILE_TAGS = "./data/Existing feeds";
 	public static final String NEW_FEEDS_PATH = "./data/Feeds";
 	public static final String ORGANIZATION_TAG_FILE_PATH = "./data/datafiles/orgs.csv";
 	public static final String ORGANIZATION_SHORT_TAG_FILE_PATH = "./data/datafiles/orgs_short.csv";

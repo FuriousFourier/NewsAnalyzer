@@ -159,7 +159,7 @@ public class MainTagger {
 		}
 	}
 
-	public static void tagNewFeeds(int workId) throws IOException {
+	public static void tagNewFeeds(String feedFolderPath, int workId) throws IOException {
 		long startTime = System.nanoTime();
 		Thread[] nonCurrencyWorkers = new Thread[tagFiles.length];
 		Thread[] currencyWorkers = new Thread[currencyTaggers.length];
@@ -171,7 +171,7 @@ public class MainTagger {
 			final String tagFile = tagFiles[i];
 			final String destinationSuffix = destinationSuffixes[i];
 
-			initWorkersAndStart(workId, nonCurrencyWorkers, i, tagger, tagFile, destinationSuffix, InfoContainer.NEW_FEEDS_PATH, false);
+			initWorkersAndStart(workId, nonCurrencyWorkers, i, tagger, tagFile, destinationSuffix, feedFolderPath, false);
 		}
 
 		for (int i=0; i<currencyTaggers.length; ++i) {
@@ -179,7 +179,7 @@ public class MainTagger {
 			final BasicTagger tagger = currencyTaggers[i];
 			final String tagFile = InfoContainer.currencyTagFiles[i];
 
-			initWorkersAndStart(workId + 1, currencyWorkers, i, tagger, tagFile, destinationCurrencyTagSuffix, InfoContainer.NEW_FEEDS_PATH, false);
+			initWorkersAndStart(workId + 1, currencyWorkers, i, tagger, tagFile, destinationCurrencyTagSuffix, feedFolderPath, false);
 		}
 
 		waitForWorkers(nonCurrencyWorkers);

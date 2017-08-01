@@ -18,7 +18,6 @@ public class PressRelease {
     private static final Date dummyDate = new Date(0, 0, 0, 0, 0, 0);
     private static final String dummyTitle = "UNTITLED";
 	private static final Feed dummyFeed = new Feed();
-	private static long counter = 0;
 
     @Id
     @GeneratedValue

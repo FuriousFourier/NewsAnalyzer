@@ -13,7 +13,7 @@ public class FeedDownloaderWorker implements Runnable {
 			if (currentTime.getDate() != previousTime.getDate()) {
 				previousTime = currentTime;
 				try {
-					dbUtil.getNewFeeds();
+					dbUtil.getNewFeeds(true);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}

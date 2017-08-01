@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.sound.sampled.Line;
 import java.io.*;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -77,7 +78,7 @@ public class DbController {
 
 	@GetMapping("/addNewThingsToDB")
 	@ResponseBody
-	public synchronized boolean addNewData(@RequestParam("secNum") Long securityNumber) throws IOException {
+	public synchronized boolean addNewData(@RequestParam("secNum") Long securityNumber, @RequestParam("feedPath") String feedPath) throws IOException {
 
 		if (!securityNumber.equals(NewsAnalyzerMain.getSecurityNumber())) {
 			return false;
@@ -97,7 +98,7 @@ public class DbController {
 		System.out.println("Press releases");
 		//pressReleases
 		try {
-			changedPRs.add(addPressReleasesToDBNewWay(NEW_FEEDS_PATH, true));
+			changedPRs.add(addPressReleasesToDBNewWay(feedPath, true));
 		} catch (InvalidDataException e) {
 			return false;
 		}
@@ -137,7 +138,7 @@ public class DbController {
 		return true;
 	}
 
-	private void getThingsFromDb(boolean shouldTakePressReleases) {
+	private synchronized void getThingsFromDb(boolean shouldTakePressReleases) {
 		Iterable<Language> languagesFromDb = languageRepository.findAll();
 		Iterable<Country> countriesFromDb = countryRepository.findAll();
 		Iterable<Newspaper> newspapersFromDb = newspaperRepository.findAll();
@@ -174,7 +175,7 @@ public class DbController {
 		getUnknownCountry();
 	}
 
-	private Set<PressReleaseId> extractFeedsFilesAndSaveNewWay(File file, boolean newFeeds) throws IOException {
+	private synchronized Set<PressReleaseId> extractFeedsFilesAndSaveNewWay(File file, boolean newFeeds) throws IOException {
 		File[] files = file.listFiles();
 		if (files == null) {
 			System.out.println("Null for " + file.getAbsolutePath());
@@ -240,13 +241,13 @@ public class DbController {
 					}
 				}
 			} else if (f.isDirectory()) {
-				extractFeedsFilesAndSaveNewWay(f, newFeeds);
+				result.addAll(extractFeedsFilesAndSaveNewWay(f, newFeeds));
 			}
 		}
 		return result;
 	}
 
-	private Set<PressReleaseId> addPressReleasesToDBNewWay(String path, boolean newFeeds) throws IOException {
+	private synchronized Set<PressReleaseId> addPressReleasesToDBNewWay(String path, boolean newFeeds) throws IOException {
 		File file = new File(path);
 		return extractFeedsFilesAndSaveNewWay(file, newFeeds);
 	}
@@ -301,7 +302,7 @@ public class DbController {
 				}
 
 			} else if (f.isDirectory()) {
-				extractTaggedFeedsFilesAndSaveNewWay(f);
+				result.addAll(extractTaggedFeedsFilesAndSaveNewWay(f));
 			}
 		}
 		return result;
@@ -401,9 +402,9 @@ public class DbController {
 		Analyzer.secondProject.rss.Main.main(tmp);
 		System.out.println("Im tagging");
 		try {
-			MainTagger.tagNewFeeds(1);
+			MainTagger.tagNewFeeds(InfoContainer.NEW_FEEDS_PATH,1);
 			System.out.println("Lets go with db");
-			addNewData(NewsAnalyzerMain.getSecurityNumber());
+			addNewData(NewsAnalyzerMain.getSecurityNumber(), InfoContainer.NEW_FEEDS_PATH);
 			System.out.println("Work finished");
 		} catch (IOException e) {
 			System.err.println("Something went wrong :/");
@@ -433,7 +434,7 @@ public class DbController {
 					System.out.println("\t" + pressRelease.getTitle());
 					Set<Tag> tags = pressRelease.getTags();
 					if (!tags.isEmpty()) {
-						System.out.println(pressRelease.getTitle() + "; " + pressRelease.getContent());
+						System.out.println(pressRelease.getDate() + "; " + pressRelease.getTitle());
 						for (Tag tag : tags) {
 							System.out.println("\t" + tag.getName());
 						}
@@ -591,7 +592,7 @@ public class DbController {
 		return true;
 	}
 
-	private long saveThingsToDb() {
+	private synchronized long saveThingsToDb() {
 		System.out.println("I will be saving this to DB now");
 		System.out.println("Countries size: " + countryMap.values().size());
 		System.out.println("Feeds size: " + feedMap.values().size());
@@ -647,7 +648,7 @@ public class DbController {
 
 	@GetMapping("/createCurrencyTagStats")
 	@ResponseBody
-	public boolean createCurrencyTagStats(@RequestParam("secNum") Long securityNumber) {
+	public synchronized boolean createCurrencyTagStats(@RequestParam("secNum") Long securityNumber) {
 		if (!securityNumber.equals(NewsAnalyzerMain.getSecurityNumber())) {
 			return false;
 		}
@@ -694,7 +695,7 @@ public class DbController {
 			try {
 				long currentTagCount = tag.getPressReleases().size();
 				tagCount += currentTagCount;
-				WriterCsvFiles.write(destinationFile.getAbsolutePath(), tag.getName(), Long.toString(currentTagCount), tag.getCountry().getName());
+				WriterCsvFiles.write(destinationFile.getAbsolutePath(), tag.getName(), Long.toString(currentTagCount), tag.getCategory());
 			} catch (IOException e) {
 				System.err.println("Error while handling tag: " + tag.getName());
 			}
@@ -705,7 +706,7 @@ public class DbController {
 
 	@GetMapping("/createCurrencyTagStatsForNewspapers")
 	@ResponseBody
-	public boolean createCurrencyTagStatsForNewspapers(@RequestParam("secNum") Long securityNumber) {
+	public synchronized boolean createCurrencyTagStatsForNewspapers(@RequestParam("secNum") Long securityNumber) {
 		if (!securityNumber.equals(NewsAnalyzerMain.getSecurityNumber())) {
 			return false;
 		}
@@ -741,6 +742,132 @@ public class DbController {
 			} catch (IOException e) {
 				System.err.println("Its impossible to write into " + destinationFilePath + ", newspaper's name: " + newspaper.getName());
 				return false;
+			}
+		}
+		return true;
+	}
+
+	@GetMapping("/findBiggerNewspaper")
+	@ResponseBody
+	public synchronized boolean findBiggerNewspaper(@RequestParam("secNum") Long securityNumber) {
+		if (!securityNumber.equals(NewsAnalyzerMain.getSecurityNumber())) {
+			return false;
+		}
+
+		System.out.println("Lets go");
+		List<Newspaper> newspapers = ((List<Newspaper>) newspaperRepository.findAll());
+		if (newspapers.isEmpty()) {
+			System.out.println("No newspapers");
+			return false;
+		}
+
+		final String destinationFilePath = "newspapersPRCount.csv";
+		File destinationFile = new File(destinationFilePath);
+		destinationFile.delete();
+		PrintWriter printWriter;
+		try {
+			printWriter = new PrintWriter(destinationFile);
+		} catch (FileNotFoundException e) {
+			System.err.println("Error");
+			return false;
+		}
+
+		for (Newspaper newspaper : newspapers) {
+			long PRcount = 0;
+			Set<Feed> feeds = newspaper.getFeeds();
+			for (Feed feed : feeds) {
+				PRcount += feed.getPressReleases().size();
+			}
+			printWriter.println(Long.toString(PRcount) + "\t" + newspaper.getName());
+		}
+		printWriter.close();
+		return true;
+	}
+
+	@GetMapping("/addExistingFeeds")
+	@ResponseBody
+	public synchronized boolean addExistingFeeds(@RequestParam("secNum") Long secNum, @RequestParam("shouldDelete") boolean shouldDelete) {
+		if (!secNum.equals(NewsAnalyzerMain.getSecurityNumber())) {
+			return false;
+		}
+
+		System.out.println("Im tagging");
+		try {
+			MainTagger.tagNewFeeds(InfoContainer.EXISTING_FILE_TAGS,1);
+			System.out.println("Lets go with db");
+			addNewData(NewsAnalyzerMain.getSecurityNumber(), InfoContainer.EXISTING_FILE_TAGS);
+			System.out.println("Work finished");
+		} catch (IOException e) {
+			System.err.println("Something went wrong :/");
+			e.printStackTrace();
+		}
+		if (shouldDelete) {
+			try {
+				deleteFolder(InfoContainer.EXISTING_FILE_TAGS);
+				deleteFolder(InfoContainer.DESTINATION_TAGS_FOLDER_PATHS);
+			} catch (IOException e) {
+				System.err.println("I cant even throw away the litter :/");
+				e.printStackTrace();
+			}
+		}
+		return true;
+	}
+
+	@GetMapping("/createPairStats")
+	@ResponseBody
+	public synchronized boolean createPairStats(@RequestParam("secNum") Long secNum) {
+		if (!secNum.equals(NewsAnalyzerMain.getSecurityNumber())) {
+			return false;
+		}
+
+		List<Newspaper> newspapers = ((List<Newspaper>) newspaperRepository.findAll());
+		if (newspapers.isEmpty()) {
+			System.out.println("No newspapers found");
+			return false;
+		}
+		List<Tag> foundTags = new ArrayList<>();
+		Map<Tag, Map<Tag, Long>> results = new HashMap<>();
+		final String resultFilepath = "tagPairStats.csv";
+		File resultFile = new File(resultFilepath);
+		resultFile.delete();
+		try {
+			WriterCsvFiles.write(resultFilepath, "newspaper", "tag1", "tag2", "count");
+		} catch (IOException e) {
+			System.err.println("Error while writing to file " + resultFilepath);
+			return false;
+		}
+		for (Newspaper newspaper : newspapers) {
+			System.out.println("Newspaper: " + newspaper.getName());
+			results.clear();
+			for (Feed feed : newspaper.getFeeds()) {
+				for (PressRelease pressRelease : feed.getPressReleases()) {
+					foundTags.clear();
+					for (Tag tag : pressRelease.getTags()) {
+						if (tag.getCategory().equals("Currency")) {
+							foundTags.add(tag);
+						}
+					}
+					foundTags.sort(Comparator.comparing(Tag::getName));
+					for (int i=0; i<foundTags.size(); ++i) {
+						for (int j=i+1; j<foundTags.size(); ++j) {
+							Map<Tag, Long> secondMap = results.computeIfAbsent(foundTags.get(i), k -> new HashMap<>());
+							Long tagCount = secondMap.computeIfAbsent(foundTags.get(j), k -> 0L);
+							secondMap.put(foundTags.get(j), tagCount + 1);
+						}
+					}
+				}
+			}
+			Set<Map.Entry<Tag, Map<Tag, Long>>> entries = results.entrySet();
+			for (Map.Entry<Tag, Map<Tag, Long>> entry : entries) {
+				Set<Map.Entry<Tag, Long>> secondEntries = entry.getValue().entrySet();
+				for (Map.Entry<Tag, Long> entry2 : secondEntries) {
+					try {
+						WriterCsvFiles.write(resultFilepath, newspaper.getName(), entry.getKey().getName(), entry2.getKey().getName(), Long.toString(entry2.getValue()));
+					} catch (IOException e) {
+						System.err.println("Error while writing to " + resultFilepath);
+						return false;
+					}
+				}
 			}
 		}
 		return true;

@@ -60,8 +60,18 @@ W analizie opisać ile danych udało się zebrać itp.
 W planie ustalić jakie statystyki chcemy zebrać (pliki csv, wykresy, zintegrowane wyniki mają znaleźć się w dokumentacji), np. ile danych pobrano, ile notek dodatkowo pobranych
 Na końcu referencje dopisać
 Miary dla poszczególnych czasopism albo są dla państw albo dla walut, sprawdzić czy są dobrze znormalizowane. Policzyć korelacje między tymi grafami, między poszczególnymi czasopismami
-Pliczyć korelacje by można albo po wartościach miar dla czasopisma albo pozycja państwa w rankingu w danej mierze – rozkminić to jeszcze - tu normalizacja nie jest szczególnie istotna
+Policzyć korelacje by można albo po wartościach miar dla czasopisma albo pozycja państwa w rankingu w danej mierze – rozkminić to jeszcze - tu normalizacja nie jest szczególnie istotna
 Ciekawe państwa – Syria, Irak, Libia, Francja, tam gdzie wojny zamachy i inne inby
 Istotne jest np. jak mocno dane wydarzenie przekształciło sieć i wpłynęło na wyniki
 Obok nazw walut słowa kluczowe
 Ile razy poszczególne waluty występują globalnie i po czasopismach (co do statystyk do zrobienia na już)
+
+
+
+
+
+Znajdować pary walut w tej samej notce (ile razy para występuje) → gut
+Wysłać statystyki wszystkich tagów (nie tylko walutowych). → gut
+Rozłożyć to w czasie. 
+Mało tagów polskich odnośnie walut. → gut
+Nazwy krajów pododawać

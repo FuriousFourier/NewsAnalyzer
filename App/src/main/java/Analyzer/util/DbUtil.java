@@ -36,9 +36,9 @@ public class DbUtil {
 		return scanner.nextBoolean();
 	}
 
-	public boolean getNewFeeds() throws IOException {
+	public boolean getNewFeeds(boolean shouldDelete) throws IOException {
 		URL url = new URL("http://localhost:8080/getNewFeeds?secNum=" + NewsAnalyzerMain.getSecurityNumber()
-		+ "&shouldDelete=" + true);
+		+ "&shouldDelete=" + shouldDelete);
 		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 		connection.setRequestProperty("User-Agent", USER_AGENT);
 		int responseCode = connection.getResponseCode();
@@ -87,6 +87,43 @@ public class DbUtil {
 
 	public boolean createCurrencyTagStatsForNewspapers() throws IOException {
 		URL url = new URL("http://localhost:8080/createCurrencyTagStatsForNewspapers?secNum=" + NewsAnalyzerMain.getSecurityNumber());
+		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+		connection.setRequestProperty("User-Agent", USER_AGENT);
+		int responseCode = connection.getResponseCode();
+		if (responseCode != 200) {
+			throw new HTTPException(responseCode);
+		}
+		Scanner scanner = new Scanner(connection.getInputStream());
+		return scanner.nextBoolean();
+	}
+
+	public boolean findBiggerNewspaper() throws IOException {
+		URL url = new URL("http://localhost:8080/findBiggerNewspaper?secNum=" + NewsAnalyzerMain.getSecurityNumber());
+		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+		connection.setRequestProperty("User-Agent", USER_AGENT);
+		int responseCode = connection.getResponseCode();
+		if (responseCode != 200) {
+			throw new HTTPException(responseCode);
+		}
+		Scanner scanner = new Scanner(connection.getInputStream());
+		return scanner.nextBoolean();
+	}
+
+	public boolean addExistingFeeds(boolean shouldDelete) throws IOException {
+		URL url = new URL("http://localhost:8080/addExistingFeeds?secNum=" + NewsAnalyzerMain.getSecurityNumber()
+				+ "&shouldDelete=" + shouldDelete);
+		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+		connection.setRequestProperty("User-Agent", USER_AGENT);
+		int responseCode = connection.getResponseCode();
+		if (responseCode != 200) {
+			throw new HTTPException(responseCode);
+		}
+		Scanner scanner = new Scanner(connection.getInputStream());
+		return scanner.nextBoolean();
+	}
+
+	public boolean createPairStats() throws IOException {
+		URL url = new URL("http://localhost:8080/createPairStats?secNum=" + NewsAnalyzerMain.getSecurityNumber());
 		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 		connection.setRequestProperty("User-Agent", USER_AGENT);
 		int responseCode = connection.getResponseCode();
