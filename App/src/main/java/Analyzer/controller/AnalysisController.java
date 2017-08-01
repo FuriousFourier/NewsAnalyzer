@@ -368,6 +368,7 @@ public class AnalysisController {
 	@GetMapping("/broadAnalysis")
 	public synchronized String chooseParams(){
 		try {
+			int nrOfTopTags = 0;
 			fetchedTags = new TreeSet<>((List<Tag>) tagRepository.findAll());
 
 			System.out.println("Choose option" +
@@ -382,6 +383,8 @@ public class AnalysisController {
 			//date1 = br.readLine();
 			System.out.print("Date 2: " + date2 + "\n");
 			//date2 = br.readLine();
+			System.out.print("Nr of TOP tags to compare: ");
+			nrOfTopTags = Integer.parseInt(br.readLine());
 			if (option.startsWith("o")) {
 				System.out.print("Newspaper to compare with others: ");
 				titleToCompare = br.readLine();
@@ -400,6 +403,9 @@ public class AnalysisController {
 					reportTitle += titleToCompare + "_";
 				}
 			}
+			System.out.println("Create pdf with charts? (t/n)");
+			boolean willCreateReport = br.readLine().startsWith("t");
+
 			if (option.startsWith("o")) {
 				isChosenToCompare = true;
 				for (Newspaper n : fetchedNewspapers) {
@@ -415,18 +421,18 @@ public class AnalysisController {
 				compare();
 			}
 
-			System.out.println("Shall I create pdf with charts? (t/n)");
-			if (br.readLine().startsWith("t")) {
+			//if (willCreateReport.startsWith("t")) {
 				Document report = null;
 				try {
 					String daysFileName = "src/main/resources/csv/" + reportTitle + "(" + date1 + "_" + date2 + ")_days.csv";
 					String graphFileName = "src/main/resources/csv/" + reportTitle + "(" + date1 + "_" + date2 + ").csv";
 					String nodesFileName = "src/main/resources/csv/" + reportTitle + "(" + date1 + "_" + date2 + ")_nodes.csv";
-					report = reportCreator.createReportBase(reportTitle + "(" + date1 + "_" + date2 + ")");
+					if (willCreateReport)
+						report = reportCreator.createReportBase(reportTitle + "(" + date1 + "_" + date2 + ")");
 					System.out.println("Nr of newspaper titles: " + newspaperTitles.size());
-					reportCreator.showChart(daysFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ") - day by day", false, false);
-					reportCreator.showChart(graphFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ")", false, false);
-					reportCreator.showChart(nodesFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ")", true, true);
+					reportCreator.showChart(daysFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ") - day by day", nrOfTopTags, 3,false, false, willCreateReport);
+					reportCreator.showChart(graphFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ")", nrOfTopTags, 3,false,false, willCreateReport);
+					reportCreator.showChart(nodesFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ")", nrOfTopTags, -1, true, true, willCreateReport);
 
 					String daysNodesFileName = "src/main/resources/csv/"+reportTitle+"("+date1+"_"+date2+")_days_TOP.csv";
 					File nodeFile = new File(daysNodesFileName);
@@ -450,7 +456,10 @@ public class AnalysisController {
 						reportCreator.extractRelevantInputs(reader, graphWriter, date1, date2, true, true);
 					}
 					graphWriter.close();
-					reportCreator.showChart(daysNodesFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ") - day by day", true, false);
+					for (int i = 0; i < nrOfTopTags; i++){
+						reportCreator.showChart(daysNodesFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ") - day by day", nrOfTopTags, i+3, true, false, willCreateReport);
+					}
+
 				} catch (Exception e) {
 					System.out.println("EXCEPTION IN chooseParams()");
 					e.printStackTrace();
@@ -458,9 +467,10 @@ public class AnalysisController {
 					if (report != null)
 						report.close();
 				}
-			}
+			//}
 		}catch (Exception e){
 			System.out.println("EXCEPTION IN chooseParams()!!! (out try)");
+			e.printStackTrace();
 		}finally {
 
 			return "foo";

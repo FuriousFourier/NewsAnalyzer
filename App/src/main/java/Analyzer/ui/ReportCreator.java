@@ -33,15 +33,20 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 	private List<String> series;
 	private Map<String, List<Number>> values;
 	private boolean isNodeAnalysis;
-	private String xAxis;
+	private String xAxis, colName;
 	private int nrOfSerieses;
 	private Map<String, List<Integer>> importantTagsList;//liczby wskazuja, ktory to tag jest z kolei
 
 	public synchronized void extractRelevantInputs(CSVReader reader,  CSVWriter writer, String date1, String date2, boolean initColumns, boolean useImportantTags) throws IOException {
 		System.out.println("ExtractRelevantInputs");
 		String[] nextLine;
-		String[] nextTopLine = new String[13];
+		List<Integer> tagsNums;
+		String[] nextTopLine = null;
 		String[] columnLine = null;
+		if(useImportantTags) {
+			tagsNums = importantTagsList.get("hub"); //moze byc dowolne inne istniejace pole
+			nextTopLine = new String[tagsNums.size() + 3];
+		}
 		while ((nextLine = reader.readNext()) != null) {
 			if (nextLine[0].startsWith("Date") && initColumns) {
 				columnLine = nextLine;
@@ -68,8 +73,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 				nextTopLine[0] = columnLine[0];
 				nextTopLine[1] = columnLine[1];
 				nextTopLine[2] = columnLine[2];
-
-				List<Integer> tagsNums = importantTagsList.get(nextLine[2]);
+				tagsNums = importantTagsList.get(nextLine[2]);
 				for (int i = 0; i < tagsNums.size(); i++){
 					nextTopLine[3+i] = columnLine[3+ tagsNums.get(i)];
 				}
@@ -121,7 +125,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 			this.value = value;
 		}
 	}
-	public synchronized void showChart(String dataPath, int nrOfSerieses, Document report, String chartName, boolean isNodeAnalysis, boolean getTop) {
+	public synchronized void showChart(String dataPath, int nrOfSerieses, Document report, String chartName, int nrOfTopTags, int colNr, boolean isNodeAnalysis, boolean getTop, boolean willCreateReport) {
 		try {
 			LabelComparator labelComparator = new LabelComparator();
 			ValueComparator valueComparator = new ValueComparator();
@@ -129,51 +133,53 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 			this.nrOfSerieses = nrOfSerieses;
 			File inputFile = new File(dataPath);
 			CSVReader reader = null;
-				reader = new CSVReader(new FileReader(inputFile), '\t');
+			reader = new CSVReader(new FileReader(inputFile), '\t');
 			String[] nextLine;
 			Map<String, Map<String, List<DataContainer>>> data = new HashMap<>(); //do analizy grafu
 			String[] columnNames = null;
-				while ((nextLine = reader.readNext()) != null) {
-					if (nextLine[0].equals("Date")) {
-					//	if (columnNames == null) { //dla analizy wezlow - musze sprawic, aby najpierw wazniejsza gazeta byla uwzgledniona!
-							columnNames = nextLine; //mam nadzieje, ze wykomentowanie warunku nie pospuje niczego
-						//}
-						continue;
-					}
-					try {
-						data.putIfAbsent(nextLine[2], new HashMap<>()); //zapisuje parametr
-					}catch (Exception e){
-						System.out.println("Wypis felernej linijki (rozmiar: " + nextLine.length);
-						for (String s: nextLine)
-							System.out.print(s);
-						System.out.println();
-					}
-
-					data.get(nextLine[2]).putIfAbsent(nextLine[1], new ArrayList<>()); //tu moge juz dodac gazete, bo znam parametr
-					//dla grafow - dodaje parametr i basta
-					if (!isNodeAnalysis) {
-						if (nextLine[3].equals("NaN"))
-							nextLine[3] = "-0.1";
-						DataContainer container;
-						container = new DataContainer(nextLine[0], NumberFormat.getInstance(Locale.ENGLISH).parse(nextLine[3]));
-						data.get(nextLine[2]).get(nextLine[1]).add(container);
-					} else {
-						for (int j = 3; j < columnNames.length; j++) {
-							DataContainer container = null;
-							try {
-								container = new DataContainer(columnNames[j], NumberFormat.getInstance(Locale.ENGLISH).parse(nextLine[j]));
-							} catch (Exception e){
-								System.out.println("columns names["+j+"]: " + columnNames[j]);
-								System.out.println("Felerna linijka: " + nextLine[0] + " " +nextLine[1] + " " + nextLine[2]+" "+nextLine[j]);
-								continue;
-							}
-							data.get(nextLine[2]).get(nextLine[1]).add(container);
-						}
-					}
+			while ((nextLine = reader.readNext()) != null) {
+				if (nextLine[0].equals("Date")) {
+					columnNames = nextLine; //mam nadzieje, ze wykomentowanie warunku nie pospuje niczego
+					continue;
+				}
+				try {
+					data.putIfAbsent(nextLine[2], new HashMap<>()); //zapisuje parametr
+				}catch (Exception e){
+					System.out.println("Wypis felernej linijki (rozmiar: " + nextLine.length);
+					for (String s: nextLine)
+						System.out.print(s);
+					System.out.println();
 				}
 
-			com.itextpdf.text.Rectangle rect = report.getPageSize();
-			float margin = report.rightMargin() + report.leftMargin();
+				data.get(nextLine[2]).putIfAbsent(nextLine[1], new ArrayList<>()); //tu moge juz dodac gazete, bo znam parametr
+				//dla grafow - dodaje parametr i basta
+				if (!getTop) {
+					if (nextLine[colNr].equals("NaN"))
+						nextLine[colNr] = "-0.1";
+					DataContainer container;
+					container = new DataContainer(nextLine[0], NumberFormat.getInstance(Locale.ENGLISH).parse(nextLine[colNr]));
+					colName = columnNames[colNr];
+					data.get(nextLine[2]).get(nextLine[1]).add(container);
+				} else {
+					for (int j = 3; j < columnNames.length; j++) {
+						DataContainer container = null;
+						try {
+							container = new DataContainer(columnNames[j], NumberFormat.getInstance(Locale.ENGLISH).parse(nextLine[j]));
+						} catch (Exception e){
+							System.out.println("columns names["+j+"]: " + columnNames[j]);
+							System.out.println("Felerna linijka: " + nextLine[0] + " " +nextLine[1] + " " + nextLine[2]+" "+nextLine[j]);
+							continue;
+						}
+						data.get(nextLine[2]).get(nextLine[1]).add(container);
+					}
+				}
+			}
+			com.itextpdf.text.Rectangle rect = null;
+			float margin = 0;
+			if (willCreateReport) {
+				rect = report.getPageSize();
+				margin = report.rightMargin() + report.leftMargin();
+			}
 			if (data.isEmpty()) {
 				System.out.println("Input is empty - returning...");
 				return;
@@ -182,7 +188,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 			//graph params
 			List<String> importantTagsNames;
 			SortedSet<String> labelsSet = new TreeSet<>(data.keySet());
-			//give TOP 10 to output .csv files
+			//give TOP nrOfTopTags to output .csv files
 
 			String topFileName = "src/main/resources/csv/"+chartName+"_TOP.csv";
 			File topFile;
@@ -194,12 +200,12 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 				topWriter = new CSVWriter(new FileWriter(topFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
 			}
 
-			String[] textForTop = new String[23];
+			String[] textForTop = new String[3 + 2 * nrOfTopTags];
 			if (getTop) {
 				textForTop[0] = "Date";
 				textForTop[1] = "Newspaper";
 				textForTop[2] = "Param name";
-				for (int i = 0; i < 10; i += 2) {
+				for (int i = 0; i < nrOfTopTags; i += 2) {
 					textForTop[3 + i] = (i / 2 + 1) + "-tag";
 					textForTop[3 + i + 1] = "Tag rank";
 				}
@@ -238,7 +244,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 						//	System.out.println("Important tags:");
 							//tu musze zapamietac nazwy tagow
 							//za chwile zapametam indeksy w zaleznosci od kolejnosci alfabetycznej
-							for (int k = 0; k < 10; k++) { //sparametryzowac po liczbie tagow, w wywolaniu funkcji
+							for (int k = 0; k < nrOfTopTags; k++) { //sparametryzowac po liczbie tagow, w wywolaniu funkcji
 								int index = dateData.size()-1-k;
 								importantTagsNames.add(dateDataCopy.get(index).date);//importantTags.add(dateData.get(index));
 								textForTop[3+2*k] = dateDataCopy.get(index).date;
@@ -260,52 +266,54 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 						}
 					}
 					//System.out.println("currentTags.size(): " + currentTags.size());
-					if (!getTop) {
-						for (DataContainer d : dateData) {
-							LabelsSet.add(d.date);
-							values.putIfAbsent(d.date, new ArrayList<>(nrOfSerieses));
-							//System.out.println("list size: " + values.get(d.date).size());
-							while (values.get(d.date).size() < i)
-								values.get(d.date).add(0);
-							values.get(d.date).add(i, d.value);
-							//System.out.println(d.value + " added to series  " + i + " for " + d.date);
-						}
-					}
-					else {
-						System.out.println("Important tags list size for "+ p+": " + importantTagsList.get(p).size());
-						for (Integer m : importantTagsList.get(p)) {
-							DataContainer d = dateData.get(m);
-							LabelsSet.add(d.date);
-							values.putIfAbsent(d.date, new ArrayList<>(nrOfSerieses));
-							System.out.println("list size: " + values.get(d.date).size());
-							while (values.get(d.date).size() < i)
-								values.get(d.date).add(0);
-							values.get(d.date).add(i, d.value);
-							System.out.println(d.value + " added to series  " + i + " for " + d.date);
+					if (willCreateReport) {
+						if (!getTop) {
+							for (DataContainer d : dateData) {
+								LabelsSet.add(d.date);
+								values.putIfAbsent(d.date, new ArrayList<>(nrOfSerieses));
+								//System.out.println("list size: " + values.get(d.date).size());
+								while (values.get(d.date).size() < i)
+									values.get(d.date).add(0);
+								values.get(d.date).add(i, d.value);
+								//System.out.println(d.value + " added to series  " + i + " for " + d.date);
+							}
+						} else {
+							System.out.println("Important tags list size for " + p + ": " + importantTagsList.get(p).size());
+							for (Integer m : importantTagsList.get(p)) {
+								DataContainer d = dateData.get(m);
+								LabelsSet.add(d.date);
+								values.putIfAbsent(d.date, new ArrayList<>(nrOfSerieses));
+								System.out.println("list size: " + values.get(d.date).size());
+								while (values.get(d.date).size() < i)
+									values.get(d.date).add(0);
+								values.get(d.date).add(i, d.value);
+								System.out.println(d.value + " added to series  " + i + " for " + d.date);
+							}
 						}
 					}
 					i++;
 				}
 
-				labelValues = new ArrayList<>(LabelsSet);
-				//if (!getTop)
+				if (willCreateReport) {
+					labelValues = new ArrayList<>(LabelsSet);
+					//if (!getTop)
 					sort(labelValues);
-				CategoryChart chart = this.getChart();
-				if (chart == null) {
-					System.out.println("No chart to display for " + series.get(0) + " etc. " + labelValues.get(0) + " etc., param: " + p);
-					continue;
-				}
+					CategoryChart chart = this.getChart();
+					if (chart == null) {
+						System.out.println("No chart to display for " + series.get(0) + " etc. " + labelValues.get(0) + " etc., param: " + p);
+						continue;
+					}
 					try {
 						BitmapEncoder.saveBitmap(chart, "src/main/resources/charts/" + chartName + "_" + p, BitmapEncoder.BitmapFormat.PNG);
-							Path path = Paths.get("src/main/resources/charts/"+ chartName + "_" + p+".png");
-							Image img = Image.getInstance(path.toAbsolutePath().toString());
-							img.scaleToFit(rect.getWidth() - margin, rect.getHeight());
-							report.add(img);
+						Path path = Paths.get("src/main/resources/charts/" + chartName + "_" + p + ".png");
+						Image img = Image.getInstance(path.toAbsolutePath().toString());
+						img.scaleToFit(rect.getWidth() - margin, rect.getHeight());
+						report.add(img);
 					} catch (Exception e) {
 						System.err.println("BŁĄD");
 						continue;
 					}
-
+				}
 			}
 
 			if (topWriter != null)
@@ -337,8 +345,8 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 		// Customize Chart
 		chart.getStyler().setLegendPosition(Styler.LegendPosition.InsideSE);
 		chart.getStyler().setHasAnnotations(true);
-		chart.getStyler().setXAxisLabelRotation(80);
-		chart.getStyler().setYAxisDecimalPattern("#0.000");
+		chart.getStyler().setXAxisLabelRotation(70);
+	//	chart.getStyler().setYAxisDecimalPattern("#0.000");
 
 		// Series
 		List<CoefficientData> coefficientData = new ArrayList<>(labelValues.size());
@@ -390,7 +398,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 			}
 			double n = labelValues.size();
 			double correlation = 1 - (6*sum)/(n * (n*n -1));
-			chart.setTitle(currentParam + "(correlation: " + correlation+")");
+			chart.setTitle(currentParam + " - " + colName + "(correlation: " + correlation+")");
 		}
 		return chart;
 	}
