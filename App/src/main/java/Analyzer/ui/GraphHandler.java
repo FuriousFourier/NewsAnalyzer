@@ -208,6 +208,11 @@ public class GraphHandler {
 	public synchronized static void graphCreator(String date, String newspaper, SortedSet<Tag> tags,
 									CSVWriter graphWriter, CSVWriter nodesWriter, CSVWriter edgesWriter,
 									boolean initColumns) throws DocumentException {
+		/*aby dalo sie robic dla poszczegolnych rodzajow tagow, rozbudowac input graphCreatora, ew. stworzyc strukture, ktora bedzie przechowywala
+		powiazane tematycznie writery (na podst. sciezki) i wszystko inicjalizowala wewnatrz konstruktora (zeby nie bylo tyle powtarzajacego sie kodu
+		w Analysis Controller*/
+
+
         /*//Iterate over nodes
         for (Node n : directedGraph.getNodes()) {
             Node[] neighbors = directedGraph.getNeighbors(n).toArray();

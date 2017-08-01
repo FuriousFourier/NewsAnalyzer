@@ -40,30 +40,13 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 	public synchronized void extractRelevantInputs(CSVReader reader,  CSVWriter writer, String date1, String date2, boolean initColumns, boolean useImportantTags) throws IOException {
 		System.out.println("ExtractRelevantInputs");
 		String[] nextLine;
-		String[] nextTopLine = new String[23];
+		String[] nextTopLine = new String[13];
 		String[] columnLine = null;
 		while ((nextLine = reader.readNext()) != null) {
 			if (nextLine[0].startsWith("Date") && initColumns) {
 				columnLine = nextLine;
 				if (useImportantTags){
-					/*nextTopLine[0] = nextLine[0];
-					nextTopLine[1] = nextLine[1];
-					nextTopLine[2] = nextLine[2];
-					//List<Integer> tagsNums = importantTagsList.get(nextTopLine[2]);
-					System.out.println(nextTopLine[0] + " " + nextTopLine[1] + " " +nextTopLine[2]);
-					//tu musze wyjatkowo przeczytac jedna linijke extra, bo inaczej nie mam jak znalezc nazwy tagow
-
-					String[] extraLine = reader.readNext();
-					if (extraLine == null)
-						break;
-					List<Integer> tagsNums = importantTagsList.get(extraLine[2]);
-
-					for (int i = 0; i < 10; i++){
-						nextTopLine[3+i] = nextLine[3+tagsNums.get(i)];
-					}
-
-					nextLine = extraLine;
-					writer.writeNext(nextTopLine);*/
+					continue;
 				}
 				else {
 					writer.writeNext(nextLine);
@@ -85,6 +68,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 				nextTopLine[0] = columnLine[0];
 				nextTopLine[1] = columnLine[1];
 				nextTopLine[2] = columnLine[2];
+
 				List<Integer> tagsNums = importantTagsList.get(nextLine[2]);
 				for (int i = 0; i < tagsNums.size(); i++){
 					nextTopLine[3+i] = columnLine[3+ tagsNums.get(i)];
@@ -151,9 +135,9 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 			String[] columnNames = null;
 				while ((nextLine = reader.readNext()) != null) {
 					if (nextLine[0].equals("Date")) {
-						if (columnNames == null) { //dla analizy wezlow - musze sprawic, aby najpierw wazniejsza gazeta byla uwzgledniona!
-							columnNames = nextLine;
-						}
+					//	if (columnNames == null) { //dla analizy wezlow - musze sprawic, aby najpierw wazniejsza gazeta byla uwzgledniona!
+							columnNames = nextLine; //mam nadzieje, ze wykomentowanie warunku nie pospuje niczego
+						//}
 						continue;
 					}
 					try {
@@ -175,7 +159,14 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 						data.get(nextLine[2]).get(nextLine[1]).add(container);
 					} else {
 						for (int j = 3; j < columnNames.length; j++) {
-							DataContainer container = new DataContainer(columnNames[j], NumberFormat.getInstance(Locale.ENGLISH).parse(nextLine[j]));
+							DataContainer container = null;
+							try {
+								container = new DataContainer(columnNames[j], NumberFormat.getInstance(Locale.ENGLISH).parse(nextLine[j]));
+							} catch (Exception e){
+								System.out.println("columns names["+j+"]: " + columnNames[j]);
+								System.out.println("Felerna linijka: " + nextLine[0] + " " +nextLine[1] + " " + nextLine[2]+" "+nextLine[j]);
+								continue;
+							}
 							data.get(nextLine[2]).get(nextLine[1]).add(container);
 						}
 					}
@@ -241,11 +232,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 					//jezeli jest wykres dla parametrow grafu, to tylko labelCOmparator
 					//jezeli wykres dla parametrow wezlow, to za pierwszym razem valueCOmparator, a dla kolejnych trzeba sciagac reczenie (pomocnicza HashMap?)
 					//ew. recznie inicjalizuje importantTags i wtedy tu wyciagam je dla kazdej gazety
-					if (!getTop) {
-						//ponizsze byc moze zbedne, bo chyba dodaje we wlasciwej kolejnosci
-						//dateData.sort(labelComparator);
-						//currentTags = dateData;
-					} else {
+					if (getTop) {
 						if (i == 0 && importantTagsNames.isEmpty()) {
 							dateDataCopy.sort(valueComparator);
 						//	System.out.println("Important tags:");
@@ -301,18 +288,15 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 				}
 
 				labelValues = new ArrayList<>(LabelsSet);
-				if (!getTop)
+				//if (!getTop)
 					sort(labelValues);
 				CategoryChart chart = this.getChart();
 				if (chart == null) {
 					System.out.println("No chart to display for " + series.get(0) + " etc. " + labelValues.get(0) + " etc., param: " + p);
 					continue;
 				}
-
 					try {
-						System.err.println("PRZED Bitmap");
 						BitmapEncoder.saveBitmap(chart, "src/main/resources/charts/" + chartName + "_" + p, BitmapEncoder.BitmapFormat.PNG);
-						System.err.println("Po Bitmap");
 							Path path = Paths.get("src/main/resources/charts/"+ chartName + "_" + p+".png");
 							Image img = Image.getInstance(path.toAbsolutePath().toString());
 							img.scaleToFit(rect.getWidth() - margin, rect.getHeight());

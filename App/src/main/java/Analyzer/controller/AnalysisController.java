@@ -450,7 +450,7 @@ public class AnalysisController {
 						reportCreator.extractRelevantInputs(reader, graphWriter, date1, date2, true, true);
 					}
 					graphWriter.close();
-					reportCreator.showChart(daysNodesFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ")", true, false);
+					reportCreator.showChart(daysNodesFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ") - day by day", true, false);
 				} catch (Exception e) {
 					System.out.println("EXCEPTION IN chooseParams()");
 					e.printStackTrace();
