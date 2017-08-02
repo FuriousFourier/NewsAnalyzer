@@ -22,6 +22,9 @@ import java.text.ParseException;
 import java.util.*;
 import java.util.List;
 
+import static Analyzer.info.InfoContainer.analysisChartsPath;
+import static Analyzer.info.InfoContainer.analysisCsvPath;
+import static Analyzer.info.InfoContainer.analysisPdfPath;
 import static java.util.Collections.sort;
 
 /**
@@ -60,14 +63,10 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 				}
 			}
 
-			if (!nextLine[0].equals("Date") &&(nextLine[0].compareTo(date1) < 0 || nextLine[0].compareTo(date2) > 0)){
-				//System.out.println(nextLine[0] + " - skipping...");
+			if (!nextLine[0].equals("Date") &&(nextLine[0].compareTo(date1) < 0 || nextLine[0].compareTo(date2) > 0))
 				continue;
-			}
 
-			//System.out.println(nextLine[0] + nextLine[1]);
-			//jesli useImportantTags==true, utworz nowa tablice o dlugosci rownej liczbie tagow + 3 (chyba)
-			//iteruj po nextLine i wyekstrahuj, co trzeba
+			//iteruj po nextLine
 			if (useImportantTags){
 				//napierw pisze wiersz z kolumnami
 				nextTopLine[0] = columnLine[0];
@@ -95,7 +94,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 
 	public synchronized  Document createReportBase(String chartName) throws FileNotFoundException, DocumentException {
 		Document report = new Document();
-		PdfWriter.getInstance(report, new FileOutputStream("src/main/resources/reports/"+chartName+".pdf"));
+		PdfWriter.getInstance(report, new FileOutputStream(analysisPdfPath +chartName+".pdf"));
 		report.open();
 		Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD,14,BaseColor.BLACK);
 		Paragraph p = new Paragraph(chartName, titleFont);
@@ -190,7 +189,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 			SortedSet<String> labelsSet = new TreeSet<>(data.keySet());
 			//give TOP nrOfTopTags to output .csv files
 
-			String topFileName = "src/main/resources/csv/"+chartName+"_TOP.csv";
+			String topFileName = analysisCsvPath+chartName+"_TOP.csv";
 			File topFile;
 			CSVWriter topWriter = null;
 			if (getTop){
@@ -228,34 +227,27 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 				int i = 0; //liczba gazet
 				System.out.println("Nr of serieses; " + nrOfSerieses);
 				for (String n : newspaperData.keySet()) {
-					//currentTags = new ArrayList<>();
 
 					textForTop[1] = n;
 					series.add(n);
 					System.out.println("Newspaper: " + n);
 					List<DataContainer> dateDataCopy = newspaperData.get(n);
 					List<DataContainer>  dateData = new ArrayList<>(newspaperData.get(n));
-					//jezeli jest wykres dla parametrow grafu, to tylko labelCOmparator
-					//jezeli wykres dla parametrow wezlow, to za pierwszym razem valueCOmparator, a dla kolejnych trzeba sciagac reczenie (pomocnicza HashMap?)
-					//ew. recznie inicjalizuje importantTags i wtedy tu wyciagam je dla kazdej gazety
+
 					if (getTop) {
 						if (i == 0 && importantTagsNames.isEmpty()) {
 							dateDataCopy.sort(valueComparator);
-						//	System.out.println("Important tags:");
-							//tu musze zapamietac nazwy tagow
-							//za chwile zapametam indeksy w zaleznosci od kolejnosci alfabetycznej
-							for (int k = 0; k < nrOfTopTags; k++) { //sparametryzowac po liczbie tagow, w wywolaniu funkcji
+
+							for (int k = 0; k < nrOfTopTags; k++) {
 								int index = dateData.size()-1-k;
-								importantTagsNames.add(dateDataCopy.get(index).date);//importantTags.add(dateData.get(index));
+								importantTagsNames.add(dateDataCopy.get(index).date);
 								textForTop[3+2*k] = dateDataCopy.get(index).date;
 								textForTop[3+2*k+1] = dateDataCopy.get(index).value.toString();
 							}
 							topWriter.writeNext(textForTop);
 							for (String t: importantTagsNames){
 								importantTagsList.get(p).add(getTagIndex(dateData, t));
-								//System.out.println(t+"\t"+getTagIndex(dateDataCopy, t));
 							}
-							//System.out.println("Important tags list size for "+ p+": " + importantTagsList.get(p).size());
 						} else {
 							for(int k = 0; k < importantTagsList.get(p).size(); k++){
 								int index = importantTagsList.get(p).get(k);
@@ -265,17 +257,15 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 							topWriter.writeNext(textForTop);
 						}
 					}
-					//System.out.println("currentTags.size(): " + currentTags.size());
 					if (willCreateReport) {
 						if (!getTop) {
 							for (DataContainer d : dateData) {
 								LabelsSet.add(d.date);
 								values.putIfAbsent(d.date, new ArrayList<>(nrOfSerieses));
-								//System.out.println("list size: " + values.get(d.date).size());
+
 								while (values.get(d.date).size() < i)
 									values.get(d.date).add(0);
 								values.get(d.date).add(i, d.value);
-								//System.out.println(d.value + " added to series  " + i + " for " + d.date);
 							}
 						} else {
 							System.out.println("Important tags list size for " + p + ": " + importantTagsList.get(p).size());
@@ -296,7 +286,6 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 
 				if (willCreateReport) {
 					labelValues = new ArrayList<>(LabelsSet);
-					//if (!getTop)
 					sort(labelValues);
 					CategoryChart chart = this.getChart();
 					if (chart == null) {
@@ -304,8 +293,8 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 						continue;
 					}
 					try {
-						BitmapEncoder.saveBitmap(chart, "src/main/resources/charts/" + chartName + "_" + p, BitmapEncoder.BitmapFormat.PNG);
-						Path path = Paths.get("src/main/resources/charts/" + chartName + "_" + p + ".png");
+						BitmapEncoder.saveBitmap(chart, analysisChartsPath + chartName + "_" + p, BitmapEncoder.BitmapFormat.PNG);
+						Path path = Paths.get(analysisChartsPath + chartName + "_" + p + ".png");
 						Image img = Image.getInstance(path.toAbsolutePath().toString());
 						img.scaleToFit(rect.getWidth() - margin, rect.getHeight());
 						report.add(img);
@@ -403,7 +392,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 		return chart;
 	}
 
-	private class CoefficientData{ //algorytm w getChart dziala  tylko dla niepowtarzajacych sie wartosci w X i w Y
+	private class CoefficientData{
 		private Number X, Y;
 		private double xRank, yRank;
 	}

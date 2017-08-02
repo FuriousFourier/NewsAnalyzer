@@ -1,20 +1,20 @@
 package Analyzer;
 
-import Analyzer.controller.AnalysisController;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import Analyzer.ui.AnalysisHandler;
-import Analyzer.secondProject.rss.Main;
-import org.springframework.context.ConfigurableApplicationContext;
-//import Analyzer.secondProject.tagger.Tagger;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Random;
 
+import static Analyzer.info.InfoContainer.analysisChartsPath;
+import static Analyzer.info.InfoContainer.analysisCsvPath;
+import static Analyzer.info.InfoContainer.analysisPdfPath;
 import static org.springframework.http.HttpHeaders.USER_AGENT;
 
 
@@ -48,29 +48,6 @@ public class MainUI {
                 if (line.startsWith("q")) {
                     isRunning = false;
                 }
-                else if (line.startsWith("d")) {
-                    myPrint("New notes will be downloaded");
-                    Main.main(null);
-                    myPrint("Notes has been successfully downloaded");
-                }
-                else if (line.startsWith("t")) {
-                    //myPrint("Notes will get missing tags");
-                    //Tagger.main(null);
-                    myPrint("Tagging finished successfully");
-                }
-                else if (line.startsWith("u")) {
-                    synchronized(mainUI) {
-                        myPrint("Database will be updated with new data");
-                        URL url = new URL("http://localhost:8080/addThingsToDB?secNum=" + securityNumber);
-                        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                        connection.setRequestProperty("User-Agent", USER_AGENT);
-                        int responseCode = connection.getResponseCode();
-                        System.out.println("*************");
-                        System.out.println("Response Code: " + responseCode);
-                        System.out.println("*************");
-                        myPrint("Database updated successfully");
-                    }
-                }
                 else if (line.startsWith("p")) {
                     synchronized (mainUI) {
                         myPrint("Tags will be fetched soon...");
@@ -86,6 +63,11 @@ public class MainUI {
                 }
                 else if (line.startsWith("a")) {
                     synchronized (mainUI) {
+
+                        (new File(analysisCsvPath)).mkdirs();
+                        (new File(analysisChartsPath)).mkdirs();
+                        (new File(analysisPdfPath)).mkdirs();
+
                         myPrint("Analysis will start  soon...");
                         handler.startHandling();
                         myPrint("Analysis finished successfully");
@@ -108,9 +90,6 @@ public class MainUI {
 
     private static void listCommands(){
         myPrint("List of commands:\n" +
-                "\t d -> download new press notes\n" +
-                "\t t -> tag new notes\n" +
-                "\t u -> update database with new data (notes and tags)\n" +
                 "\t p -> print out all tags\n" +
                 "\t a -> analyse social network\n" +
                 "\t q -> quit application\n" +

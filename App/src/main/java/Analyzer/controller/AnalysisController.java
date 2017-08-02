@@ -19,6 +19,8 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
+import static Analyzer.info.InfoContainer.analysisCsvPath;
+
 /**
  * Created by karolina on 12.07.17.
  */
@@ -204,9 +206,9 @@ public class AnalysisController {
 			System.out.println("Last month: "+ lastMonth + "; last year: "+ lastYear);
 		}
 
-		String graphFileName = "src/main/resources/csv/Month.csv";
-		String nodesFileName = "src/main/resources/csv/Month_nodes.csv";
-		String edgesFileName = "src/main/resources/csv/Month_edges.csv";
+		String graphFileName = analysisCsvPath + "Month.csv";
+		String nodesFileName = analysisCsvPath + "Month_nodes.csv";
+		String edgesFileName = analysisCsvPath + "Month_edges.csv";
 		File graphFile = new File(graphFileName);
 		File nodesFile = new File(nodesFileName);
 		File edgesFile = new File(edgesFileName);
@@ -273,9 +275,9 @@ public class AnalysisController {
 		else if (isIteratingOverDates)
 			descr = "months";
 		if (!isIteratingOverDates) {
-			graphGlobalFileName = "src/main/resources/csv/Newspaper.csv";
-			nodesGlobalFileName = "src/main/resources/csv/Newspaper_nodes.csv";
-			edgesGlobalFileName = "src/main/resources/csv/Newspaper_edges.csv";
+			graphGlobalFileName = analysisCsvPath + "Newspaper.csv";
+			nodesGlobalFileName = analysisCsvPath + "Newspaper_nodes.csv";
+			edgesGlobalFileName = analysisCsvPath + "Newspaper_edges.csv";
 			globalGraphFile = new File(graphGlobalFileName);
 			globalNodesFile = new File(nodesGlobalFileName);
 			globalEdgesFile = new File(edgesGlobalFileName);
@@ -292,10 +294,10 @@ public class AnalysisController {
 		}
 		//String[] newspaperList = { "Interia", "Fakt", "Newsweek", "The New York Times"};
 		String[] newspaperList = {"The Guardian", "New Zealand Herald"};
-		/*for (Newspaper n : fetchedNewspapers) {
-			value = n.getName();*/
-		for (String s: newspaperList) {
-			value = s;
+		for (Newspaper n : fetchedNewspapers) {
+			value = n.getName();
+		/*for (String s: newspaperList) {
+			value = s;*/
 			setIsAskingForValue(false);
 			if ((getPressReleasesByNews().equals("foo")) && (fetchedNotes != null) && (!fetchedNotes.isEmpty())){
 				System.out.println("******************* *Newspaper: "+value + " ************************");
@@ -316,23 +318,15 @@ public class AnalysisController {
 							date = pYear + "-" + (pMonth<10 ? "0" : "") + pMonth + "w" + pWeek;
 						else
 							date = pYear + "-" + (pMonth<10 ? "0" : "") + pMonth;
-						newspaperNotes.putIfAbsent(date, new HashSet<PressRelease>());
+						newspaperNotes.putIfAbsent(date, new HashSet<>());
 						newspaperNotes.get(date).add(p);
-						Set<Tag> tags = p.getTags();
-						/*if (tags!=null && !tags.isEmpty()){
-							System.out.print("ID: " + p.getId() + "; Date: "+ date+"; Tags:");
-							for (Tag t: p.getTags()){
-								System.out.print(t.getName()+", ");
-							}
-							System.out.println();
-						}*/
 					}
 					fetchedNotes =null;
 					SortedSet<String> notesKeySet = new TreeSet<>(newspaperNotes.keySet());
 
-					String graphFileName = "src/main/resources/csv/"+value+"("+descr+").csv";
-					String nodesFileName = "src/main/resources/csv/"+value+"("+descr+")_nodes.csv";
-					String edgesFileName = "src/main/resources/csv/"+value+"("+descr+")_edges.csv";
+					String graphFileName = analysisCsvPath+value+"("+descr+").csv";
+					String nodesFileName = analysisCsvPath+value+"("+descr+")_nodes.csv";
+					String edgesFileName = analysisCsvPath+value+"("+descr+")_edges.csv";
 					File graphFile = new File(graphFileName);
 					File nodesFile = new File(nodesFileName);
 					File edgesFile = new File(edgesFileName);
@@ -403,8 +397,6 @@ public class AnalysisController {
 			fetchedTags = new TreeSet<>((List<Tag>) tagRepository.findAll());
 
 			System.out.println("Choose option" +
-					"\ta -> compare all newspapers together\n" +
-					"\to -> compare one newspaper with all others +\n" +
 					"\tm -> manually type newspapers' titles to compare together\n");
 			String option = br.readLine();
 			System.out.print("Choose the shortest time range to consider:" +
@@ -445,13 +437,7 @@ public class AnalysisController {
 
 			System.out.print("Nr of TOP tags to compare: ");
 			nrOfTopTags = Integer.parseInt(br.readLine());
-			if (option.startsWith("o")) {
-				System.out.print("Newspaper to compare with others: ");
-				titleToCompare = br.readLine();
-				reportTitle = titleToCompare + "_with_others_";
-				getAllNewspapers();
-
-			} else if (option.startsWith("m")) {
+			if (option.startsWith("m")) {
 				System.out.print("Nr of newspapers to compare: ");
 				nrOfNewspapers = Integer.parseInt(br.readLine());
 				System.out.println("Enter one title per line:");
@@ -466,26 +452,16 @@ public class AnalysisController {
 			System.out.println("Create pdf with charts? (t/n)");
 			boolean willCreateReport = br.readLine().startsWith("t");
 
-			if (option.startsWith("o")) {
-				isChosenToCompare = true;
-				for (Newspaper n : fetchedNewspapers) {
-					if (n.getName().equals(titleToCompare))
-						continue;
-					newspaperTitles = new ArrayList<>();
-					newspaperTitles.add(titleToCompare);
-					newspaperTitles.add(n.getName());
-					compare();
-				}
-			} else if (option.startsWith("m")) {
+			if (option.startsWith("m")) {
 				isChosenToCompare = false;
 				compare();
 			}
 
 				Document report = null;
 				try {
-					String daysFileName = "src/main/resources/csv/" + reportTitle + "(" + date1 + "_" + date2 + ")_"+descr+".csv";
-					String graphFileName = "src/main/resources/csv/" + reportTitle + "(" + date1 + "_" + date2 + ").csv";
-					String nodesFileName = "src/main/resources/csv/" + reportTitle + "(" + date1 + "_" + date2 + ")_nodes.csv";
+					String daysFileName = analysisCsvPath + reportTitle + "(" + date1 + "_" + date2 + ")_"+descr+".csv";
+					String graphFileName = analysisCsvPath + reportTitle + "(" + date1 + "_" + date2 + ").csv";
+					String nodesFileName = analysisCsvPath + reportTitle + "(" + date1 + "_" + date2 + ")_nodes.csv";
 					if (willCreateReport)
 						report = reportCreator.createReportBase(reportTitle + "(" + date1 + "_" + date2 + ")");
 					System.out.println("Nr of newspaper titles: " + newspaperTitles.size());
@@ -493,7 +469,7 @@ public class AnalysisController {
 					reportCreator.showChart(graphFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ")", nrOfTopTags, 3,false,false, willCreateReport);
 					reportCreator.showChart(nodesFileName, newspaperTitles.size(), report, reportTitle + "(" + date1 + "_" + date2 + ")", nrOfTopTags, -1, true, true, willCreateReport);
 
-					String daysNodesFileName = "src/main/resources/csv/"+reportTitle+"("+date1+"_"+date2+")_"+descr+"_TOP.csv";
+					String daysNodesFileName = analysisCsvPath+reportTitle+"("+date1+"_"+date2+")_"+descr+"_TOP.csv";
 					File nodeFile = new File(daysNodesFileName);
 
 					nodeFile.delete();
@@ -503,7 +479,7 @@ public class AnalysisController {
 
 					for (String n : newspaperTitles){
 						System.out.println("Newspaper (in compare()): "+ n);
-						String filePath = "src/main/resources/csv/"+n+"("+descr+")_nodes.csv";
+						String filePath = analysisCsvPath +n+"("+descr+")_nodes.csv";
 						FileReader fileReader;
 						try {
 							fileReader = new FileReader(filePath);
@@ -526,7 +502,6 @@ public class AnalysisController {
 					if (report != null)
 						report.close();
 				}
-			//}
 		}catch (Exception e){
 			System.out.println("EXCEPTION IN chooseParams()!!! (out try)");
 			e.printStackTrace();
@@ -538,7 +513,7 @@ public class AnalysisController {
 
 	@GetMapping("/broadAnalysis2")
 	public synchronized String compare() throws IOException, DocumentException, ParseException {
-		String daysFileName = "src/main/resources/csv/"+reportTitle+"("+date1+"_"+date2+")_"+descr+".csv";
+		String daysFileName = analysisCsvPath+reportTitle+"("+date1+"_"+date2+")_"+descr+".csv";
 		File graphFile = new File(daysFileName);
 		if (!isChosenToCompare) {
 			graphFile.delete();
@@ -549,7 +524,7 @@ public class AnalysisController {
 
 		for (String n : newspaperTitles){
 			System.out.println("Newspaper (in compare()): "+ n);
-			String filePath = "src/main/resources/csv/"+n+"("+descr+").csv";
+			String filePath = analysisCsvPath+n+"("+descr+").csv";
 			FileReader fileReader;
 			try {
 				fileReader = new FileReader(filePath);
@@ -562,9 +537,9 @@ public class AnalysisController {
 		}
 		graphWriter.close();
 		//utworzenie plikow zbiorczych
-		String graphFileName = "src/main/resources/csv/"+reportTitle+"("+date1+"_"+date2+").csv";
-		String nodesFileName = "src/main/resources/csv/"+reportTitle+"("+date1+"_"+date2+")_nodes.csv";
-		String edgesFileName = "src/main/resources/csv/"+reportTitle+"("+date1+"_"+date2+")_edges.csv";
+		String graphFileName = analysisCsvPath+reportTitle+"("+date1+"_"+date2+").csv";
+		String nodesFileName = analysisCsvPath+reportTitle+"("+date1+"_"+date2+")_nodes.csv";
+		String edgesFileName = analysisCsvPath+reportTitle+"("+date1+"_"+date2+")_edges.csv";
 		graphFile = new File(graphFileName);
 		File nodesFile = new File(nodesFileName);
 		File edgesFile = new File(edgesFileName);
@@ -582,7 +557,7 @@ public class AnalysisController {
 
 		for (String n : newspaperTitles) {
 			//read appropriate files
-			String filePath = "src/main/resources/csv/" + n + "("+descr+")_edges.csv";
+			String filePath = analysisCsvPath+ n + "("+descr+")_edges.csv";
 			FileReader fileReader;
 			try {
 				fileReader = new FileReader(filePath);
@@ -605,7 +580,6 @@ public class AnalysisController {
 	@GetMapping("/getTags")
 	public synchronized String getAllTags(){
 		if (tagRepository == null){
-			System.out.println("Kiepsko");
 			return  "foo";
 		}
 		fetchedTags = new TreeSet<>((List<Tag>)tagRepository.findAll());
