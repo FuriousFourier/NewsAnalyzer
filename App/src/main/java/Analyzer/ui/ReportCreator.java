@@ -40,6 +40,8 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 	private int nrOfSerieses;
 	private Map<String, List<Integer>> importantTagsList;//liczby wskazuja, ktory to tag jest z kolei
 
+	//wyodrebnij potrzebne dane z istniejacego pliku csv (na podst. dat)
+	//useImportantTags - wazne dla tworzenia *_days_TOP, *_weeks_TOP i *_months_TOP
 	public synchronized void extractRelevantInputs(CSVReader reader,  CSVWriter writer, String date1, String date2, boolean initColumns, boolean useImportantTags) throws IOException {
 		System.out.println("ExtractRelevantInputs");
 		String[] nextLine;
@@ -92,6 +94,7 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 		}
 	}
 
+	//stworzenie pustego raportu w postaci .pdf
 	public synchronized  Document createReportBase(String chartName) throws FileNotFoundException, DocumentException {
 		Document report = new Document();
 		PdfWriter.getInstance(report, new FileOutputStream(analysisPdfPath +chartName+".pdf"));
@@ -102,6 +105,8 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 		return report;
 	}
 
+	//DataContainer - klasa pomocnicza do organizacji danych uzytych do rysowania kolejnych wykresow
+	// dla roznych parametrow
 	public class LabelComparator implements Comparator<DataContainer>{
 		@Override
 		public synchronized int compare(DataContainer t0, DataContainer t1) {
@@ -115,12 +120,12 @@ public class ReportCreator implements ExampleChart<CategoryChart> {
 		}
 	}
 	public class DataContainer{
-		private String date;
-		private Number value;
+		private String date; //data albo nazwa tagu
+		private Number value; //wartosc paramteru (jesli date jest data - parametru grafu, wpp parametru pojedynczego wierzcholka)
 		private DataContainer(){
 		}
 		private DataContainer(String date, Number value){
-			this.date = date; //nie 'date', tylko 'label' - bo labelem moze tez byc tag
+			this.date = date;
 			this.value = value;
 		}
 	}
