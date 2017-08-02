@@ -267,4 +267,8 @@ public class InfoContainer {
 	public static final String countryTagFile = "./data/datafiles/Dico_Country_Free.csv";
 	public static final String[] currencyTagFiles = {"./data/datafiles/currencies_Polish.csv",
 			"./data/datafiles/currencies_English.csv", "./data/datafiles/currencies_French.csv", "./data/datafiles/currencies_Spanish.csv"};
+
+	public static final String analysisCsvPath = "src/main/resources/csv/";
+	public static final String analysisChartsPath = "src/main/resources/charts/";
+	public static final String analysisPdfPath = "src/main/resources/reports/";
 }

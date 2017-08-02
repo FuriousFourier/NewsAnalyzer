@@ -1,5 +1,6 @@
 package Analyzer.repository;
 
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import Analyzer.model.Feed;
 import Analyzer.model.Newspaper;

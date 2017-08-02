@@ -38,6 +38,9 @@ public class ReaderCsvFiles {
 		List<String> result = null;
 
 		char separator = getSeparator(filepath);
+		if (separator == 0) {
+			throw new InvalidDataException();
+		}
 
 		try (FileReader fileReader = new FileReader(filepath)) {
 			CSVReader reader = new CSVReader(fileReader, separator);
