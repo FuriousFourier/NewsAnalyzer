@@ -8,6 +8,7 @@ import static Analyzer.info.InfoContainer.*;
 
 import Analyzer.secondProject.csv.writer.WriterCsvFiles;
 import Analyzer.secondProject.tagger.MainTagger;
+import Analyzer.support.TagPairContainer;
 import com.sun.media.sound.InvalidDataException;
 import org.hibernate.Hibernate;
 import org.hibernate.exception.DataException;
@@ -15,6 +16,7 @@ import Analyzer.NewsAnalyzerMain;
 import Analyzer.model.*;
 import Analyzer.repository.*;
 import Analyzer.support.PressReleaseId;
+import org.openide.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -652,7 +654,7 @@ public class DbController {
 		if (!securityNumber.equals(NewsAnalyzerMain.getSecurityNumber())) {
 			return false;
 		}
-		System.out.println("Im gonna find tags");
+		System.out.println("Im gonna find currency tags");
 		List<Tag> tags = tagRepository.findByCategory("Currency");
 		if (tags.isEmpty()) {
 			System.out.println("No currency tags found");
@@ -662,14 +664,22 @@ public class DbController {
 		long tagCount = 0;
 		File destinationFile = new File("currencyTagsStats.csv");
 		destinationFile.delete();
+		List<Pair<String, Long>> tagCounts = new ArrayList<>();
 		for (Tag tag : tags) {
-			try {
-				long currentTagCount = tag.getPressReleases().size();
-				tagCount += currentTagCount;
-				WriterCsvFiles.write(destinationFile.getAbsolutePath(), tag.getName(), Long.toString(currentTagCount), tag.getCountry().getName());
-			} catch (IOException e) {
-				System.err.println("Error while handling tag: " + tag.getName());
+			long currentTagCount = tag.getPressReleases().size();
+			tagCount += currentTagCount;
+			if (currentTagCount > 0){
+				tagCounts.add(Pair.of(tag.getName(), currentTagCount));
 			}
+		}
+		tagCounts.sort((stringLongPair, t1) -> -Long.compare(stringLongPair.second(), t1.second()));
+		try {
+			for (Pair<String, Long> pair : tagCounts) {
+				WriterCsvFiles.write(destinationFile.getAbsolutePath(), pair.first(), Long.toString(pair.second()));
+			}
+		}
+		catch (IOException e) {
+			System.err.println("Error while writing to " + destinationFile.getAbsolutePath());
 		}
 		System.out.println("There are " + tagCount + " currency tags in PressReleases");
 		return true;
@@ -691,14 +701,28 @@ public class DbController {
 		long tagCount = 0;
 		File destinationFile = new File("tagsStats.csv");
 		destinationFile.delete();
+		try {
+			WriterCsvFiles.write(destinationFile.getAbsolutePath(), "Tag", "Count", "Category");
+		} catch (IOException e) {
+			System.err.println("Error while writing into " + destinationFile.getAbsolutePath());
+			return false;
+		}
+		List<Pair<String, Long>> tagCounts = new ArrayList<>();
 		for (Tag tag : tags) {
-			try {
-				long currentTagCount = tag.getPressReleases().size();
-				tagCount += currentTagCount;
-				WriterCsvFiles.write(destinationFile.getAbsolutePath(), tag.getName(), Long.toString(currentTagCount), tag.getCategory());
-			} catch (IOException e) {
-				System.err.println("Error while handling tag: " + tag.getName());
+			long currentTagCount = tag.getPressReleases().size();
+			tagCount += currentTagCount;
+			if (currentTagCount > 0){
+				tagCounts.add(Pair.of(tag.getName(), currentTagCount));
 			}
+		}
+		tagCounts.sort((stringLongPair, t1) -> -Long.compare(stringLongPair.second(), t1.second()));
+		try {
+			for (Pair<String, Long> pair : tagCounts) {
+				WriterCsvFiles.write(destinationFile.getAbsolutePath(), pair.first(), Long.toString(pair.second()));
+			}
+		}
+		catch (IOException e) {
+			System.err.println("Error while writing to " + destinationFile.getAbsolutePath());
 		}
 		System.out.println("There are " + tagCount + " tags in PressReleases");
 		return true;
@@ -721,6 +745,8 @@ public class DbController {
 			return false;
 		}
 		System.out.println("It may take some time");
+
+		List<Pair<String, Long>> tagCounts = new ArrayList<>();
 		for (Newspaper newspaper : newspapers) {
 			long currencyTagCount = 0;
 			Set<Feed> feeds = newspaper.getFeeds();
@@ -737,12 +763,18 @@ public class DbController {
 				}
 			}
 			System.out.println("Newspaper: " + newspaper.getName() + "; tagCount: " + currencyTagCount);
-			try {
-				WriterCsvFiles.write(destinationFilePath, newspaper.getName(), Long.toString(currencyTagCount));
-			} catch (IOException e) {
-				System.err.println("Its impossible to write into " + destinationFilePath + ", newspaper's name: " + newspaper.getName());
-				return false;
+			if (currencyTagCount > 0){
+				tagCounts.add(Pair.of(newspaper.getName(), currencyTagCount));
 			}
+		}
+		tagCounts.sort((stringLongPair, t1) -> -Long.compare(stringLongPair.second(), t1.second()));
+		try {
+			for (Pair<String, Long> pair : tagCounts) {
+				WriterCsvFiles.write(destinationFile.getAbsolutePath(), pair.first(), Long.toString(pair.second()));
+			}
+		}
+		catch (IOException e) {
+			System.err.println("Error while writing to " + destinationFile.getAbsolutePath());
 		}
 		return true;
 	}
@@ -826,18 +858,20 @@ public class DbController {
 			return false;
 		}
 		List<Tag> foundTags = new ArrayList<>();
+		List<TagPairContainer> sortedResults = new ArrayList<>();
 		Map<Tag, Map<Tag, Long>> results = new HashMap<>();
-		final String resultFilepath = "tagPairStats.csv";
-		File resultFile = new File(resultFilepath);
-		resultFile.delete();
-		try {
-			WriterCsvFiles.write(resultFilepath, "newspaper", "tag1", "tag2", "count");
-		} catch (IOException e) {
-			System.err.println("Error while writing to file " + resultFilepath);
-			return false;
-		}
 		for (Newspaper newspaper : newspapers) {
 			System.out.println("Newspaper: " + newspaper.getName());
+			File resultFile = new File(InfoContainer.ANALYSIS_FOLDER_PATH + "/tagPairStatsForNewspaper/" + newspaper.getName() + ".csv");
+			resultFile.mkdirs();
+			resultFile.delete();
+			sortedResults.clear();
+			try {
+				WriterCsvFiles.write(resultFile.getAbsolutePath(), "newspaper", "tag1", "tag2", "count");
+			} catch (IOException e) {
+				System.err.println("Error while writing to file " + resultFile.getAbsolutePath());
+				return false;
+			}
 			results.clear();
 			for (Feed feed : newspaper.getFeeds()) {
 				for (PressRelease pressRelease : feed.getPressReleases()) {
@@ -861,13 +895,98 @@ public class DbController {
 			for (Map.Entry<Tag, Map<Tag, Long>> entry : entries) {
 				Set<Map.Entry<Tag, Long>> secondEntries = entry.getValue().entrySet();
 				for (Map.Entry<Tag, Long> entry2 : secondEntries) {
+					sortedResults.add(new TagPairContainer(entry.getKey(), entry2.getKey(), entry2.getValue()));
+				}
+			}
+			sortedResults.sort((tagPairContainer, t1) -> -Long.compare(tagPairContainer.getCount(), t1.getCount()));
+			for (TagPairContainer tagPairContainer: sortedResults) {
+				try {
+					WriterCsvFiles.write(resultFile.getAbsolutePath(), tagPairContainer.getTag1().getName() + " " + tagPairContainer.getTag2().getName(), Long.toString(tagPairContainer.getCount()));
+				} catch (IOException e) {
+					System.err.println("Error while writing to " + resultFile.getAbsolutePath());
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	@GetMapping("/createPairStatsForMonths")
+	@ResponseBody
+	public synchronized boolean createPairStatsForMonths(@RequestParam("secNum") Long secNum) {
+		if (!secNum.equals(NewsAnalyzerMain.getSecurityNumber())) {
+			return false;
+		}
+
+		String newspaperName = "New Zealand Herald";
+		List<PressRelease> pressReleases = ((List<PressRelease>) pressReleaseRepository.findAll());
+		pressReleases.sort(Comparator.comparing(PressRelease::getDate));
+		Date currentDate = pressReleases.get(0).getDate();
+		Map<Tag, Map<Tag, Long>> results = new HashMap<>();
+		List<Tag> foundTags = new ArrayList<>();
+		List<TagPairContainer> sortedResults = new ArrayList<>();
+		File resultFile = new File(InfoContainer.ANALYSIS_FOLDER_PATH + "/tagPairStatsForNewspaperForMonths/" + newspaperName + "/" + currentDate + ".csv");
+		resultFile.mkdirs();
+		resultFile.delete();
+		pressReleases.sort(Comparator.comparing(PressRelease::getDate));
+		for (PressRelease pressRelease : pressReleases) {
+			if (!pressRelease.getFeed().getNewspaper().getName().equals(newspaperName)){
+				continue;
+			}
+			if (currentDate.getMonth() != pressRelease.getDate().getMonth()) {
+				currentDate = pressRelease.getDate();
+				Set<Map.Entry<Tag, Map<Tag, Long>>> entries = results.entrySet();
+				for (Map.Entry<Tag, Map<Tag, Long>> entry : entries) {
+					Set<Map.Entry<Tag, Long>> secondEntries = entry.getValue().entrySet();
+					for (Map.Entry<Tag, Long> entry2 : secondEntries) {
+						sortedResults.add(new TagPairContainer(entry.getKey(), entry2.getKey(), entry2.getValue()));
+					}
+				}
+				sortedResults.sort((tagPairContainer, t1) -> -Long.compare(tagPairContainer.getCount(), t1.getCount()));
+				for (TagPairContainer tagPairContainer: sortedResults) {
 					try {
-						WriterCsvFiles.write(resultFilepath, newspaper.getName(), entry.getKey().getName(), entry2.getKey().getName(), Long.toString(entry2.getValue()));
+						WriterCsvFiles.write(resultFile.getAbsolutePath(), tagPairContainer.getTag1().getName() + " " + tagPairContainer.getTag2().getName(), Long.toString(tagPairContainer.getCount()));
 					} catch (IOException e) {
-						System.err.println("Error while writing to " + resultFilepath);
+						System.err.println("Error while writing to " + resultFile.getAbsolutePath());
 						return false;
 					}
 				}
+				resultFile = new File(InfoContainer.ANALYSIS_FOLDER_PATH + "/tagPairStatsForNewspaperForMonths/" + newspaperName + "/" + currentDate + ".csv");
+				resultFile.mkdirs();
+				resultFile.delete();
+				results.clear();
+				sortedResults.clear();
+			} else {
+				foundTags.clear();
+				for (Tag tag : pressRelease.getTags()) {
+					if (tag.getCategory().equals("Currency")) {
+						foundTags.add(tag);
+					}
+				}
+				foundTags.sort(Comparator.comparing(Tag::getName));
+				for (int i = 0; i < foundTags.size(); ++i) {
+					for (int j = i + 1; j < foundTags.size(); ++j) {
+						Map<Tag, Long> secondMap = results.computeIfAbsent(foundTags.get(i), k -> new HashMap<>());
+						Long tagCount = secondMap.computeIfAbsent(foundTags.get(j), k -> 0L);
+						secondMap.put(foundTags.get(j), tagCount + 1);
+					}
+				}
+			}
+		}
+		Set<Map.Entry<Tag, Map<Tag, Long>>> entries = results.entrySet();
+		for (Map.Entry<Tag, Map<Tag, Long>> entry : entries) {
+			Set<Map.Entry<Tag, Long>> secondEntries = entry.getValue().entrySet();
+			for (Map.Entry<Tag, Long> entry2 : secondEntries) {
+				sortedResults.add(new TagPairContainer(entry.getKey(), entry2.getKey(), entry2.getValue()));
+			}
+		}
+		sortedResults.sort((tagPairContainer, t1) -> -Long.compare(tagPairContainer.getCount(), t1.getCount()));
+		for (TagPairContainer tagPairContainer: sortedResults) {
+			try {
+				WriterCsvFiles.write(resultFile.getAbsolutePath(), tagPairContainer.getTag1().getName() + " " + tagPairContainer.getTag2().getName(), Long.toString(tagPairContainer.getCount()));
+			} catch (IOException e) {
+				System.err.println("Error while writing to " + resultFile.getAbsolutePath());
+				return false;
 			}
 		}
 		return true;

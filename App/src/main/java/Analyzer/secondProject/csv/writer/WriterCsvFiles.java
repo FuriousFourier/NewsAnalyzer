@@ -24,7 +24,7 @@ public class WriterCsvFiles {
         if (parentDir != null)
         	parentDir.mkdirs();
         file.createNewFile();
-        CSVWriter writer = new CSVWriter(new FileWriter(filename, true), '\t', CSVWriter.DEFAULT_QUOTE_CHARACTER);
+        CSVWriter writer = new CSVWriter(new FileWriter(filename, true), ',', CSVWriter.NO_QUOTE_CHARACTER);
         try {
             String[] textToWrite = new String[args.length];
             System.arraycopy(args, 0, textToWrite, 0, args.length);

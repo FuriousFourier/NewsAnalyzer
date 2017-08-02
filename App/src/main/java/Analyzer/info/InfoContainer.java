@@ -261,6 +261,7 @@ public class InfoContainer {
 	public static final String ORG_TAGGED_FILE_NAME = "rss_org_tagged.csv";
 	public static final String STEMMING_FOLDER_PATH = "./data/datafiles";
 	public static final String COUNTRIES_FILE_PATH = "../SecondProject/geomedia/cist-sample_geomedia-db/Sample_GeomediaDB/countries.csv";
+	public static final String ANALYSIS_FOLDER_PATH = "analysis";
 
 	public static final String oldFeedsFolderPaths = "./data/Geomedia_extract_AGENDA";
 	public static final String countryTagFile = "./data/datafiles/Dico_Country_Free.csv";

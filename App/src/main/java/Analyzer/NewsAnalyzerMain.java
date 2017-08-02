@@ -117,6 +117,10 @@ public class NewsAnalyzerMain {
 					if (!dbUtil.createPairStats()) {
 						System.out.println("Something went wrong");
 					}
+				} else if (line.startsWith("cpsfn")) {
+					if (!dbUtil.createPairStatsForNewspaper()) {
+						System.out.println("Something went wrong");
+					}
 				} else {
 					System.out.println("Unknown command");
 				}
