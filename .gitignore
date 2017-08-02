@@ -27,11 +27,7 @@ hs_err_pid*
 
 
 #Feeds and database
-Feeds
 TaggedFeeds
-NewFeeds 
-Feeds_new
-Feeds_old
 App/db/*
 
 #backups
