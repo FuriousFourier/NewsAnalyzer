@@ -362,6 +362,7 @@ public class DbController {
 			Country country = countryMap.get(countries.get(i));
 			if (country == null) {
 				country = unknownCountry;
+				System.out.println("Unknown country: " + countries.get(i));
 			}
 			Tag tag = tagMap.get(tags.get(i));
 			if (tag == null) {
@@ -662,7 +663,7 @@ public class DbController {
 		}
 		tags.sort((tag, t1) -> (tag.getName().compareTo(t1.getName())));
 		long tagCount = 0;
-		File destinationFile = new File("currencyTagsStats.csv");
+		File destinationFile = new File(InfoContainer.ANALYSIS_FOLDER_PATH + "/currencyTagsStats.csv");
 		destinationFile.delete();
 		List<Pair<String, Long>> tagCounts = new ArrayList<>();
 		for (Tag tag : tags) {
@@ -699,7 +700,7 @@ public class DbController {
 		}
 		tags.sort((tag, t1) -> (tag.getName().compareTo(t1.getName())));
 		long tagCount = 0;
-		File destinationFile = new File("tagsStats.csv");
+		File destinationFile = new File(InfoContainer.ANALYSIS_FOLDER_PATH + "/tagsStats.csv");
 		destinationFile.delete();
 		try {
 			WriterCsvFiles.write(destinationFile.getAbsolutePath(), "Tag", "Count", "Category");
@@ -736,7 +737,7 @@ public class DbController {
 		}
 
 		System.out.println("Lets start");
-		final String destinationFilePath = "currencyTagStatsForNewspapers.csv";
+		final String destinationFilePath = InfoContainer.ANALYSIS_FOLDER_PATH + "/currencyTagStatsForNewspapers.csv";
 		File destinationFile = new File(destinationFilePath);
 		destinationFile.delete();
 		List<Newspaper> newspapers = ((List<Newspaper>) newspaperRepository.findAll());
@@ -925,7 +926,9 @@ public class DbController {
 		Map<Tag, Map<Tag, Long>> results = new HashMap<>();
 		List<Tag> foundTags = new ArrayList<>();
 		List<TagPairContainer> sortedResults = new ArrayList<>();
-		File resultFile = new File(InfoContainer.ANALYSIS_FOLDER_PATH + "/tagPairStatsForNewspaperForMonths/" + newspaperName + "/" + currentDate + ".csv");
+		File resultFile = new File(InfoContainer.ANALYSIS_FOLDER_PATH + "/tagPairStatsForNewspaperForMonths/"
+				+ newspaperName + "/" + (currentDate.getYear()+1900) + "_" + (currentDate.getMonth()) + "_"
+				+ (currentDate.getDate()) + ".csv");
 		resultFile.mkdirs();
 		resultFile.delete();
 		pressReleases.sort(Comparator.comparing(PressRelease::getDate));
@@ -951,7 +954,9 @@ public class DbController {
 						return false;
 					}
 				}
-				resultFile = new File(InfoContainer.ANALYSIS_FOLDER_PATH + "/tagPairStatsForNewspaperForMonths/" + newspaperName + "/" + currentDate + ".csv");
+				resultFile = new File(InfoContainer.ANALYSIS_FOLDER_PATH + "/tagPairStatsForNewspaperForMonths/"
+						+ newspaperName + "/" + (currentDate.getYear()+1900) + "_" + (currentDate.getMonth()) + "_"
+						+ (currentDate.getDate()) + ".csv");
 				resultFile.mkdirs();
 				resultFile.delete();
 				results.clear();
