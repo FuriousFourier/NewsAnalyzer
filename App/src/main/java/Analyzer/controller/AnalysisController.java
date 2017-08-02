@@ -290,7 +290,8 @@ public class AnalysisController {
 			nodesGlobalWriter = new CSVWriter(new FileWriter(nodesGlobalFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
 			edgesGlobalWriter = new CSVWriter(new FileWriter(edgesGlobalFileName, true), '\t', CSVWriter.NO_QUOTE_CHARACTER);
 		}
-		String[] newspaperList = { "Interia", "Fakt", "Newsweek", "Today"};
+		//String[] newspaperList = { "Interia", "Fakt", "Newsweek", "The New York Times"};
+		String[] newspaperList = {"The Guardian", "New Zealand Herald"};
 		/*for (Newspaper n : fetchedNewspapers) {
 			value = n.getName();*/
 		for (String s: newspaperList) {
@@ -380,7 +381,7 @@ public class AnalysisController {
 	@GetMapping("/getDate")
 	public synchronized String getDate() throws ParseException {
 		String pattern = "yyyy-MM-dd";
-		SimpleDateFormat formatter = new SimpleDateFormat(pattern, Locale.GERMAN);
+		SimpleDateFormat formatter = new SimpleDateFormat(pattern);
 		cal.setTime(formatter.parse(dateToGet));
 		int pMonth = cal.get(Calendar.MONTH)+1;
 		int pYear = cal.get(Calendar.YEAR);
@@ -435,41 +436,12 @@ public class AnalysisController {
 			dateToGet = date1;
 			getDate();
 			date1 = dateToGet;
+			System.out.println("Date 1: " + date1);
 
 			dateToGet = date2;
 			getDate();
 			date2 = dateToGet;
-
-			/*String pattern = "yyyy-MM-dd";
-			SimpleDateFormat formatter = new SimpleDateFormat(pattern, Locale.GERMAN);
-			cal.setTime(formatter.parse(date1));
-			int pMonth = cal.get(Calendar.MONTH)+1;
-			int pYear = cal.get(Calendar.YEAR);
-			int pDay = cal.get(Calendar.DAY_OF_MONTH);
-			int pWeek = cal.get(Calendar.DAY_OF_WEEK_IN_MONTH); //czy ok
-
-			if (timeRange.startsWith("d"))
-				date = pYear + "-" + (pMonth<10 ? "0" : "") + pMonth + "-" + (pDay<10 ? "0" : "") + pDay;
-			else if (timeRange.startsWith("w"))
-				date = pYear + "-" + (pMonth<10 ? "0" : "") + pMonth + "w" + pWeek;
-			else
-				date = pYear + "-" + (pMonth<10 ? "0" : "") + pMonth;
-			date1 = date;
-			System.out.println("Date1: " + date1);
-
-			cal.setTime(formatter.parse(date2));
-			pMonth = cal.get(Calendar.MONTH)+1;
-			pYear = cal.get(Calendar.YEAR);
-			pDay = cal.get(Calendar.DAY_OF_MONTH);
-			pWeek = cal.get(Calendar.DAY_OF_WEEK_IN_MONTH); //czy ok
-			if (timeRange.startsWith("d"))
-				date = pYear + "-" + (pMonth<10 ? "0" : "") + pMonth + "-" + (pDay<10 ? "0" : "") + pDay;
-			else if (timeRange.startsWith("w"))
-				date = pYear + "-" + (pMonth<10 ? "0" : "") + pMonth + "w" + pWeek;
-			else
-				date = pYear + "-" + (pMonth<10 ? "0" : "") + pMonth;
-			date2= date;
-			System.out.println("Date2: " + date2);*/
+			System.out.println("Date 2: " + date2);
 
 			System.out.print("Nr of TOP tags to compare: ");
 			nrOfTopTags = Integer.parseInt(br.readLine());
@@ -509,7 +481,6 @@ public class AnalysisController {
 				compare();
 			}
 
-			//if (willCreateReport.startsWith("t")) {
 				Document report = null;
 				try {
 					String daysFileName = "src/main/resources/csv/" + reportTitle + "(" + date1 + "_" + date2 + ")_"+descr+".csv";

@@ -18,6 +18,8 @@ import Analyzer.model.Feed;
 import Analyzer.model.PressRelease;
 import Analyzer.model.Tag;
 import java.io.IOException;
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.*;
 import java.util.List;
 
@@ -115,6 +117,7 @@ public class GraphHandler {
 			System.out.println("Empty result");
 			return;
 		}
+		nrOfTagOccurences = new HashMap<>();
 		ProjectController pc = Lookup.getDefault().lookup(ProjectController.class);
 		pc.newProject();
 		Workspace workspace = pc.getCurrentWorkspace();
@@ -153,8 +156,9 @@ public class GraphHandler {
 		}
 	}
 
-	private synchronized static void addCsv(String date1, String date2, CSVReader reader, DirectedGraph directedGraph) throws IOException {
+	private synchronized static void addCsv(String date1, String date2, CSVReader reader, DirectedGraph directedGraph) throws IOException, ParseException {
 		String[] nextLine;
+		nrOfTagOccurences = new HashMap<>();
 		while ((nextLine = reader.readNext()) != null){
 			if(nextLine[0].compareTo(date1)< 0 || nextLine[0].compareTo(date2)>0)
 				continue;
@@ -164,35 +168,38 @@ public class GraphHandler {
 
 			Integer currentCount = nrOfTagOccurences.get(nextLine[2]);
 			if (currentCount == null)
-				nrOfTagOccurences.put(nextLine[2], 1);
+				nrOfTagOccurences.put(nextLine[2], Integer.parseInt(nextLine[3]));
 			else
-				nrOfTagOccurences.put(nextLine[2], currentCount+1);
+				nrOfTagOccurences.put(nextLine[2], currentCount+1+Integer.parseInt(nextLine[3]));
 			Node n1 = directedGraph.getNode(nextLine[2]);
 			if (n1 == null){
 				n1 = graphModel.factory().newNode(nextLine[2]);
 				n1.setLabel(nextLine[2]);
 				directedGraph.addNode(n1);
 			}
-			for (int k = 3; ; k++){
+			for (int k = 0; ; k++){
 
-				if (nextLine[k].equals(""))
+				if (nextLine[2*k+4].equals(""))
 					break;
-				if (nextLine[k].compareTo(nextLine[2]) < 0){
+				if (nextLine[2*k+4].compareTo(nextLine[2]) < 0){
 					//System.out.println(nextLine[k] + " skipped for " + nextLine[2]);
 					continue;
 				}
-				Node n2 = directedGraph.getNode(nextLine[k]);
+				Node n2 = directedGraph.getNode(nextLine[2*k+4]);
 				if (n2 == null) {
-					n2 = graphModel.factory().newNode(nextLine[k]);
-					n2.setLabel(nextLine[k]);
+					n2 = graphModel.factory().newNode(nextLine[2*k+4]);
+					n2.setLabel(nextLine[2*k+4]);
 					directedGraph.addNode(n2);
 				}
 				addEdge(graphModel, n1, n2);
 				addEdge(graphModel, n2, n1);
+
+				directedGraph.getEdge(n1, n2).setWeight(Double.parseDouble(nextLine[2*k+5]));
+				directedGraph.getEdge(n2, n1).setWeight(Double.parseDouble(nextLine[2*k+5]));
 			}
 		}
 	}
-	public synchronized static void initGraphFromCsv(String date1, String date2, CSVReader reader1) throws IOException {
+	public synchronized static void initGraphFromCsv(String date1, String date2, CSVReader reader1) throws IOException, ParseException {
 		ProjectController pc = Lookup.getDefault().lookup(ProjectController.class);
 		pc.newProject();
 		Workspace workspace = pc.getCurrentWorkspace();
@@ -224,20 +231,22 @@ public class GraphHandler {
 		//System.out.println("initColumns in graphHandler: " +initColumns);
 
 		//inicjalizacja nazw kolumn w plikach csv
-		String[] textForEdges = new String[tags.size()+3];
-		int j=3;
+		String[] textForEdges = new String[tags.size()*2+4];
+
 		if (initColumns) {
 			textForEdges[0] = "Date";
 			textForEdges[1] = "Newspaper";
 			textForEdges[2] = "Source";
-			for (;j<tags.size()+3; j++){
-				textForEdges[j] = "N" + (j-2);
+			textForEdges[3] = "Occurences";
+			for (int j = 0;j<tags.size(); j++){
+				textForEdges[2*j+4] = "N" + (j+1); //neighbor
+				textForEdges[2*j+5] = "W" + (j+1); //edge weigh
 			}
 			edgesWriter.writeNext(textForEdges);
 		}
 
 		String[] textForNodes = new String[tags.size()+3];
-		j=3;
+		int j=3;
 		if (initColumns) {
 			textForNodes[0] = "Date";
 			textForNodes[1] = "Newspaper";
@@ -304,24 +313,27 @@ public class GraphHandler {
 		prestigeStatistics.setCalculateDomain(true);
 		prestigeStatistics.setCalculateIndegree(true);
 		prestigeStatistics.setCalculateProximity(true);
-		prestigeStatistics.setRankProminenceAttributeId(GraphDistance.BETWEENNESS); //dla proby
+		prestigeStatistics.setRankProminenceAttributeId(GraphDistance.HARMONIC_CLOSENESS); //dla proby
 		prestigeStatistics.setCalculateRank(true);
 		prestigeStatistics.execute(graphModel);
 
 		textForEdges[0] = date;
 		textForEdges[1] = newspaper;
 		for (Tag t : tags) {
-			j = 3;
+			j = 0;
 			Node n1 = directedGraph.getNode(t.getName());
 			if (n1 != null){
 				textForEdges[2] = n1.getLabel();
+				textForEdges[3] = nrOfTagOccurences.get(t.getName()).toString();
 				List<Node> neighbors = (ArrayList<Node>)directedGraph.getNeighbors(n1).toCollection();
 				for (Node n2 : neighbors){
-					textForEdges[j] = n2.getLabel();
+					textForEdges[j*2 + 4] = n2.getLabel();
+					Edge e = directedGraph.getEdge(n1, n2);
+					textForEdges[j*2 + 5] = String.valueOf(e.getWeight());
 					j++;
 				}
-				for (;j < tags.size()+3; j++)
-					textForEdges[j] = "";
+				for (;j < tags.size(); j++)
+					textForEdges[j*2 + 4] = textForEdges[j*2 + 5] = "";
 				edgesWriter.writeNext(textForEdges);
 			}
 		}
@@ -347,7 +359,7 @@ public class GraphHandler {
 			}
 			nodesWriter.writeNext(textForNodes);
 		}
-		textForNodes[2] = "Occurences"; //TODO: dolozyc kolumne do grafu - wtedy wychwyci go tez ReportInput
+		textForNodes[2] = "Occurences";
 		graphModel.getNodeTable().addColumn("Occurences", Integer.class);
 		j = 3;
 		for (Tag t : tags) {
@@ -369,7 +381,7 @@ public class GraphHandler {
 		input.setGraphValue("Nr of connected components", connectedComponents.getConnectedComponentsCount());
 		input.setGraphValue("Average shortest path length", distance.getPathLength());
 		input.setGraphValue("Diameter", distance.getDiameter());
-		//input.setGraphValue("Radius", distance.getRadius());		//TEMPORARILY
+		input.setGraphValue("Radius", distance.getRadius());
 		input.setGraphValue("Average clustering coefficient", clusteringCoefficient.getAverageClusteringCoefficient());
 		input.setGraphValue("Average degree", degree.getAverageDegree());
 		input.setGraphValue("Modularity", modularity.getModularity());
