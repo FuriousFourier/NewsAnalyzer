@@ -1,20 +1,12 @@
 package Analyzer.secondProject.tagger;
 
-import Analyzer.info.InfoContainer;
-import Analyzer.model.Feed;
 import Analyzer.secondProject.csv.reader.ReaderCsvFiles;
-import Analyzer.secondProject.csv.writer.WriterCsvFiles;
 import au.com.bytecode.opencsv.CSVReader;
-import com.sun.media.sound.InvalidDataException;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
-
-import static Analyzer.secondProject.tagger.MainTagger.getSourceDataPositions;
-import static Analyzer.secondProject.tagger.MainTagger.getTagsDataPositions;
+import java.util.HashSet;
+import java.util.Set;
 
 public class EnglishCurrencyTagger extends CurrencyTagger {
 

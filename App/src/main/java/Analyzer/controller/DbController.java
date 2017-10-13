@@ -703,7 +703,7 @@ public class DbController {
 		File destinationFile = new File(InfoContainer.ANALYSIS_FOLDER_PATH + "/tagsStats.csv");
 		destinationFile.delete();
 		try {
-			WriterCsvFiles.write(destinationFile.getAbsolutePath(), "Tag", "Count", "Category");
+			WriterCsvFiles.write(destinationFile.getAbsolutePath(), "Tag", "Count");
 		} catch (IOException e) {
 			System.err.println("Error while writing into " + destinationFile.getAbsolutePath());
 			return false;
